@@ -185,7 +185,7 @@ export function SiteHeader({ signedIn, portalHref }: { signedIn: boolean; portal
             )}
           </nav>
 
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             <SiteSearch>
               <Button variant="ghost" size="icon-lg" aria-label="Search the website">
                 <SearchIcon className="size-[1.15rem]" />
