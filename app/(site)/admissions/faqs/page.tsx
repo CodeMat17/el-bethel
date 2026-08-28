@@ -1,0 +1,55 @@
+import type { Metadata } from "next";
+
+import { CtaBand, PageHero } from "@/components/common";
+import { FaqSearch } from "@/components/site/faq-search";
+import { getFaqs } from "@/lib/school/data";
+
+export const metadata: Metadata = {
+  title: "Frequently Asked Questions",
+  description:
+    "Answers to common questions about admissions, fees, classes, uniform, transport, academics and the school calendar at Crestwood Heights Academy, Abuja.",
+  alternates: { canonical: "/admissions/faqs" },
+};
+
+export default function FaqsPage() {
+  const faqs = getFaqs();
+
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: { "@type": "Answer", text: faq.answer },
+    })),
+  };
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+      <PageHero
+        eyebrow="Admissions"
+        title="Frequently Asked Questions"
+        lede="Twenty questions we are asked most often, across admissions, fees, academics, uniform, transport and the school calendar."
+        breadcrumb={[
+          { label: "Home", href: "/" },
+          { label: "Admissions", href: "/admissions" },
+          { label: "FAQs", href: "/admissions/faqs" },
+        ]}
+      />
+
+      <section className="cw-section">
+        <div className="cw-container max-w-4xl">
+          <FaqSearch faqs={faqs} />
+        </div>
+      </section>
+
+      <CtaBand
+        title="Still have a question?"
+        text="Our school office answers enquiries within one working day, Monday to Friday."
+        primary={{ label: "Send an enquiry", href: "/contact" }}
+        secondary={{ label: "Book a school tour", href: "/contact/tour" }}
+      />
+    </>
+  );
+}

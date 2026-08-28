@@ -1,0 +1,134 @@
+import type { Metadata } from "next";
+import { StarIcon } from "lucide-react";
+
+import { EmptyState, StatCard } from "@/components/common";
+import { PortalPageHeader } from "@/components/portal/page-header";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { requirePupil } from "@/lib/school/auth";
+import {
+  classDisplayName,
+  getAttendanceForStudent,
+  getClass,
+  getStudent,
+  getStudentAssignments,
+  studentName,
+  summariseAttendance,
+  teacherNameById,
+} from "@/lib/school/data";
+import { avatarTone, formatDate, initials } from "@/lib/school/format";
+import { getDb } from "@/lib/school/store";
+import { cn } from "@/lib/utils";
+
+export const metadata: Metadata = { title: "My profile" };
+
+export default async function PupilProfilePage() {
+  const user = await requirePupil();
+  const student = user.studentId ? getStudent(user.studentId) : null;
+  if (!student) {
+    return <EmptyState icon="Backpack" title="No pupil record" description="Please ask your class teacher." />;
+  }
+
+  const cls = getClass(student.classId);
+  const attendance = summariseAttendance(getAttendanceForStudent(student.id));
+  const assignments = getStudentAssignments(student.id);
+  const graded = assignments.filter((a) => a.submission?.status === "graded");
+  const certificates = getDb().certificates.filter((c) => c.studentId === student.id);
+
+  return (
+    <>
+      <PortalPageHeader title="My profile" description="Who you are at school, and what you have achieved." />
+
+      <Card className="mb-6 gap-0 overflow-hidden p-0">
+        <div className="flex flex-col items-center gap-4 bg-navy p-6 text-center text-navy-foreground sm:flex-row sm:text-left">
+          <Avatar className="size-20 shrink-0 ring-2 ring-gold/40">
+            <AvatarFallback className={cn("text-xl font-extrabold", avatarTone(student.avatarSeed))}>
+              {initials(student.firstName, student.lastName)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <h2 className="font-heading text-2xl font-extrabold">{studentName(student)}</h2>
+            <p className="mt-1 text-sm text-navy-foreground/70">
+              {classDisplayName(student.classId)} · {student.house} House
+            </p>
+            <p className="mt-0.5 text-sm text-navy-foreground/70">
+              My class teacher is {teacherNameById(cls?.classTeacherId)}
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard label="My attendance" value={`${attendance.rate}%`} icon="CalendarCheck" tone={attendance.rate >= 95 ? "success" : "warning"} />
+        <StatCard label="Work marked" value={graded.length} icon="ClipboardCheck" tone="info" />
+        <StatCard label="Certificates" value={certificates.length} icon="Award" tone="gold" />
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <Card className="gap-0 p-5 sm:p-6">
+          <h2 className="font-heading text-base font-extrabold">About me</h2>
+          <Separator className="my-4" />
+          <dl className="grid gap-4 sm:grid-cols-2">
+            {[
+              ["Student number", student.studentNo],
+              ["Class", classDisplayName(student.classId)],
+              ["Classroom", cls?.room ?? "—"],
+              ["House", student.house],
+              ["Date of birth", formatDate(student.dateOfBirth)],
+              ["Joined Crestwood", formatDate(student.enrolledAt)],
+            ].map(([label, value]) => (
+              <div key={label}>
+                <dt className="text-xs font-bold text-muted-foreground uppercase">{label}</dt>
+                <dd className="mt-0.5 text-sm font-semibold">{value}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-5 rounded-xl bg-muted/70 p-4 text-xs leading-relaxed text-muted-foreground">
+            Only you, your family and your teachers can see this page. If anything here is wrong, tell
+            your class teacher.
+          </p>
+        </Card>
+
+        <Card className="gap-0 p-5 sm:p-6">
+          <h2 className="font-heading text-base font-extrabold">My certificates</h2>
+          <Separator className="my-4" />
+          {certificates.length === 0 ? (
+            <div className="py-8 text-center">
+              <StarIcon className="mx-auto size-9 text-muted-foreground/50" />
+              <p className="mt-3 text-sm text-muted-foreground">
+                No certificates yet — keep working hard!
+              </p>
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {certificates.map((certificate) => (
+                <li key={certificate.id} className="rounded-xl border border-gold/30 bg-gold/8 p-4">
+                  <div className="flex items-center gap-3">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-gold text-gold-foreground">
+                      <StarIcon className="size-5" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-extrabold">{certificate.award}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {certificate.sessionName} · {certificate.certificateNo}
+                      </p>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Badge variant="secondary" className="font-bold">Reader</Badge>
+            <Badge variant="secondary" className="font-bold">{student.house} House</Badge>
+            <Badge variant="secondary" className="font-bold">
+              {attendance.rate >= 98 ? "Great attendance" : "Keep it up"}
+            </Badge>
+          </div>
+        </Card>
+      </div>
+    </>
+  );
+}
