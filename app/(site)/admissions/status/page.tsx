@@ -29,7 +29,7 @@ import type { Application } from "@/lib/school/types";
 export const metadata: Metadata = {
   title: "Check Application Status",
   description:
-    "Track the status of your Crestwood Heights Academy admission application using your application number.",
+    "Track the status of your El-Bethel International Academy admission application using your application number.",
   robots: { index: false, follow: true },
   alternates: { canonical: "/admissions/status" },
 };
@@ -98,8 +98,8 @@ export default async function StatusPage({ searchParams }: PageProps<"/admission
         ]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container max-w-5xl">
+      <section className="eb-section">
+        <div className="eb-container max-w-5xl">
           {!user ? (
             <Card className="gap-0 p-6 sm:p-8">
               <h2 className="font-heading text-lg font-extrabold">Look up an application</h2>

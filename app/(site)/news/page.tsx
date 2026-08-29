@@ -12,7 +12,7 @@ import { formatDate } from "@/lib/school/format";
 export const metadata: Metadata = {
   title: "News & Updates",
   description:
-    "School news, achievements, announcements and updates from Crestwood Heights Academy, Abuja.",
+    "School news, achievements, announcements and updates from El-Bethel International Academy, Abuja.",
   alternates: { canonical: "/news" },
 };
 
@@ -25,13 +25,13 @@ export default function NewsPage() {
     <>
       <PageHero
         eyebrow="News & updates"
-        title="What's happening at Crestwood"
+        title="What's happening at El-Bethel"
         lede="Announcements, achievements, academic updates and stories from across the school."
         breadcrumb={[{ label: "Home", href: "/" }, { label: "News", href: "/news" }]}
       />
 
       <section className="border-b bg-muted/40 py-6">
-        <div className="cw-container flex flex-wrap items-center gap-2">
+        <div className="eb-container flex flex-wrap items-center gap-2">
           <span className="text-xs font-extrabold tracking-wide text-muted-foreground uppercase">Topics</span>
           {categories.map((category) => (
             <Badge key={category} variant="outline" className="h-7 px-3 font-bold">{category}</Badge>
@@ -40,8 +40,8 @@ export default function NewsPage() {
       </section>
 
       {lead ? (
-        <section className="cw-section pb-0">
-          <div className="cw-container">
+        <section className="eb-section pb-0">
+          <div className="eb-container">
             <Link href={`/news/${lead.slug}`} className="group block">
               <Card className="grid gap-0 overflow-hidden p-0 transition-all group-hover:shadow-xl lg:grid-cols-2">
                 <ToneImage tone={lead.tone} seed={lead.slug} label={lead.title} className="aspect-16/10 lg:aspect-auto lg:min-h-80" />
@@ -67,8 +67,8 @@ export default function NewsPage() {
         </section>
       ) : null}
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading eyebrow="Archive" title="All news" />
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {rest.map((post, i) => (

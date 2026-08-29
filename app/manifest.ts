@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: `${SCHOOL.name} — Digital School`,
     short_name: SCHOOL.shortName,
     description:
-      "The Crestwood Heights Academy digital school platform: admissions, parent, pupil, teacher and administration portals.",
+      "The El-Bethel International Academy digital school platform: admissions, parent, pupil, teacher and administration portals.",
     start_url: "/",
     scope: "/",
     display: "standalone",

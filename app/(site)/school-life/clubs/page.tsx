@@ -11,7 +11,7 @@ import { getClubs, teacherNameById } from "@/lib/school/data";
 export const metadata: Metadata = {
   title: "Clubs & Activities",
   description:
-    "Sixteen clubs at Crestwood Heights Academy, Abuja — coding, robotics, chess, reading, art, music, drama, sport and more.",
+    "Sixteen clubs at El-Bethel International Academy, Abuja — coding, robotics, chess, reading, art, music, drama, sport and more.",
   alternates: { canonical: "/school-life/clubs" },
 };
 
@@ -62,8 +62,8 @@ export default function ClubsPage() {
         </div>
       </PageHero>
 
-      <section className="cw-section">
-        <div className="cw-container space-y-14">
+      <section className="eb-section">
+        <div className="eb-container space-y-14">
           {grouped.map(([category, list]) => (
             <div key={category}>
               <SectionHeading eyebrow={CATEGORY_LABEL[category]} title={`${CATEGORY_LABEL[category]} clubs`} />

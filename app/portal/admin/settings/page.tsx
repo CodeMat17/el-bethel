@@ -72,7 +72,6 @@ export default async function AdminSettingsPage() {
                 ["Short name", SCHOOL.shortName],
                 ["Type", SCHOOL.type],
                 ["Motto", SCHOOL.motto],
-                ["Established", String(SCHOOL.established)],
                 ["Academic session", SCHOOL.session],
                 ["Address", SCHOOL.address],
                 ["Phone", SCHOOL.phone],

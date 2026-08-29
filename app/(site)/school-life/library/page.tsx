@@ -17,7 +17,7 @@ import { getDb } from "@/lib/school/store";
 export const metadata: Metadata = {
   title: "School Library",
   description:
-    "The Crestwood Heights Academy library — catalogue, borrowing, guided reading and the termly reading challenge.",
+    "The El-Bethel International Academy library — catalogue, borrowing, guided reading and the termly reading challenge.",
   alternates: { canonical: "/school-life/library" },
 };
 
@@ -52,8 +52,8 @@ export default function LibraryPage() {
         </div>
       </PageHero>
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading eyebrow="Programmes" title="How reading works here" />
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {PROGRAMMES.map((programme, i) => (
@@ -71,8 +71,8 @@ export default function LibraryPage() {
         </div>
       </section>
 
-      <section className="cw-section border-t bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-t bg-muted/40">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Catalogue"
             title="A sample of what is on the shelves"

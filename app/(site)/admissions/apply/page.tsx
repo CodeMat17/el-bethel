@@ -24,7 +24,7 @@ import { formatDate } from "@/lib/school/format";
 export const metadata: Metadata = {
   title: "Apply Online",
   description:
-    "Start or resume an online admission application to Crestwood Heights Academy, Abuja, for the 2026/2027 session.",
+    "Start or resume an online admission application to El-Bethel International Academy, Abuja, for the 2026/2027 session.",
   alternates: { canonical: "/admissions/apply" },
 };
 
@@ -76,8 +76,8 @@ export default async function ApplyPage({ searchParams }: PageProps<"/admissions
         ]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container max-w-4xl">
+      <section className="eb-section">
+        <div className="eb-container max-w-4xl">
           <WizardProgress current={step} reachable={reachable} />
 
           <Card className="mt-8 gap-0 p-6 sm:p-8">

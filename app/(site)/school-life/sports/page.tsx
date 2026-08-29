@@ -13,7 +13,7 @@ import { formatDate } from "@/lib/school/format";
 export const metadata: Metadata = {
   title: "Sports",
   description:
-    "Football, basketball, volleyball, athletics and four competing houses at Crestwood Heights Academy, Abuja.",
+    "Football, basketball, volleyball, athletics and four competing houses at El-Bethel International Academy, Abuja.",
   alternates: { canonical: "/school-life/sports" },
 };
 
@@ -50,8 +50,8 @@ export default function SportsPage() {
         ]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading eyebrow="What we play" title="Six sports across the school" />
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {SPORTS.map((sport, i) => (
@@ -70,12 +70,12 @@ export default function SportsPage() {
         </div>
       </section>
 
-      <section className="cw-section border-y bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-y bg-muted/40">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Houses"
             title="Four houses, one very loud sports day"
-            lede="Every pupil is placed in a house on their first day and stays in it for their whole time at Crestwood."
+            lede="Every pupil is placed in a house on their first day and stays in it for their whole time at El-Bethel."
             align="center"
           />
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -94,8 +94,8 @@ export default function SportsPage() {
         </div>
       </section>
 
-      <section className="cw-section">
-        <div className="cw-container grid gap-12 lg:grid-cols-2">
+      <section className="eb-section">
+        <div className="eb-container grid gap-12 lg:grid-cols-2">
           <div>
             <SectionHeading eyebrow="Fixtures" title="Upcoming sporting events" />
             <div className="mt-8 space-y-3">

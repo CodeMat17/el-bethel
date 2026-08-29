@@ -13,7 +13,7 @@ import { getDb } from "@/lib/school/store";
 export const metadata: Metadata = {
   title: "Verify a Certificate",
   description:
-    "Verify the authenticity of a certificate issued by Crestwood Heights Academy using its certificate number.",
+    "Verify the authenticity of a certificate issued by El-Bethel International Academy using its certificate number.",
   alternates: { canonical: "/verify" },
 };
 
@@ -30,12 +30,12 @@ export default async function VerifyPage({ searchParams }: PageProps<"/verify">)
       <PageHero
         eyebrow="Verification"
         title="Verify a certificate"
-        lede="Enter the certificate number printed on a Crestwood Heights Academy certificate to confirm it is genuine."
+        lede="Enter the certificate number printed on an El-Bethel International Academy certificate to confirm it is genuine."
         breadcrumb={[{ label: "Home", href: "/" }, { label: "Verify", href: "/verify" }]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container max-w-2xl">
+      <section className="eb-section">
+        <div className="eb-container max-w-2xl">
           <Card className="gap-0 p-6 sm:p-8">
             <form method="get" className="flex flex-col gap-3 sm:flex-row sm:items-end">
               <div className="flex-1">
@@ -46,7 +46,7 @@ export default async function VerifyPage({ searchParams }: PageProps<"/verify">)
                   id="no"
                   name="no"
                   defaultValue={certificateNo}
-                  placeholder="CHA-2026-00021"
+                  placeholder="EIA-2026-00021"
                   required
                   className="h-11"
                 />
@@ -106,7 +106,7 @@ export default async function VerifyPage({ searchParams }: PageProps<"/verify">)
                   </p>
                   <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                     No certificate matches the number <span className="font-mono font-bold">{certificateNo}</span>.
-                    Check the number carefully — it should look like CHA-2026-00021. If you believe the
+                    Check the number carefully — it should look like EIA-2026-00021. If you believe the
                     certificate is genuine, please contact the school office.
                   </p>
                 </div>
@@ -116,7 +116,7 @@ export default async function VerifyPage({ searchParams }: PageProps<"/verify">)
             {!certificateNo ? (
               <p className="mt-6 rounded-xl bg-muted/70 p-4 text-sm leading-relaxed text-muted-foreground">
                 Certificate numbers appear at the foot of every certificate we issue, and are encoded in
-                the QR code printed alongside them. Try <span className="font-mono font-bold text-foreground">CHA-2026-00021</span> to
+                the QR code printed alongside them. Try <span className="font-mono font-bold text-foreground">EIA-2026-00021</span> to
                 see a verified result.
               </p>
             ) : null}

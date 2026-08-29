@@ -14,7 +14,7 @@ import { getDb } from "@/lib/school/store";
 export const metadata: Metadata = {
   title: "School Documents",
   description:
-    "Download the Crestwood Heights Academy handbook, prospectus, fee schedule, academic calendar, uniform guide and admission requirements.",
+    "Download the El-Bethel International Academy handbook, prospectus, fee schedule, academic calendar, uniform guide and admission requirements.",
   alternates: { canonical: "/documents" },
 };
 
@@ -31,8 +31,8 @@ export default function DocumentsPage() {
         breadcrumb={[{ label: "Home", href: "/" }, { label: "Documents", href: "/documents" }]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading eyebrow="Public" title="Available to everyone" />
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {publicDocs.map((doc, i) => (
@@ -65,8 +65,8 @@ export default function DocumentsPage() {
         </div>
       </section>
 
-      <section className="cw-section border-t bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-t bg-muted/40">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Private"
             title="Available after signing in"

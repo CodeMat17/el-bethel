@@ -66,7 +66,7 @@
 }
 
 :root {
-  /* Crestwood Heights Academy — Ivory / Deep Navy / Warm Gold */
+  /* El-Bethel — Ivory / Deep Navy / Warm Gold */
   --background: oklch(0.981 0.006 84);
   --foreground: oklch(0.248 0.036 262);
   --card: oklch(0.995 0.003 84);
@@ -202,23 +202,23 @@
   }
 }
 
-@utility cw-container {
+@utility eb-container {
   @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
 }
-@utility cw-section {
+@utility eb-section {
   @apply py-14 sm:py-20 lg:py-24;
 }
-@utility cw-eyebrow {
+@utility eb-eyebrow {
   @apply inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-[0.68rem] font-extrabold tracking-[0.16em] uppercase;
   color: color-mix(in oklch, var(--gold) 72%, var(--foreground));
 }
-@utility cw-title {
+@utility eb-title {
   @apply text-balance text-3xl leading-[1.12] sm:text-4xl lg:text-5xl;
 }
-@utility cw-lede {
+@utility eb-lede {
   @apply text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg;
 }
-@utility cw-hairline {
+@utility eb-hairline {
   background-image: linear-gradient(90deg, transparent, var(--border), transparent);
 }
 
@@ -231,11 +231,11 @@
   }
 }
 
-@keyframes cw-float {
+@keyframes eb-float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
 }
-@keyframes cw-marquee {
+@keyframes eb-marquee {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }

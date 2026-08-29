@@ -16,7 +16,7 @@ const MAX_AGE_SECONDS = 60 * 60 * 8;
  * so a client can never elevate its own privileges by editing a cookie.
  */
 function secret(): string {
-  return process.env.SESSION_SECRET ?? "crestwood-heights-development-secret";
+  return process.env.SESSION_SECRET ?? "elbethel-heights-development-secret";
 }
 
 function sign(payload: string): string {

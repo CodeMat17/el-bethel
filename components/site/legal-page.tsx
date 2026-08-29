@@ -31,8 +31,8 @@ export function LegalPage({
         breadcrumb={[{ label: "Home", href: "/" }, { label: title, href }]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container grid gap-10 lg:grid-cols-[16rem_1fr]">
+      <section className="eb-section">
+        <div className="eb-container grid gap-10 lg:grid-cols-[16rem_1fr]">
           <nav aria-label="On this page" className="lg:sticky lg:top-28 lg:self-start">
             <Card className="gap-0 p-5">
               <p className="text-[0.68rem] font-extrabold tracking-[0.16em] text-muted-foreground uppercase">

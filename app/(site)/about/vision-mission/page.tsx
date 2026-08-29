@@ -9,7 +9,7 @@ import { CORE_VALUES, MISSION, VISION } from "@/lib/school/config";
 export const metadata: Metadata = {
   title: "Vision & Mission",
   description:
-    "The vision and mission of Crestwood Heights Academy, a private Primary School in Abuja.",
+    "The vision and mission of El-Bethel International Academy, a private Primary School in Abuja.",
   alternates: { canonical: "/about/vision-mission" },
 };
 
@@ -34,11 +34,11 @@ export default function VisionMissionPage() {
         ]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container grid gap-6 lg:grid-cols-2">
+      <section className="eb-section">
+        <div className="eb-container grid gap-6 lg:grid-cols-2">
           <Reveal>
             <Card className="h-full gap-0 border-gold/25 p-8 sm:p-10">
-              <span className="cw-eyebrow">Vision</span>
+              <span className="eb-eyebrow">Vision</span>
               <p className="mt-6 text-pretty font-heading text-2xl leading-snug sm:text-3xl">{VISION}</p>
               <p className="mt-6 text-sm leading-relaxed text-muted-foreground">
                 A vision is only useful if it can be tested. Ours is tested every term by our results,
@@ -61,8 +61,8 @@ export default function VisionMissionPage() {
         </div>
       </section>
 
-      <section className="cw-section border-y bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-y bg-muted/40">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="What this means in practice"
             title="Four commitments we can be held to"
@@ -86,8 +86,8 @@ export default function VisionMissionPage() {
         </div>
       </section>
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading eyebrow="Core values" title="The values underneath both" align="center" />
           <div className="mt-10 flex flex-wrap justify-center gap-3">
             {CORE_VALUES.map((value) => (

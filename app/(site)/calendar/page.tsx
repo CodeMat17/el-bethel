@@ -14,7 +14,7 @@ import { DEMO_TODAY } from "@/lib/school/seed";
 export const metadata: Metadata = {
   title: "School Calendar",
   description:
-    "Term dates, breaks, examinations and key events for the 2026/2027 academic session at Crestwood Heights Academy, Abuja.",
+    "Term dates, breaks, examinations and key events for the 2026/2027 academic session at El-Bethel International Academy, Abuja.",
   alternates: { canonical: "/calendar" },
 };
 
@@ -48,8 +48,8 @@ export default function CalendarPage() {
         breadcrumb={[{ label: "Home", href: "/" }, { label: "Calendar", href: "/calendar" }]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading eyebrow="Terms and breaks" title="How the year is divided" />
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {ACADEMIC_CALENDAR.map((block, i) => {
@@ -80,8 +80,8 @@ export default function CalendarPage() {
         </div>
       </section>
 
-      <section className="cw-section border-t bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-t bg-muted/40">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Events"
             title="Key dates, month by month"
@@ -134,8 +134,8 @@ export default function CalendarPage() {
         </div>
       </section>
 
-      <section className="cw-section">
-        <div className="cw-container max-w-3xl">
+      <section className="eb-section">
+        <div className="eb-container max-w-3xl">
           <Card className="gap-0 border-info/30 bg-info/10 p-6">
             <h2 className="font-heading text-base font-extrabold">Today</h2>
             <p className="mt-2 text-sm leading-relaxed">

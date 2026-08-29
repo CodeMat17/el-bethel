@@ -32,7 +32,7 @@ export default function TransportPage() {
       <PageHero
         eyebrow="School life"
         title="School Transport"
-        lede="Four routes covering Jabi, Utako, Wuse, Maitama, Katampe, Gwarinpa, Life Camp, Lokogoma and Galadimawa."
+        lede="Four routes covering Ushafa, Utako, Wuse, Maitama, Katampe, Gwarinpa, Life Camp, Lokogoma and Galadimawa."
         breadcrumb={[
           { label: "Home", href: "/" },
           { label: "School Life", href: "/school-life" },
@@ -46,8 +46,8 @@ export default function TransportPage() {
         ) : null}
       </PageHero>
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading eyebrow="Safety first" title="What we will not compromise on" align="center" />
           <div className="mt-12 grid gap-4 sm:grid-cols-3">
             {SAFETY.map((item, i) => (
@@ -65,8 +65,8 @@ export default function TransportPage() {
         </div>
       </section>
 
-      <section className="cw-section border-y bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-y bg-muted/40">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Routes"
             title="Four routes, with published stop times"
@@ -116,8 +116,8 @@ export default function TransportPage() {
         </div>
       </section>
 
-      <section className="cw-section">
-        <div className="cw-container max-w-3xl">
+      <section className="eb-section">
+        <div className="eb-container max-w-3xl">
           <SectionHeading eyebrow="Coming soon" title="Live bus tracking" align="center" />
           <Card className="mt-8 gap-0 border-gold/25 bg-gold/8 p-6">
             <p className="text-sm leading-relaxed">

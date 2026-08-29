@@ -10,7 +10,7 @@ import { HEADTEACHER_MESSAGE, SCHOOL } from "@/lib/school/config";
 export const metadata: Metadata = {
   title: "Headteacher's Message",
   description:
-    "A welcome message from Dr. Amaka N. Okafor, Headteacher of Crestwood Heights Academy, Abuja.",
+    "A welcome message from Dr. Amaka N. Okafor, Headteacher of El-Bethel International Academy, Abuja.",
   alternates: { canonical: "/about/headteacher" },
 };
 
@@ -28,8 +28,8 @@ export default function HeadteacherPage() {
         ]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+      <section className="eb-section">
+        <div className="eb-container grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
           <Reveal className="lg:sticky lg:top-28">
             <ToneImage tone="gold" seed="headteacher-portrait" sizes="(max-width: 1024px) 100vw, 40vw" label={SCHOOL.headteacher} className="aspect-4/5 rounded-3xl" />
             <Card className="mt-5 gap-0 p-5">
@@ -42,7 +42,7 @@ export default function HeadteacherPage() {
                   <dd className="mt-0.5">Ph.D Educational Leadership · M.Ed Curriculum Studies · B.Ed Primary Education</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-bold text-muted-foreground uppercase">At Crestwood since</dt>
+                  <dt className="text-xs font-bold text-muted-foreground uppercase">At El-Bethel since</dt>
                   <dd className="mt-0.5">2014</dd>
                 </div>
                 <div>

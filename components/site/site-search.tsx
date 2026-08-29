@@ -84,7 +84,7 @@ export function SiteSearch({ children }: { children: React.ReactNode }) {
       <CommandDialog
         open={open}
         onOpenChange={setOpen}
-        title="Search Crestwood Heights Academy"
+        title="Search El-Bethel International Academy"
         description="Search news, events, staff, documents and answers."
       >
         <Command shouldFilter={false}>

@@ -1,6 +1,6 @@
-# Crestwood Heights Academy — Digital School Platform
+# El-Bethel International Academy — Digital School Platform
 
-A complete school platform for a fictional private Primary School in Jabi, Abuja,
+A complete school platform for a fictional private Primary School in Ushafa, Abuja,
 built to `BUILD_SPEC.md`. It is one application covering six audiences:
 
 | Area | Route | Who it is for |
@@ -23,18 +23,18 @@ yarn lint
 
 ## Demo accounts
 
-Every demo account uses the password **`crestwood`**. The login page also has one-click
+Every demo account uses the password **`elbethel`**. The login page also has one-click
 sign-in buttons for the four main roles.
 
 | Role | Email | What you see |
 |---|---|---|
-| Parent | `parent@crestwoodheights.edu.ng` | Mrs. Ada Chukwu — three children across Primary 1, Primary 3 and Primary 5 |
-| Pupil | `pupil@crestwoodheights.edu.ng` | David Chukwu, Primary 4A, CHA-2026-00482 |
-| Teacher | `teacher@crestwoodheights.edu.ng` | Miss Chiamaka Obi, class teacher of Primary 4A |
-| Administrator | `admin@crestwoodheights.edu.ng` | The full school control centre |
-| Headteacher | `headteacher@crestwoodheights.edu.ng` | Leadership view |
-| Accountant | `accounts@crestwoodheights.edu.ng` | Finance-oriented admin access |
-| Admissions | `admissions@crestwoodheights.edu.ng` | Admissions pipeline |
+| Parent | `parent@elbethel.edu.ng` | Mrs. Ada Chukwu — three children across Primary 1, Primary 3 and Primary 5 |
+| Pupil | `pupil@elbethel.edu.ng` | David Chukwu, Primary 4A, EIA-2026-00482 |
+| Teacher | `teacher@elbethel.edu.ng` | Miss Chiamaka Obi, class teacher of Primary 4A |
+| Administrator | `admin@elbethel.edu.ng` | The full school control centre |
+| Headteacher | `headteacher@elbethel.edu.ng` | Leadership view |
+| Accountant | `accounts@elbethel.edu.ng` | Finance-oriented admin access |
+| Admissions | `admissions@elbethel.edu.ng` | Admissions pipeline |
 | Applicant | `applicant@example.com` | An in-flight admission application |
 
 Every teacher, parent and pupil in the seed data also has an account, so authorisation

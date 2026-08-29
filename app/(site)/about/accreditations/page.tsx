@@ -11,12 +11,12 @@ import { formatDate } from "@/lib/school/format";
 export const metadata: Metadata = {
   title: "Accreditations & Awards",
   description:
-    "Registration, accreditation and recognition held by Crestwood Heights Academy, Abuja.",
+    "Registration, accreditation and recognition held by El-Bethel International Academy, Abuja.",
   alternates: { canonical: "/about/accreditations" },
 };
 
 const ACCREDITATIONS = [
-  { title: "FCT Universal Basic Education Board", detail: "Registered private Primary School, Federal Capital Territory.", year: "Since 2012" },
+  { title: "FCT Universal Basic Education Board", detail: "Registered private Primary School, Federal Capital Territory.", year: "Registered" },
   { title: "Federal Ministry of Education", detail: "Approved to deliver the Nigerian national primary curriculum.", year: "Since 2013" },
   { title: "National Association of Proprietors of Private Schools", detail: "Member in good standing, FCT chapter.", year: "Since 2015" },
   { title: "Child Safeguarding Standards", detail: "Annual independent safeguarding and child protection review.", year: "Renewed 2026" },
@@ -27,7 +27,7 @@ const ACCREDITATIONS = [
 const SCHOOL_AWARDS = [
   { year: "2025", title: "FCT Primary Schools Robotics Challenge — Runners-up", body: "Our Primary 5 and 6 team placed second across fourteen competing schools." },
   { year: "2024", title: "Abuja Reading Initiative — School of the Year", body: "Recognised for the highest per-pupil reading participation in the district." },
-  { year: "2023", title: "Best Kept Primary School Grounds, Jabi District", body: "Awarded for our gardening programme and campus maintenance." },
+  { year: "2023", title: "Best Kept Primary School Grounds, Ushafa", body: "Awarded for our gardening programme and campus maintenance." },
   { year: "2022", title: "Excellence in Parent Engagement", body: "Recognised for our digital classroom and parent communication programme." },
 ];
 
@@ -47,8 +47,8 @@ export default function AccreditationsPage() {
         ]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Accreditation"
             title="Registered, approved and inspected"
@@ -71,8 +71,8 @@ export default function AccreditationsPage() {
         </div>
       </section>
 
-      <section className="cw-section border-y bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-y bg-muted/40">
+        <div className="eb-container">
           <SectionHeading eyebrow="School awards" title="Recognition for the whole school" />
           <ol className="mt-10 space-y-4">
             {SCHOOL_AWARDS.map((award, i) => (
@@ -92,8 +92,8 @@ export default function AccreditationsPage() {
         </div>
       </section>
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading eyebrow="Our Stars" title="Recent pupil achievements" />
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {achievements.map((achievement, i) => (

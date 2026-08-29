@@ -15,7 +15,7 @@ import { formatDate } from "@/lib/school/format";
 export const metadata: Metadata = {
   title: "School Life",
   description:
-    "Clubs, sports, achievements, facilities, events and gallery — life beyond the classroom at Crestwood Heights Academy, Abuja.",
+    "Clubs, sports, achievements, facilities, events and gallery — life beyond the classroom at El-Bethel International Academy, Abuja.",
   alternates: { canonical: "/school-life" },
 };
 
@@ -45,8 +45,8 @@ export default function SchoolLifePage() {
         breadcrumb={[{ label: "Home", href: "/" }, { label: "School Life", href: "/school-life" }]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {SECTIONS.map((section, i) => (
               <Reveal key={section.href} delay={i * 0.04}>
@@ -68,8 +68,8 @@ export default function SchoolLifePage() {
         </div>
       </section>
 
-      <section className="cw-section border-y bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-y bg-muted/40">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Clubs"
             title="Find what you love"
@@ -95,8 +95,8 @@ export default function SchoolLifePage() {
         </div>
       </section>
 
-      <section className="cw-section">
-        <div className="cw-container grid gap-12 lg:grid-cols-[1fr_1fr]">
+      <section className="eb-section">
+        <div className="eb-container grid gap-12 lg:grid-cols-[1fr_1fr]">
           <div>
             <SectionHeading eyebrow="Upcoming" title="What's coming up" />
             <ul className="mt-8 space-y-3">
@@ -144,8 +144,8 @@ export default function SchoolLifePage() {
         </div>
       </section>
 
-      <section className="cw-section border-y bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-y bg-muted/40">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Facilities"
             title="Where it all happens"
@@ -177,8 +177,8 @@ export default function SchoolLifePage() {
         </div>
       </section>
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Gallery"
             title="A term in pictures"

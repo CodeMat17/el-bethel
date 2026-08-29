@@ -266,7 +266,7 @@ export async function payApplicationFee(_prev: FormState, formData: FormData): P
   }
 
   application.applicationFeePaid = true;
-  application.applicationFeeReference = `CHA-ADM-${Date.now().toString(36).toUpperCase()}`;
+  application.applicationFeeReference = `EIA-ADM-${Date.now().toString(36).toUpperCase()}`;
   revalidatePath("/admissions/apply");
   redirect("/admissions/apply?step=submit");
 }

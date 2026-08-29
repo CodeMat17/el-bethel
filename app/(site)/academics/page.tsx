@@ -20,7 +20,7 @@ import { getSubjects } from "@/lib/school/data";
 export const metadata: Metadata = {
   title: "Academics",
   description:
-    "The Crestwood Heights Academy curriculum: six class levels from Primary 1 to Primary 6, seventeen subjects and continuous assessment.",
+    "The El-Bethel International Academy curriculum: six class levels from Primary 1 to Primary 6, seventeen subjects and continuous assessment.",
   alternates: { canonical: "/academics" },
 };
 
@@ -43,8 +43,8 @@ export default function AcademicsPage() {
         breadcrumb={[{ label: "Home", href: "/" }, { label: "Academics", href: "/academics" }]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container grid gap-6 lg:grid-cols-2">
+      <section className="eb-section">
+        <div className="eb-container grid gap-6 lg:grid-cols-2">
           {[
             {
               stage: "lower_primary" as const,
@@ -85,8 +85,8 @@ export default function AcademicsPage() {
         </div>
       </section>
 
-      <section className="cw-section border-y bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-y bg-muted/40">
+        <div className="eb-container">
           <SectionHeading eyebrow="Explore" title="Four ways into our academic programme" align="center" />
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {PILLARS.map((pillar, i) => (
@@ -109,8 +109,8 @@ export default function AcademicsPage() {
         </div>
       </section>
 
-      <section className="cw-section">
-        <div className="cw-container grid gap-12 lg:grid-cols-[1fr_1fr]">
+      <section className="eb-section">
+        <div className="eb-container grid gap-12 lg:grid-cols-[1fr_1fr]">
           <div>
             <SectionHeading
               eyebrow="Class structure"
@@ -170,8 +170,8 @@ export default function AcademicsPage() {
         </div>
       </section>
 
-      <section className="cw-section border-y bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-y bg-muted/40">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Subjects"
             title={`${subjects.length} subjects across the school`}
@@ -196,8 +196,8 @@ export default function AcademicsPage() {
         </div>
       </section>
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading eyebrow="Teaching methods" title="Eleven ways we teach" align="center" />
           <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {TEACHING_METHODS.map((method, i) => (

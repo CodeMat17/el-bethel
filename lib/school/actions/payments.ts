@@ -64,7 +64,7 @@ export async function payInvoice(_prev: PaymentState, formData: FormData): Promi
   const receiptNo = `RCP-2026-${String(sequence).padStart(5, "0")}`;
   db.payments.unshift({
     id: `pay-${sequence}-${Date.now().toString(36)}`,
-    reference: `CHA-PAY-${Date.now().toString(36).toUpperCase()}`,
+    reference: `EIA-PAY-${Date.now().toString(36).toUpperCase()}`,
     invoiceId: invoice.id,
     studentId: invoice.studentId,
     amount,

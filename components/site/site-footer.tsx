@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ClockIcon, MailIcon, MapPinIcon, PhoneIcon } from "lucide-react";
+import { ClockIcon, MailIcon, MapPinIcon, MessageCircleIcon, PhoneIcon } from "lucide-react";
 
 import { Brand } from "@/components/site/brand";
 import { NewsletterForm } from "@/components/site/newsletter-form";
@@ -13,6 +13,7 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
       { label: "Our Story", href: "/about" },
       { label: "Vision & Mission", href: "/about/vision-mission" },
       { label: "Core Values", href: "/about/core-values" },
+      { label: "School Anthem", href: "/about/anthem" },
       { label: "Headteacher's Message", href: "/about/headteacher" },
       { label: "Leadership", href: "/about/leadership" },
       { label: "Our Teachers", href: "/about/teachers" },
@@ -21,7 +22,7 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Admissions",
     links: [
-      { label: "Why Crestwood", href: "/admissions/why-crestwood" },
+      { label: "Why El-Bethel", href: "/admissions/why-el-bethel" },
       { label: "Admission Process", href: "/admissions/process" },
       { label: "Requirements", href: "/admissions/requirements" },
       { label: "Fees", href: "/admissions/fees" },
@@ -63,13 +64,13 @@ const SOCIALS: { label: string; href: string; path: string }[] = [
 export function SiteFooter() {
   return (
     <footer className="mt-auto bg-navy text-navy-foreground">
-      <div className="cw-container py-12 sm:py-16">
+      <div className="eb-container py-12 sm:py-16">
         <div className="grid gap-10 lg:grid-cols-[1.4fr_2.6fr]">
           <div>
             <Brand className="[&_span]:text-navy-foreground" />
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-navy-foreground/70">
               A private Primary School in Abuja providing quality, child-centred education
-              in a safe, stimulating and technology-enabled environment since {SCHOOL.established}.
+              in a safe, stimulating and technology-enabled environment.
             </p>
 
             <ul className="mt-6 space-y-3 text-sm text-navy-foreground/80">
@@ -79,7 +80,15 @@ export function SiteFooter() {
               </li>
               <li className="flex items-center gap-3">
                 <PhoneIcon className="size-4 shrink-0 text-gold" />
-                <a href={`tel:${SCHOOL.phoneHref}`} className="hover:text-navy-foreground">{SCHOOL.phone}</a>
+                <span className="flex flex-wrap gap-x-2">
+                  <a href={`tel:${SCHOOL.phoneHref}`} className="hover:text-navy-foreground">{SCHOOL.phone}</a>
+                  <span aria-hidden>·</span>
+                  <a href={`tel:${SCHOOL.phoneAltHref}`} className="hover:text-navy-foreground">{SCHOOL.phoneAlt}</a>
+                </span>
+              </li>
+              <li className="flex items-center gap-3">
+                <MessageCircleIcon className="size-4 shrink-0 text-gold" />
+                <a href={SCHOOL.whatsappHref} target="_blank" rel="noreferrer noopener" className="hover:text-navy-foreground">WhatsApp {SCHOOL.whatsapp}</a>
               </li>
               <li className="flex items-center gap-3">
                 <MailIcon className="size-4 shrink-0 text-gold" />
@@ -146,7 +155,7 @@ export function SiteFooter() {
 
         <div className="flex flex-col items-center justify-between gap-4 text-xs text-navy-foreground/60 sm:flex-row">
           <p>
-            © {new Date(SCHOOL.established, 0, 1).getFullYear() + 14} {SCHOOL.name}. All rights reserved.
+            © {new Date().getFullYear()} {SCHOOL.name}. All rights reserved.
             <span className="ml-2 rounded-full bg-gold/15 px-2 py-0.5 font-semibold text-gold">Demo data</span>
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">

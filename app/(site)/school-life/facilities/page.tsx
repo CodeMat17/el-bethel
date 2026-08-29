@@ -10,7 +10,7 @@ import { FACILITIES } from "@/lib/school/config";
 export const metadata: Metadata = {
   title: "Facilities",
   description:
-    "Smart classrooms, an ICT and innovation lab, science laboratory, library, creative arts studio, sports facilities and more at Crestwood Heights Academy, Abuja.",
+    "Smart classrooms, an ICT and innovation lab, science laboratory, library, creative arts studio, sports facilities and more at El-Bethel International Academy, Abuja.",
   alternates: { canonical: "/school-life/facilities" },
 };
 
@@ -32,7 +32,7 @@ export default function FacilitiesPage() {
 
       {/* Quick jump */}
       <section className="border-b bg-muted/40 py-6">
-        <div className="cw-container flex flex-wrap gap-2">
+        <div className="eb-container flex flex-wrap gap-2">
           {FACILITIES.map((facility) => (
             <a
               key={facility.id}
@@ -45,8 +45,8 @@ export default function FacilitiesPage() {
         </div>
       </section>
 
-      <section className="cw-section">
-        <div className="cw-container space-y-6">
+      <section className="eb-section">
+        <div className="eb-container space-y-6">
           {FACILITIES.map((facility, i) => (
             <Reveal key={facility.id} delay={0.03}>
               <Card

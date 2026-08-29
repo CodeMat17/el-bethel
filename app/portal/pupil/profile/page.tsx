@@ -77,7 +77,7 @@ export default async function PupilProfilePage() {
               ["Classroom", cls?.room ?? "—"],
               ["House", student.house],
               ["Date of birth", formatDate(student.dateOfBirth)],
-              ["Joined Crestwood", formatDate(student.enrolledAt)],
+              ["Joined El-Bethel", formatDate(student.enrolledAt)],
             ].map(([label, value]) => (
               <div key={label}>
                 <dt className="text-xs font-bold text-muted-foreground uppercase">{label}</dt>

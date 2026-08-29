@@ -60,7 +60,7 @@ export async function logoutAction(): Promise<void> {
 /** One-click demo sign-in used by the login page's demo account picker. */
 export async function demoLoginAction(formData: FormData): Promise<void> {
   const email = String(formData.get("email") ?? "");
-  const userId = verifyCredentials(email, "crestwood");
+  const userId = verifyCredentials(email, "elbethel");
   if (!userId) redirect("/login?error=1");
   await setSessionCookie(userId);
   const session = await getSessionUser();

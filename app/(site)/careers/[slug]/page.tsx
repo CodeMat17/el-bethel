@@ -53,8 +53,8 @@ export default async function VacancyPage({ params }: PageProps<"/careers/[slug]
         </div>
       </PageHero>
 
-      <section className="cw-section">
-        <div className="cw-container grid gap-10 lg:grid-cols-[1.3fr_1fr]">
+      <section className="eb-section">
+        <div className="eb-container grid gap-10 lg:grid-cols-[1.3fr_1fr]">
           <div>
             <Button variant="ghost" size="sm" className="mb-6 font-bold" render={<Link href="/careers" />}>
               <ArrowLeftIcon />

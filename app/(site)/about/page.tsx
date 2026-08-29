@@ -12,17 +12,17 @@ import { CORE_VALUES, MISSION, SCHOOL, SCHOOL_STATS, VISION } from "@/lib/school
 export const metadata: Metadata = {
   title: "Our Story",
   description:
-    "Founded in 2012, Crestwood Heights Academy is a private Primary School in Jabi, Abuja, built around how children actually learn.",
+    "El-Bethel International Academy is a private Primary School in Ushafa, Abuja, built around how children actually learn.",
   alternates: { canonical: "/about" },
 };
 
 const TIMELINE = [
-  { year: "2012", title: "Two classrooms in Jabi", text: "Crestwood Heights opened with 31 pupils, four teachers and a conviction that primary education in Abuja could be warmer and more rigorous at the same time." },
-  { year: "2015", title: "First Primary 6 cohort", text: "Our first cohort completed Primary 6 and moved on to secondary schools across Abuja and beyond." },
-  { year: "2018", title: "ICT & Innovation Lab", text: "We opened a dedicated lab and introduced coding and robotics from Primary 3 upwards." },
-  { year: "2021", title: "Digital classrooms", text: "Every class gained a digital classroom, giving parents visibility of assignments, attendance and results." },
-  { year: "2024", title: "Campus expansion", text: "New science laboratory, expanded library and a refurbished creative arts studio." },
-  { year: "2026", title: "390 pupils, 34 teachers", text: "Fifteen classes across six levels, with a pupil-to-teacher ratio of twelve to one." },
+  { label: "The beginning", title: "Two classrooms in Ushafa", text: "El-Bethel International opened with 31 pupils, four teachers and a conviction that primary education in Abuja could be warmer and more rigorous at the same time." },
+  { label: "First graduates", title: "First Primary 6 cohort", text: "Our first cohort completed Primary 6 and moved on to secondary schools across Abuja and beyond." },
+  { label: "Innovation", title: "ICT & Innovation Lab", text: "We opened a dedicated lab and introduced coding and robotics from Primary 3 upwards." },
+  { label: "Going digital", title: "Digital classrooms", text: "Every class gained a digital classroom, giving parents visibility of assignments, attendance and results." },
+  { label: "Growth", title: "Campus expansion", text: "New science laboratory, expanded library and a refurbished creative arts studio." },
+  { label: "Today", title: "390 pupils, 34 teachers", text: "Fifteen classes across six levels, with a pupil-to-teacher ratio of twelve to one." },
 ];
 
 export default function AboutPage() {
@@ -31,12 +31,12 @@ export default function AboutPage() {
       <PageHero
         eyebrow="About us"
         title="A school built around how children actually learn"
-        lede={`Founded in ${SCHOOL.established} in Jabi, Abuja, ${SCHOOL.name} has grown from two classrooms into a community of 390 pupils — without ever losing sight of the individual child.`}
+        lede={`Based in Ushafa, Abuja, ${SCHOOL.name} has grown from two classrooms into a community of 390 pupils — without ever losing sight of the individual child.`}
         breadcrumb={[{ label: "Home", href: "/" }, { label: "About", href: "/about" }]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+      <section className="eb-section">
+        <div className="eb-container grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div>
             <SectionHeading
               eyebrow="Our story"
@@ -45,12 +45,12 @@ export default function AboutPage() {
             />
             <div className="mt-6 space-y-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
               <p>
-                In 2012, a small group of Abuja educators and parents opened Crestwood Heights Academy
+                A small group of Abuja educators and parents opened El-Bethel International Academy
                 with thirty-one pupils. The premise was simple: children learn best when they feel safe,
                 valued and challenged — in that order.
               </p>
               <p>
-                Fourteen years later, that premise has not changed, but the school around it has. We now
+                That premise has not changed, but the school around it has. We now
                 teach six class levels across fifteen classes, with a science laboratory, an ICT and
                 innovation lab, a library, a creative arts studio and full sporting facilities.
               </p>
@@ -70,17 +70,17 @@ export default function AboutPage() {
             </div>
           </div>
           <Reveal>
-            <ToneImage tone="navy" seed="about-story" label="Crestwood Heights Academy campus" className="aspect-4/5 rounded-3xl" />
+            <ToneImage tone="navy" seed="about-story" label="El-Bethel International Academy campus" className="aspect-4/5 rounded-3xl" />
           </Reveal>
         </div>
       </section>
 
-      <section className="cw-section border-y bg-muted/40">
-        <div className="cw-container">
-          <SectionHeading eyebrow="Milestones" title="Fourteen years, told in six moments" align="center" />
+      <section className="eb-section border-y bg-muted/40">
+        <div className="eb-container">
+          <SectionHeading eyebrow="Milestones" title="Our journey, told in six moments" align="center" />
           <ol className="relative mt-12 space-y-8 before:absolute before:top-2 before:bottom-2 before:left-[0.6875rem] before:w-px before:bg-border sm:before:left-1/2">
             {TIMELINE.map((item, i) => (
-              <Reveal key={item.year} delay={i * 0.05} as="li">
+              <Reveal key={item.label} delay={i * 0.05} as="li">
                 <div
                   className={`relative pl-10 sm:w-1/2 sm:pl-0 ${
                     i % 2 === 0 ? "sm:pr-12 sm:text-right" : "sm:ml-auto sm:pl-12"
@@ -91,7 +91,7 @@ export default function AboutPage() {
                       i % 2 === 0 ? "sm:-right-[0.4375rem]" : "sm:-left-[0.4375rem]"
                     }`}
                   />
-                  <p className="font-heading text-sm font-extrabold text-gold-foreground dark:text-gold">{item.year}</p>
+                  <p className="font-heading text-sm font-extrabold text-gold-foreground dark:text-gold">{item.label}</p>
                   <h3 className="mt-1 font-heading text-lg font-extrabold">{item.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.text}</p>
                 </div>
@@ -101,11 +101,11 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="cw-section">
-        <div className="cw-container grid gap-6 lg:grid-cols-2">
+      <section className="eb-section">
+        <div className="eb-container grid gap-6 lg:grid-cols-2">
           <Reveal>
             <Card className="h-full gap-0 border-gold/25 p-8">
-              <span className="cw-eyebrow">Our vision</span>
+              <span className="eb-eyebrow">Our vision</span>
               <p className="mt-5 text-pretty font-heading text-xl leading-snug sm:text-2xl">{VISION}</p>
             </Card>
           </Reveal>
@@ -121,7 +121,7 @@ export default function AboutPage() {
       </section>
 
       <section className="bg-navy py-14 text-navy-foreground sm:py-20">
-        <div className="cw-container grid gap-8 md:grid-cols-4">
+        <div className="eb-container grid gap-8 md:grid-cols-4">
           {SCHOOL_STATS.slice(0, 4).map((stat, i) => (
             <Reveal key={stat.key} delay={i * 0.05}>
               <div className="border-l border-gold/25 pl-5">
@@ -137,8 +137,8 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Core values"
             title="Seven values we teach, model and expect"

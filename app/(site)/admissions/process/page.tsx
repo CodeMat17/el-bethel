@@ -10,7 +10,7 @@ import { StatusPill } from "@/components/common";
 export const metadata: Metadata = {
   title: "Admission Process",
   description:
-    "The full Crestwood Heights Academy admission process, from creating a parent account through assessment to enrolment.",
+    "The full El-Bethel International Academy admission process, from creating a parent account through assessment to enrolment.",
   alternates: { canonical: "/admissions/process" },
 };
 
@@ -72,8 +72,8 @@ export default function ProcessPage() {
         ]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container max-w-4xl space-y-14">
+      <section className="eb-section">
+        <div className="eb-container max-w-4xl space-y-14">
           {STAGES.map((group, gi) => (
             <div key={group.stage}>
               <SectionHeading eyebrow={`Stage ${gi + 1}`} title={group.stage} />
@@ -93,8 +93,8 @@ export default function ProcessPage() {
         </div>
       </section>
 
-      <section className="cw-section border-t bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-t bg-muted/40">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Transparency"
             title="Every status your application can hold"

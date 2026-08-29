@@ -13,7 +13,7 @@ import { formatDate } from "@/lib/school/format";
 export const metadata: Metadata = {
   title: "Careers",
   description:
-    "Teaching and support vacancies at Crestwood Heights Academy, a private Primary School in Jabi, Abuja.",
+    "Teaching and support vacancies at El-Bethel International Academy, a private Primary School in Ushafa, Abuja.",
   alternates: { canonical: "/careers" },
 };
 
@@ -36,8 +36,8 @@ export default function CareersPage() {
         breadcrumb={[{ label: "Home", href: "/" }, { label: "Careers", href: "/careers" }]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading eyebrow="Open roles" title={`${vacancies.length} current vacancies`} />
           {vacancies.length === 0 ? (
             <EmptyState
@@ -86,8 +86,8 @@ export default function CareersPage() {
         </div>
       </section>
 
-      <section className="cw-section border-t bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-t bg-muted/40">
+        <div className="eb-container">
           <SectionHeading eyebrow="Why work here" title="What we offer our staff" align="center" />
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {WHY_WORK_HERE.map((item, i) => (
@@ -102,7 +102,7 @@ export default function CareersPage() {
           <Card className="mt-8 gap-0 border-info/30 bg-info/10 p-6">
             <h3 className="font-heading text-base font-extrabold">Safer recruitment</h3>
             <p className="mt-2 text-sm leading-relaxed">
-              Every appointment at Crestwood Heights Academy is subject to satisfactory references,
+              Every appointment at El-Bethel International Academy is subject to satisfactory references,
               identity and qualification verification, and a background check. All staff complete
               safeguarding training before starting and refresh it annually.
             </p>

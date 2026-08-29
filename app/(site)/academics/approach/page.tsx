@@ -8,7 +8,7 @@ import { TEACHING_METHODS } from "@/lib/school/config";
 export const metadata: Metadata = {
   title: "Learning Approach",
   description:
-    "Crestwood Heights Academy uses a child-centred, activity-based approach: pupils should understand, question, solve and apply — not simply memorise.",
+    "El-Bethel International Academy uses a child-centred, activity-based approach: pupils should understand, question, solve and apply — not simply memorise.",
   alternates: { canonical: "/academics/approach" },
 };
 
@@ -53,8 +53,8 @@ export default function ApproachPage() {
         ]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading eyebrow="Principles" title="Six principles behind every lesson" align="center" />
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {PRINCIPLES.map((principle, i) => (
@@ -72,8 +72,8 @@ export default function ApproachPage() {
         </div>
       </section>
 
-      <section className="cw-section border-y bg-muted/40">
-        <div className="cw-container grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+      <section className="eb-section border-y bg-muted/40">
+        <div className="eb-container grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <Reveal>
             <ToneImage tone="success" seed="approach" label="Pupils working together" className="aspect-square rounded-3xl" />
           </Reveal>
@@ -97,8 +97,8 @@ export default function ApproachPage() {
         </div>
       </section>
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Support"
             title="When a child needs something different"

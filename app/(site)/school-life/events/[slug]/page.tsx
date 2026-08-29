@@ -74,7 +74,7 @@ export default async function EventPage({ params }: PageProps<"/school-life/even
         <div className="relative">
           <ToneImage tone="navy" seed={event.slug} label={event.title} className="h-56 w-full sm:h-72 lg:h-96" />
           <div className="absolute inset-0 bg-linear-to-t from-navy via-navy/60 to-transparent" />
-          <div className="cw-container absolute inset-x-0 bottom-0 pb-8 sm:pb-12">
+          <div className="eb-container absolute inset-x-0 bottom-0 pb-8 sm:pb-12">
             <Button
               variant="ghost"
               size="sm"
@@ -93,8 +93,8 @@ export default async function EventPage({ params }: PageProps<"/school-life/even
           </div>
         </div>
 
-        <section className="cw-section">
-          <div className="cw-container grid gap-10 lg:grid-cols-[1.6fr_1fr]">
+        <section className="eb-section">
+          <div className="eb-container grid gap-10 lg:grid-cols-[1.6fr_1fr]">
             <div>
               <p className="text-pretty text-lg leading-relaxed">{event.description}</p>
               <Separator className="my-8" />

@@ -7,7 +7,7 @@ import { getFaqs } from "@/lib/school/data";
 export const metadata: Metadata = {
   title: "Frequently Asked Questions",
   description:
-    "Answers to common questions about admissions, fees, classes, uniform, transport, academics and the school calendar at Crestwood Heights Academy, Abuja.",
+    "Answers to common questions about admissions, fees, classes, uniform, transport, academics and the school calendar at El-Bethel International Academy, Abuja.",
   alternates: { canonical: "/admissions/faqs" },
 };
 
@@ -38,8 +38,8 @@ export default function FaqsPage() {
         ]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container max-w-4xl">
+      <section className="eb-section">
+        <div className="eb-container max-w-4xl">
           <FaqSearch faqs={faqs} />
         </div>
       </section>

@@ -7,7 +7,7 @@ import { getSubject, getTeachers, teacherName } from "@/lib/school/data";
 export const metadata: Metadata = {
   title: "Our Teachers",
   description:
-    "Meet the 34 teaching staff at Crestwood Heights Academy, Abuja — their subjects, qualifications and experience.",
+    "Meet the 34 teaching staff at El-Bethel International Academy, Abuja — their subjects, qualifications and experience.",
   alternates: { canonical: "/about/teachers" },
 };
 
@@ -40,8 +40,8 @@ export default function TeachersPage() {
         ]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Staff directory"
             title="Find a teacher"

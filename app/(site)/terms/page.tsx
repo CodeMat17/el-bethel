@@ -6,7 +6,7 @@ import { SCHOOL } from "@/lib/school/config";
 export const metadata: Metadata = {
   title: "Terms of Use",
   description:
-    "Terms governing the use of the Crestwood Heights Academy website and digital school platform.",
+    "Terms governing the use of the El-Bethel International Academy website and digital school platform.",
   alternates: { canonical: "/terms" },
 };
 

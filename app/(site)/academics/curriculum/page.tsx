@@ -15,7 +15,7 @@ import { formatDate } from "@/lib/school/format";
 export const metadata: Metadata = {
   title: "Curriculum",
   description:
-    "The Crestwood Heights Academy curriculum — the Nigerian national curriculum, enriched and sequenced from Primary 1 to Primary 6.",
+    "The El-Bethel International Academy curriculum — the Nigerian national curriculum, enriched and sequenced from Primary 1 to Primary 6.",
   alternates: { canonical: "/academics/curriculum" },
 };
 
@@ -66,8 +66,8 @@ export default function CurriculumPage() {
         ]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+      <section className="eb-section">
+        <div className="eb-container grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div>
             <SectionHeading
               eyebrow="Framework"
@@ -95,8 +95,8 @@ export default function CurriculumPage() {
         </div>
       </section>
 
-      <section className="cw-section border-y bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-y bg-muted/40">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Year by year"
             title="What is covered at each level"
@@ -139,8 +139,8 @@ export default function CurriculumPage() {
         </div>
       </section>
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading eyebrow="Academic year" title="How the year is structured" align="center" />
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {ACADEMIC_CALENDAR.map((block, i) => (

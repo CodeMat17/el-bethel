@@ -21,7 +21,7 @@ import { money } from "@/lib/school/format";
 export const metadata: Metadata = {
   title: "Admissions",
   description:
-    "Admission to Crestwood Heights Academy, Abuja is open for the 2026/2027 session — Primary 1 to Primary 4. Apply online in seven steps.",
+    "Admission to El-Bethel International Academy, Abuja is open for the 2026/2027 session — Primary 1 to Primary 4. Apply online in seven steps.",
   alternates: { canonical: "/admissions" },
 };
 
@@ -63,8 +63,8 @@ export default function AdmissionsPage() {
         </div>
       </PageHero>
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Availability"
             title="Which classes are open"
@@ -103,8 +103,8 @@ export default function AdmissionsPage() {
         </div>
       </section>
 
-      <section className="cw-section border-y bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-y bg-muted/40">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="How it works"
             title="Six steps from enquiry to enrolment"
@@ -137,8 +137,8 @@ export default function AdmissionsPage() {
         </div>
       </section>
 
-      <section className="cw-section">
-        <div className="cw-container grid gap-12 lg:grid-cols-2">
+      <section className="eb-section">
+        <div className="eb-container grid gap-12 lg:grid-cols-2">
           <div>
             <SectionHeading
               eyebrow="Requirements"
@@ -181,8 +181,8 @@ export default function AdmissionsPage() {
         </div>
       </section>
 
-      <section className="cw-section border-t bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-t bg-muted/40">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Questions"
             title="Admissions FAQs"

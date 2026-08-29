@@ -11,7 +11,7 @@ import { ADMISSION_OPEN_LEVELS, CLASS_LEVELS, SCHOOL } from "@/lib/school/config
 export const metadata: Metadata = {
   title: "Book a School Tour",
   description:
-    "Book a physical school tour, a virtual tour or an admission consultation at Crestwood Heights Academy, Abuja.",
+    "Book a physical school tour, a virtual tour or an admission consultation at El-Bethel International Academy, Abuja.",
   alternates: { canonical: "/contact/tour" },
 };
 
@@ -42,8 +42,8 @@ export default function TourPage() {
         ]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container grid gap-10 lg:grid-cols-[1.2fr_1fr]">
+      <section className="eb-section">
+        <div className="eb-container grid gap-10 lg:grid-cols-[1.2fr_1fr]">
           <Card className="gap-0 p-6 sm:p-8">
             <h2 className="font-heading text-lg font-extrabold sm:text-xl">Request a visit</h2>
             <p className="mt-1.5 text-sm text-muted-foreground">
@@ -95,8 +95,8 @@ export default function TourPage() {
         </div>
       </section>
 
-      <section className="cw-section border-t bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-t bg-muted/40">
+        <div className="eb-container">
           <SectionHeading eyebrow="Three ways to visit" title="Choose what suits your family" align="center" />
           <div className="mt-10 grid gap-4 sm:grid-cols-3">
             {[

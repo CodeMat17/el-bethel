@@ -6,7 +6,7 @@ import { SCHOOL } from "@/lib/school/config";
 export const metadata: Metadata = {
   title: "Privacy & Child Protection",
   description:
-    "How Crestwood Heights Academy collects, uses and protects personal information — with particular care for children's data.",
+    "How El-Bethel International Academy collects, uses and protects personal information — with particular care for children's data.",
   alternates: { canonical: "/privacy" },
 };
 

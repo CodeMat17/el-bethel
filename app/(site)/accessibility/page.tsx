@@ -6,7 +6,7 @@ import { SCHOOL } from "@/lib/school/config";
 export const metadata: Metadata = {
   title: "Accessibility",
   description:
-    "How the Crestwood Heights Academy platform is built to be usable by everyone, including children and people using assistive technology.",
+    "How the El-Bethel International Academy platform is built to be usable by everyone, including children and people using assistive technology.",
   alternates: { canonical: "/accessibility" },
 };
 

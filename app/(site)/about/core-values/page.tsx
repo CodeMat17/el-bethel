@@ -9,7 +9,7 @@ import { CONDUCT_TRAITS, CORE_VALUES } from "@/lib/school/config";
 export const metadata: Metadata = {
   title: "Core Values",
   description:
-    "Excellence, integrity, respect, curiosity, creativity, responsibility and compassion — the seven values that shape life at Crestwood Heights Academy.",
+    "Excellence, integrity, respect, curiosity, creativity, responsibility and compassion — the seven values that shape life at El-Bethel International Academy.",
   alternates: { canonical: "/about/core-values" },
 };
 
@@ -37,8 +37,8 @@ export default function CoreValuesPage() {
         ]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="eb-section">
+        <div className="eb-container grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {CORE_VALUES.map((value, i) => (
             <Reveal key={value.name} delay={i * 0.05}>
               <Card className="h-full gap-0 p-7 transition-all hover:-translate-y-1 hover:border-gold/40 hover:shadow-lg">
@@ -57,8 +57,8 @@ export default function CoreValuesPage() {
         </div>
       </section>
 
-      <section className="cw-section border-t bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-t bg-muted/40">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="On the report card"
             title="Values we actually measure"

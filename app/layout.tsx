@@ -19,13 +19,13 @@ export const metadata: Metadata = {
     template: `%s | ${SCHOOL.name}`,
   },
   description:
-    "Crestwood Heights Academy is a private Primary School in Abuja providing quality, child-centred education in a safe, stimulating and technology-enabled environment.",
+    "El-Bethel International Academy is a private Primary School in Abuja providing quality, child-centred education in a safe, stimulating and technology-enabled environment.",
   applicationName: SCHOOL.name,
   keywords: [
     "primary school Abuja",
-    "primary school Jabi",
-    "private school Jabi",
-    "Crestwood Heights Academy",
+    "primary school Ushafa",
+    "private school Ushafa",
+    "El-Bethel International Academy",
     "school admission Abuja",
   ],
   authors: [{ name: SCHOOL.name }],
@@ -42,9 +42,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    site: "@CrestwoodHeights",
+    site: "@ElBethelInternational",
     title: `${SCHOOL.name} | Primary School in Abuja`,
-    description: "Nurturing Minds, Building Futures — Crestwood Heights Academy, Abuja.",
+    description: "Knowledge and the fear of God — El-Bethel International Academy, Abuja.",
   },
   robots: { index: true, follow: true },
   icons: { icon: [{ url: "/favicon.ico" }, { url: "/icon.svg", type: "image/svg+xml" }], apple: "/icon.svg" },
@@ -62,7 +62,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en-NG" suppressHydrationWarning className={`${nunito.variable} h-full antialiased`}>
+    <html lang="en-NG" data-scroll-behavior="smooth" suppressHydrationWarning className={`${nunito.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <Providers>{children}</Providers>
       </body>

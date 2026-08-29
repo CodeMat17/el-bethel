@@ -11,7 +11,7 @@ import { getSubjects } from "@/lib/school/data";
 export const metadata: Metadata = {
   title: "Primary School",
   description:
-    "Primary 1 to Primary 6 at Crestwood Heights Academy, Abuja — literacy, numeracy, science, reasoning, technology and the arts.",
+    "Primary 1 to Primary 6 at El-Bethel International Academy, Abuja — literacy, numeracy, science, reasoning, technology and the arts.",
   alternates: { canonical: "/academics/primary" },
 };
 
@@ -58,8 +58,8 @@ export default function PrimaryPage() {
         </div>
       </PageHero>
 
-      <section className="cw-section">
-        <div className="cw-container grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+      <section className="eb-section">
+        <div className="eb-container grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <Reveal>
             <ToneImage tone="info" seed="primary-stage" label="Primary classroom" className="aspect-4/5 rounded-3xl" />
           </Reveal>
@@ -88,8 +88,8 @@ export default function PrimaryPage() {
         </div>
       </section>
 
-      <section className="cw-section border-y bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-y bg-muted/40">
+        <div className="eb-container">
           <SectionHeading eyebrow="Curriculum strands" title="Six strands, taught every week" align="center" />
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {STRANDS.map((strand, i) => (
@@ -107,8 +107,8 @@ export default function PrimaryPage() {
         </div>
       </section>
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading eyebrow="Year by year" title="What each year focuses on" />
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {YEARS.map((year, i) => (
@@ -123,8 +123,8 @@ export default function PrimaryPage() {
         </div>
       </section>
 
-      <section className="cw-section border-y bg-muted/40">
-        <div className="cw-container grid gap-12 lg:grid-cols-2">
+      <section className="eb-section border-y bg-muted/40">
+        <div className="eb-container grid gap-12 lg:grid-cols-2">
           <div>
             <SectionHeading eyebrow="Subjects" title="On a Primary 4 timetable" />
             <div className="mt-8 flex flex-wrap gap-2.5">

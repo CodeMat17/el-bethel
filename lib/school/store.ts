@@ -14,7 +14,7 @@ import { buildDatabase, type Database } from "./seed";
  * The instance is cached on globalThis so that mutations survive Fast Refresh
  * and route-handler module reloads in development.
  */
-const GLOBAL_KEY = Symbol.for("crestwood.database");
+const GLOBAL_KEY = Symbol.for("elbethel.database");
 
 type GlobalWithDb = typeof globalThis & { [GLOBAL_KEY]?: Database };
 

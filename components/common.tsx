@@ -44,9 +44,9 @@ export function SectionHeading({
       )}
     >
       <div className={cn("max-w-2xl", align === "center" && "mx-auto")}>
-        {eyebrow ? <span className="cw-eyebrow">{eyebrow}</span> : null}
-        <h2 className={cn("cw-title", eyebrow && "mt-4")}>{title}</h2>
-        {lede ? <p className="cw-lede mt-4">{lede}</p> : null}
+        {eyebrow ? <span className="eb-eyebrow">{eyebrow}</span> : null}
+        <h2 className={cn("eb-title", eyebrow && "mt-4")}>{title}</h2>
+        {lede ? <p className="eb-lede mt-4">{lede}</p> : null}
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
     </div>
@@ -198,7 +198,7 @@ export function PageHero({
         }}
         aria-hidden
       />
-      <div className="cw-container relative py-12 sm:py-16 lg:py-20">
+      <div className="eb-container relative py-12 sm:py-16 lg:py-20">
         {breadcrumb ? (
           <nav aria-label="Breadcrumb" className="mb-5 flex flex-wrap items-center gap-1.5 text-xs text-navy-foreground/60">
             {breadcrumb.map((crumb, i) => (
@@ -233,7 +233,7 @@ export function PageHero({
 /* --------------------------------- CTA band ------------------------------- */
 
 export function CtaBand({
-  title = "Ready to join the Crestwood family?",
+  title = "Ready to join the El-Bethel family?",
   text = "Admission for the 2026/2027 session is open for Primary 1 to Primary 4. Spaces in some classes are limited.",
   primary = { label: "Apply for admission", href: "/admissions/apply" },
   secondary = { label: "Book a school tour", href: "/contact/tour" },
@@ -244,8 +244,8 @@ export function CtaBand({
   secondary?: { label: string; href: string };
 }) {
   return (
-    <section className="cw-section">
-      <div className="cw-container">
+    <section className="eb-section">
+      <div className="eb-container">
         <Card className="overflow-hidden border-gold/25 bg-navy p-0 text-navy-foreground">
           <CardContent className="relative grid gap-6 p-8 sm:p-12 lg:grid-cols-[1.6fr_1fr] lg:items-center">
             <div

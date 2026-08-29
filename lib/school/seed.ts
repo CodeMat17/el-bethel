@@ -111,7 +111,7 @@ const OCCUPATIONS = [
   "Architect", "Accountant", "Lecturer", "Pharmacist", "Nurse", "Consultant", "Trader", "Engineer",
 ];
 const DISTRICTS = [
-  "Jabi", "Wuse II", "Maitama", "Gwarinpa", "Utako", "Asokoro", "Life Camp", "Lokogoma", "Katampe",
+  "Ushafa", "Wuse II", "Maitama", "Gwarinpa", "Utako", "Asokoro", "Life Camp", "Lokogoma", "Katampe",
   "Garki", "Kubwa", "Lugbe",
 ];
 const HOUSES = ["Emerald", "Sapphire", "Ruby", "Amber"] as const;
@@ -246,13 +246,13 @@ for (let i = 0; i < 34; i++) {
   const id = `tch-${String(i + 1).padStart(3, "0")}`;
   teachers.push({
     id,
-    staffNo: `CHA/STF/${String(i + 1).padStart(3, "0")}`,
+    staffNo: `EIA/STF/${String(i + 1).padStart(3, "0")}`,
     firstName,
     lastName,
     title,
     position: named ? named.position : pick(["Class Teacher", "Subject Teacher", "Assistant Teacher", "Learning Support Teacher"]),
     department: named ? named.department : pick(["Lower Primary", "Upper Primary", "Languages", "Mathematics", "Sciences", "Creative Arts", "Sports", "Technology"]),
-    email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@crestwoodheights.edu.ng`,
+    email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@elbethel.edu.ng`,
     phone: phone(),
     qualifications: [pick(QUALIFICATIONS), ...(chance(0.4) ? [pick(QUALIFICATIONS)] : [])],
     experienceYears: int(2, 21),
@@ -356,7 +356,7 @@ const demoParent = makeParent("Chukwu", [], {
   title: "Mrs.",
   firstName: "Ada",
   relationship: "Mother",
-  email: "parent@crestwoodheights.edu.ng",
+  email: "parent@elbethel.edu.ng",
 });
 parents.push(demoParent);
 
@@ -369,8 +369,8 @@ function makeStudent(classId: string, lastName: string, parentIds: string[], for
   const age = 2 + (level?.order ?? 1);
   const student: Student = {
     id: forced?.id ?? `std-${String(studentCounter).padStart(4, "0")}`,
-    studentNo: forced?.studentNo ?? `CHA-2026-${String(studentCounter).padStart(5, "0")}`,
-    admissionNo: forced?.admissionNo ?? `CHA/${2026 - (level?.order ?? 1)}/${String(int(100, 999))}`,
+    studentNo: forced?.studentNo ?? `EIA-2026-${String(studentCounter).padStart(5, "0")}`,
+    admissionNo: forced?.admissionNo ?? `EIA/${2026 - (level?.order ?? 1)}/${String(int(100, 999))}`,
     firstName,
     middleName: chance(0.6) ? pick(gender === "Male" ? MALE_FIRST : FEMALE_FIRST) : undefined,
     lastName,
@@ -394,8 +394,8 @@ const demoDavid = makeStudent("cls-p4a", "Chukwu", [DEMO_PARENT_ID], {
   id: DEMO_STUDENT_ID,
   firstName: "David",
   gender: "Male",
-  studentNo: "CHA-2026-00482",
-  admissionNo: "CHA/2022/0184",
+  studentNo: "EIA-2026-00482",
+  admissionNo: "EIA/2022/0184",
 });
 const demoMary = makeStudent("cls-p2a", "Chukwu", [DEMO_PARENT_ID], { firstName: "Mary", gender: "Female" });
 const demoSarah = makeStudent("cls-n3a", "Chukwu", [DEMO_PARENT_ID], { firstName: "Sarah", gender: "Female" });
@@ -774,7 +774,7 @@ for (const student of students) {
     paymentCounter += 1;
     payments.push({
       id: `pay-${String(paymentCounter).padStart(5, "0")}`,
-      reference: `CHA-PAY-${String(paymentCounter).padStart(6, "0")}`,
+      reference: `EIA-PAY-${String(paymentCounter).padStart(6, "0")}`,
       invoiceId: invoice.id,
       studentId: student.id,
       amount: amountPaid,
@@ -953,7 +953,7 @@ for (let i = 0; i < 34; i++) {
       uploadedAt: iso(addDays(createdAt, 1)),
     })),
     applicationFeePaid: status !== "draft",
-    applicationFeeReference: `CHA-ADM-${String(1000 + i)}`,
+    applicationFeeReference: `EIA-ADM-${String(1000 + i)}`,
     assessment:
       ["assessment_scheduled", "assessment_completed", "interview_scheduled", "accepted", "enrolled", "conditionally_accepted"].includes(status)
         ? { date: dayKey(addDays(DEMO_TODAY, int(2, 18))), time: pick(["09:00", "10:00", "11:00"]), venue: "Assessment Hall, Main Block", score: status === "assessment_completed" ? int(58, 94) : undefined }
@@ -989,13 +989,13 @@ const news: NewsPost[] = [
   {
     id: "nws-1", slug: "welcome-back-2026-2027",
     title: "Welcome Back to a New Academic Session",
-    excerpt: "We are delighted to welcome our returning pupils and new members of the Crestwood family to the 2026/2027 session.",
+    excerpt: "We are delighted to welcome our returning pupils and new members of the El-Bethel family to the 2026/2027 session.",
     content:
-      "Welcome to the 2026/2027 academic session at Crestwood Heights Academy.\n\nWe are delighted to welcome our returning pupils and new members of the Crestwood family. We look forward to another exciting year of learning, discovery, friendship and achievement.\n\nThis term brings a refreshed reading programme, an expanded robotics offering in the ICT and Innovation Lab, and a full calendar of sporting and cultural events. Our teachers have spent the vacation preparing classrooms, schemes of work and learning resources so that every child settles quickly into the rhythm of the term.\n\nParents can follow their child's assignments, attendance and results in the Parent Portal from the first week of term.",
+      "Welcome to the 2026/2027 academic session at El-Bethel International Academy.\n\nWe are delighted to welcome our returning pupils and new members of the El-Bethel family. We look forward to another exciting year of learning, discovery, friendship and achievement.\n\nThis term brings a refreshed reading programme, an expanded robotics offering in the ICT and Innovation Lab, and a full calendar of sporting and cultural events. Our teachers have spent the vacation preparing classrooms, schemes of work and learning resources so that every child settles quickly into the rhythm of the term.\n\nParents can follow their child's assignments, attendance and results in the Parent Portal from the first week of term.",
     category: "Announcements", tags: ["session", "resumption"], authorName: "Dr. Amaka N. Okafor",
     publishedAt: "2026-09-01T08:00:00.000Z", status: "published", tone: "navy",
-    seoTitle: "Welcome Back to a New Academic Session | Crestwood Heights Academy",
-    seoDescription: "Crestwood Heights Academy welcomes pupils and parents to the 2026/2027 academic session in Abuja.",
+    seoTitle: "Welcome Back to a New Academic Session | El-Bethel International Academy",
+    seoDescription: "El-Bethel International Academy welcomes pupils and parents to the 2026/2027 academic session in Abuja.",
     featured: true,
   },
   {
@@ -1006,19 +1006,19 @@ const news: NewsPost[] = [
       "Our Robotics Club has done it again. Competing against fourteen primary schools across the Federal Capital Territory, our Primary 5 and 6 team placed second in the line-following and obstacle challenge categories.\n\nThe team spent eight weeks preparing after school, designing, testing and rebuilding their robot. Mr. Michael Nwosu, who coordinates the club, praised the pupils' persistence: 'They failed sixteen times before the design worked. That is the real lesson.'\n\nThe team now advances to the regional finals in November.",
     category: "Achievements", tags: ["robotics", "stem", "competition"], authorName: "Mr. Michael Nwosu",
     publishedAt: "2026-09-18T10:00:00.000Z", status: "published", tone: "info",
-    seoTitle: "Robotics Club Reaches Regional Finals | Crestwood Heights Academy",
-    seoDescription: "Crestwood Heights Academy's robotics team placed second at the FCT primary schools challenge.",
+    seoTitle: "Robotics Club Reaches Regional Finals | El-Bethel International Academy",
+    seoDescription: "El-Bethel International Academy's robotics team placed second at the FCT primary schools challenge.",
     featured: true,
   },
   {
     id: "nws-3", slug: "reading-challenge-2026",
-    title: "The Crestwood Reading Challenge Returns",
+    title: "The El-Bethel Reading Challenge Returns",
     excerpt: "Every pupil is invited to read twenty books this term, with celebration assemblies for readers who reach the milestone.",
     content:
       "Reading is at the heart of everything a child learns, and our termly reading challenge is back.\n\nEach pupil receives a reading passport. Twenty completed books earns a place at our end-of-term celebration assembly, and every class that reaches an eighty percent participation rate wins an additional library session each week.\n\nParents can support by setting aside fifteen minutes of reading together every evening.",
     category: "Academics", tags: ["reading", "library"], authorName: "Mrs. Esther Bello",
     publishedAt: "2026-09-14T09:00:00.000Z", status: "published", tone: "gold",
-    seoTitle: "The Crestwood Reading Challenge Returns", seoDescription: "Our termly reading challenge encourages every pupil to read twenty books.",
+    seoTitle: "The El-Bethel Reading Challenge Returns", seoDescription: "Our termly reading challenge encourages every pupil to read twenty books.",
     featured: false,
   },
   {
@@ -1040,7 +1040,7 @@ const news: NewsPost[] = [
       "Training has begun ahead of our Inter-House Sports Festival on 17 October.\n\nAll four houses — Emerald, Sapphire, Ruby and Amber — hold practice sessions twice a week. Events include sprints, relays, long jump, sack races and the always-popular parents' race.\n\nParents are warmly invited. Gates open at 8:00 AM and the opening march past begins at 9:00 AM.",
     category: "Sports", tags: ["sports", "inter-house"], authorName: "Mr. Tunde Balogun",
     publishedAt: "2026-09-22T08:30:00.000Z", status: "published", tone: "gold",
-    seoTitle: "Preparations Begin for Inter-House Sports", seoDescription: "Crestwood houses train for the annual sports festival in Abuja.",
+    seoTitle: "Preparations Begin for Inter-House Sports", seoDescription: "El-Bethel houses train for the annual sports festival in Abuja.",
     featured: true,
   },
   {
@@ -1073,7 +1073,7 @@ const news: NewsPost[] = [
       "Our French Club transformed the hall into a Francophone market square for a morning of songs, greetings and role-play.\n\nEvery pupil in the club spoke at least three complete sentences in French. Madame Adaobi Ojo, who coordinates the club, said the morning was 'a celebration of courage as much as language'.",
     category: "Languages", tags: ["french", "clubs"], authorName: "Mme. Adaobi Ojo",
     publishedAt: "2026-09-20T12:00:00.000Z", status: "published", tone: "plum",
-    seoTitle: "French Club Hosts a Cultural Morning", seoDescription: "Pupils presented songs and role-play in French at Crestwood Heights Academy.",
+    seoTitle: "French Club Hosts a Cultural Morning", seoDescription: "Pupils presented songs and role-play in French at El-Bethel International Academy.",
     featured: false,
   },
   {
@@ -1084,18 +1084,18 @@ const news: NewsPost[] = [
       "From this term, report cards are published to the Parent Portal on the result publication date.\n\nEach report card includes subject-by-subject continuous assessment and examination scores, attendance, conduct ratings, the class teacher's comment and the Headteacher's comment. A printable version is available to download.\n\nPrinted copies remain available on request from the school office.",
     category: "Academics", tags: ["results", "portal"], authorName: "Mr. Ifeanyi Adeyemi",
     publishedAt: "2026-09-16T10:00:00.000Z", status: "published", tone: "success",
-    seoTitle: "Digital Report Cards Launch", seoDescription: "Termly report cards are now published in the Crestwood Parent Portal.",
+    seoTitle: "Digital Report Cards Launch", seoDescription: "Termly report cards are now published in the El-Bethel Parent Portal.",
     featured: false,
   },
   {
     id: "nws-10", slug: "school-transport-routes-2026",
     title: "School Transport Routes for the New Session",
-    excerpt: "Four routes now cover Jabi, Gwarinpa, Wuse, Maitama, Utako, Lokogoma and Life Camp.",
+    excerpt: "Four routes now cover Ushafa, Gwarinpa, Wuse, Maitama, Utako, Lokogoma and Life Camp.",
     content:
-      "Our transport service now runs four routes covering Jabi, Gwarinpa, Wuse, Maitama, Utako, Lokogoma and Life Camp.\n\nEvery bus carries a trained attendant in addition to the driver, and pickup and drop-off are logged for each child. Parents receive an in-app notification when their child boards and alights.\n\nRoute details and pickup times are available in the Parent Portal.",
+      "Our transport service now runs four routes covering Ushafa, Gwarinpa, Wuse, Maitama, Utako, Lokogoma and Life Camp.\n\nEvery bus carries a trained attendant in addition to the driver, and pickup and drop-off are logged for each child. Parents receive an in-app notification when their child boards and alights.\n\nRoute details and pickup times are available in the Parent Portal.",
     category: "Operations", tags: ["transport"], authorName: "School Administration",
     publishedAt: "2026-09-05T07:30:00.000Z", status: "published", tone: "navy",
-    seoTitle: "School Transport Routes for the New Session", seoDescription: "Crestwood Heights Academy transport routes across Abuja districts.",
+    seoTitle: "School Transport Routes for the New Session", seoDescription: "El-Bethel International Academy transport routes across Abuja districts.",
     featured: false,
   },
   {
@@ -1137,16 +1137,16 @@ AUTO_NEWS_TITLES.forEach((title, i) => {
     id: `nws-${13 + i}`,
     slug: title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
     title,
-    excerpt: `${title} — a short update from life at Crestwood Heights Academy this term.`,
-    content: `${title}.\n\nLife at Crestwood Heights Academy is busy, and this is one of the many moments worth sharing from the term so far. Our pupils continue to surprise us with their curiosity, effort and kindness.\n\nMore photographs from this event are available in the school gallery.`,
+    excerpt: `${title} — a short update from life at El-Bethel International Academy this term.`,
+    content: `${title}.\n\nLife at El-Bethel International Academy is busy, and this is one of the many moments worth sharing from the term so far. Our pupils continue to surprise us with their curiosity, effort and kindness.\n\nMore photographs from this event are available in the school gallery.`,
     category: pick(["School Life", "Academics", "Clubs", "Community"]),
     tags: ["school life"],
     authorName: "School Administration",
     publishedAt: iso(addDays(DEMO_TODAY, -int(2, 40))),
     status: "published",
     tone: TONES[i % TONES.length],
-    seoTitle: `${title} | Crestwood Heights Academy`,
-    seoDescription: `${title} at Crestwood Heights Academy, Abuja.`,
+    seoTitle: `${title} | El-Bethel International Academy`,
+    seoDescription: `${title} at El-Bethel International Academy, Abuja.`,
     featured: false,
   });
 });
@@ -1154,7 +1154,7 @@ AUTO_NEWS_TITLES.forEach((title, i) => {
 const events: SchoolEvent[] = [
   { id: "evt-1", slug: "resumption-day", title: "Resumption Day", description: "First day of the 2026/2027 academic session. Pupils resume in full school uniform.", date: "2026-09-07", startTime: "07:30", endTime: "14:30", venue: "Main Campus", category: "academic", requiresRegistration: false, status: "past" },
   { id: "evt-2", slug: "parents-welcome-meeting", title: "Parents' Welcome Meeting", description: "Meet your child's class teacher, review the term ahead and tour the campus.", date: "2026-09-12", startTime: "09:00", endTime: "12:00", venue: "School Auditorium", category: "parents", requiresRegistration: true, status: "past" },
-  { id: "evt-3", slug: "inter-house-sports", title: "Inter-House Sports Festival", description: "Our annual sports festival featuring track events, field events and the parents' race.", date: "2026-10-17", startTime: "08:00", endTime: "14:00", venue: "Crestwood Heights Sports Field", category: "sports", requiresRegistration: true, status: "upcoming" },
+  { id: "evt-3", slug: "inter-house-sports", title: "Inter-House Sports Festival", description: "Our annual sports festival featuring track events, field events and the parents' race.", date: "2026-10-17", startTime: "08:00", endTime: "14:00", venue: "El-Bethel International Sports Field", category: "sports", requiresRegistration: true, status: "upcoming" },
   { id: "evt-4", slug: "cultural-day", title: "Cultural Day", description: "A celebration of Nigeria's cultures through dress, food, music and drama.", date: "2026-11-21", startTime: "09:00", endTime: "13:00", venue: "School Auditorium", category: "cultural", requiresRegistration: true, status: "upcoming" },
   { id: "evt-5", slug: "first-term-open-day", title: "First Term Open Day", description: "View your child's work, meet subject teachers and see the termly art exhibition.", date: "2026-12-04", startTime: "09:00", endTime: "15:00", venue: "Main Campus", category: "parents", requiresRegistration: false, status: "upcoming" },
   { id: "evt-6", slug: "first-term-examinations", title: "First Term Examinations", description: "End-of-term examinations for Primary 1 to Primary 6.", date: "2026-12-07", endDate: "2026-12-16", startTime: "08:00", endTime: "12:30", venue: "Classrooms", category: "assessment", requiresRegistration: false, status: "upcoming" },
@@ -1223,7 +1223,7 @@ const clubs: Club[] = CLUB_DEFS.map((c, i) => ({
 const ACHIEVEMENT_DEFS: { category: Achievement["category"]; title: string; description: string }[] = [
   { category: "Academic Excellence", title: "Top of Primary 6 — Third Term", description: "Achieved the highest overall average in the year group." },
   { category: "STEM", title: "Second Place, FCT Robotics Challenge", description: "Placed second in the line-following and obstacle categories." },
-  { category: "Reading", title: "50 Books in One Term", description: "Completed fifty books in the Crestwood Reading Challenge." },
+  { category: "Reading", title: "50 Books in One Term", description: "Completed fifty books in the El-Bethel Reading Challenge." },
   { category: "Sports", title: "Fastest 100m, Inter-House Sports", description: "Set a new school record in the Primary 5 sprint." },
   { category: "Music", title: "Best Solo Performance", description: "Performed at the end-of-year concert to a standing ovation." },
   { category: "Arts", title: "Exhibition Prize, 'My Abuja'", description: "Selected as the standout piece in the termly art exhibition." },
@@ -1245,9 +1245,9 @@ const achievements: Achievement[] = ACHIEVEMENT_DEFS.map((a, i) => ({
 }));
 
 const testimonials: Testimonial[] = [
-  { id: "tst-1", name: "Mrs. Aisha Bello", relationship: "Parent, Primary 3", quote: "Crestwood Heights has given my daughter the confidence to express herself and the academic foundation she needs. The teachers are attentive and genuinely care about the children.", avatarSeed: "AishaBello" },
+  { id: "tst-1", name: "Mrs. Aisha Bello", relationship: "Parent, Primary 3", quote: "El-Bethel International has given my daughter the confidence to express herself and the academic foundation she needs. The teachers are attentive and genuinely care about the children.", avatarSeed: "AishaBello" },
   { id: "tst-2", name: "Mr. Emeka Okafor", relationship: "Parent, Primary 5", quote: "What impressed us most was the partnership between the school and parents. We always know what our son is learning and how he is progressing.", avatarSeed: "EmekaOkafor" },
-  { id: "tst-3", name: "Mrs. Grace Ibrahim", relationship: "Parent, Primary 1 & Primary 4", quote: "The combination of academics, technology, sports and creative activities makes Crestwood a wonderful environment for children.", avatarSeed: "GraceIbrahim" },
+  { id: "tst-3", name: "Mrs. Grace Ibrahim", relationship: "Parent, Primary 1 & Primary 4", quote: "The combination of academics, technology, sports and creative activities makes El-Bethel a wonderful environment for children.", avatarSeed: "GraceIbrahim" },
 ];
 
 const FAQ_DEFS: { category: string; question: string; answer: string }[] = [
@@ -1260,8 +1260,8 @@ const FAQ_DEFS: { category: string; question: string; answer: string }[] = [
   { category: "Fees", question: "How do I get a receipt?", answer: "Receipts are generated automatically once a payment is verified and can be downloaded from the Fees section of the Parent Portal." },
   { category: "Classes", question: "How large are your classes?", answer: "Our average class size is 24 pupils, with a pupil-to-teacher ratio of 12:1. Every class also has a class teacher who knows each child personally." },
   { category: "Classes", question: "How are pupils placed in sections?", answer: "Pupils are placed to create balanced sections. Siblings and friendship groups are considered where it supports a child's settling in." },
-  { category: "Uniform", question: "What is the school uniform?", answer: "Pupils wear the Crestwood day uniform Monday to Thursday and the house sports kit on Fridays. Full details and suppliers are in the Uniform Guide document." },
-  { category: "Transport", question: "Do you provide school transport?", answer: "Yes. Four routes cover Jabi, Gwarinpa, Wuse, Maitama, Utako, Lokogoma and Life Camp. Every bus has a trained attendant in addition to the driver." },
+  { category: "Uniform", question: "What is the school uniform?", answer: "Pupils wear the El-Bethel day uniform Monday to Thursday and the house sports kit on Fridays. Full details and suppliers are in the Uniform Guide document." },
+  { category: "Transport", question: "Do you provide school transport?", answer: "Yes. Four routes cover Ushafa, Gwarinpa, Wuse, Maitama, Utako, Lokogoma and Life Camp. Every bus has a trained attendant in addition to the driver." },
   { category: "Transport", question: "Will I know when my child is picked up?", answer: "Parents receive an in-app notification when their child boards and alights the school bus." },
   { category: "Academics", question: "What curriculum do you follow?", answer: "We follow the Nigerian national curriculum, enriched with a child-centred, activity-based approach and a strong emphasis on reading, reasoning and digital literacy." },
   { category: "Academics", question: "How is my child assessed?", answer: "Assessment is continuous. Classwork, assignments and tests account for 40 percent of the term score and the end-of-term examination accounts for 60 percent." },
@@ -1275,8 +1275,8 @@ const FAQ_DEFS: { category: string; question: string; answer: string }[] = [
 const faqs: FaqItem[] = FAQ_DEFS.map((f, i) => ({ id: `faq-${i + 1}`, ...f }));
 
 const documents: SchoolDocument[] = [
-  { id: "doc-1", title: "School Handbook 2026/2027", description: "Everything a Crestwood family needs to know about the school year.", fileName: "crestwood-handbook-2026-2027.pdf", sizeBytes: 2_845_331, visibility: "public", updatedAt: "2026-08-20T09:00:00.000Z", category: "General" },
-  { id: "doc-2", title: "Prospectus", description: "An introduction to our school, curriculum and facilities.", fileName: "crestwood-prospectus.pdf", sizeBytes: 5_120_004, visibility: "public", updatedAt: "2026-07-30T09:00:00.000Z", category: "Admissions" },
+  { id: "doc-1", title: "School Handbook 2026/2027", description: "Everything an El-Bethel family needs to know about the school year.", fileName: "elbethel-handbook-2026-2027.pdf", sizeBytes: 2_845_331, visibility: "public", updatedAt: "2026-08-20T09:00:00.000Z", category: "General" },
+  { id: "doc-2", title: "Prospectus", description: "An introduction to our school, curriculum and facilities.", fileName: "elbethel-prospectus.pdf", sizeBytes: 5_120_004, visibility: "public", updatedAt: "2026-07-30T09:00:00.000Z", category: "Admissions" },
   { id: "doc-3", title: "Fee Schedule 2026/2027", description: "Termly fees by class band, including optional services.", fileName: "fee-schedule-2026-2027.pdf", sizeBytes: 412_889, visibility: "public", updatedAt: "2026-08-01T09:00:00.000Z", category: "Fees" },
   { id: "doc-4", title: "Academic Calendar 2026/2027", description: "Term dates, breaks, examinations and key events.", fileName: "academic-calendar-2026-2027.pdf", sizeBytes: 318_220, visibility: "public", updatedAt: "2026-08-05T09:00:00.000Z", category: "Academics" },
   { id: "doc-5", title: "Uniform Guide", description: "Day uniform, sports kit and approved suppliers.", fileName: "uniform-guide.pdf", sizeBytes: 1_204_338, visibility: "public", updatedAt: "2026-07-15T09:00:00.000Z", category: "General" },
@@ -1290,7 +1290,7 @@ const documents: SchoolDocument[] = [
 const vacancies: Vacancy[] = [
   {
     id: "vac-1", slug: "upper-primary-mathematics-teacher", title: "Upper Primary Mathematics Teacher",
-    department: "Mathematics", type: "Full-time", location: "Jabi, Abuja",
+    department: "Mathematics", type: "Full-time", location: "Ushafa, Abuja",
     summary: "Teach mathematics across Primary 4 to 6 with a focus on reasoning and problem solving.",
     responsibilities: ["Plan and deliver engaging mathematics lessons", "Assess and report on pupil progress", "Contribute to the mathematics scheme of work", "Support the mathematics olympiad team"],
     requirements: ["B.Ed or B.Sc with PGDE", "Minimum of three years primary teaching experience", "Strong classroom management", "Comfortable with digital learning tools"],
@@ -1298,7 +1298,7 @@ const vacancies: Vacancy[] = [
   },
   {
     id: "vac-2", slug: "lower-primary-assistant-teacher", title: "Lower Primary Assistant Teacher",
-    department: "Lower Primary", type: "Full-time", location: "Jabi, Abuja",
+    department: "Lower Primary", type: "Full-time", location: "Ushafa, Abuja",
     summary: "Support the class teacher in a lower primary classroom with warmth, patience and energy.",
     responsibilities: ["Support daily classroom routines", "Prepare learning materials", "Supervise play and transitions", "Communicate observations to the class teacher"],
     requirements: ["NCE or B.Ed in primary education", "Experience with children aged 5 to 9", "Excellent interpersonal skills"],
@@ -1306,7 +1306,7 @@ const vacancies: Vacancy[] = [
   },
   {
     id: "vac-3", slug: "school-nurse", title: "School Nurse",
-    department: "Wellbeing", type: "Full-time", location: "Jabi, Abuja",
+    department: "Wellbeing", type: "Full-time", location: "Ushafa, Abuja",
     summary: "Lead our medical centre and support the health and wellbeing of every pupil.",
     responsibilities: ["Provide first aid and daily medical support", "Maintain accurate medication and health records", "Run health screening and awareness sessions", "Liaise with parents on health matters"],
     requirements: ["Registered nurse with a valid practising licence", "Paediatric experience preferred", "Excellent record keeping"],
@@ -1314,7 +1314,7 @@ const vacancies: Vacancy[] = [
   },
   {
     id: "vac-4", slug: "ict-support-officer", title: "ICT Support Officer",
-    department: "Technology", type: "Contract", location: "Jabi, Abuja",
+    department: "Technology", type: "Contract", location: "Ushafa, Abuja",
     summary: "Keep our classrooms, lab and school platform running smoothly.",
     responsibilities: ["Maintain classroom and lab hardware", "Support staff with the school platform", "Manage network and device security", "Assist with robotics club sessions"],
     requirements: ["Diploma or degree in a computing field", "Hands-on hardware and networking experience", "Patience working with children and staff"],
@@ -1361,10 +1361,10 @@ borrowings.push(
 );
 
 const transportRoutes: TransportRoute[] = [
-  { id: "bus-1", busNo: "CHA-01", route: "Jabi → Utako → Wuse II", driver: "Mr. Sunday Achi", attendant: "Mrs. Rebecca Ude", capacity: 24, stops: [{ name: "Jabi Lake Roundabout", pickupTime: "06:30", dropoffTime: "15:10" }, { name: "Utako Junction", pickupTime: "06:50", dropoffTime: "15:30" }, { name: "Wuse II Market", pickupTime: "07:05", dropoffTime: "15:45" }] },
-  { id: "bus-2", busNo: "CHA-02", route: "Gwarinpa → Life Camp", driver: "Mr. Peter Anosike", attendant: "Miss Halima Sule", capacity: 24, stops: [{ name: "Gwarinpa 3rd Avenue", pickupTime: "06:20", dropoffTime: "15:20" }, { name: "Life Camp Gate", pickupTime: "06:45", dropoffTime: "15:40" }] },
-  { id: "bus-3", busNo: "CHA-03", route: "Maitama → Katampe", driver: "Mr. John Ekpe", attendant: "Mrs. Ngozi Ali", capacity: 20, stops: [{ name: "Maitama Amana Plaza", pickupTime: "06:35", dropoffTime: "15:15" }, { name: "Katampe Extension", pickupTime: "06:55", dropoffTime: "15:35" }] },
-  { id: "bus-4", busNo: "CHA-04", route: "Lokogoma → Galadimawa", driver: "Mr. Ibrahim Sadiq", attendant: "Miss Joy Obiora", capacity: 20, stops: [{ name: "Lokogoma Junction", pickupTime: "06:15", dropoffTime: "15:25" }, { name: "Galadimawa Roundabout", pickupTime: "06:40", dropoffTime: "15:45" }] },
+  { id: "bus-1", busNo: "EIA-01", route: "Ushafa → Utako → Wuse II", driver: "Mr. Sunday Achi", attendant: "Mrs. Rebecca Ude", capacity: 24, stops: [{ name: "Ushafa Lake Roundabout", pickupTime: "06:30", dropoffTime: "15:10" }, { name: "Utako Junction", pickupTime: "06:50", dropoffTime: "15:30" }, { name: "Wuse II Market", pickupTime: "07:05", dropoffTime: "15:45" }] },
+  { id: "bus-2", busNo: "EIA-02", route: "Gwarinpa → Life Camp", driver: "Mr. Peter Anosike", attendant: "Miss Halima Sule", capacity: 24, stops: [{ name: "Gwarinpa 3rd Avenue", pickupTime: "06:20", dropoffTime: "15:20" }, { name: "Life Camp Gate", pickupTime: "06:45", dropoffTime: "15:40" }] },
+  { id: "bus-3", busNo: "EIA-03", route: "Maitama → Katampe", driver: "Mr. John Ekpe", attendant: "Mrs. Ngozi Ali", capacity: 20, stops: [{ name: "Maitama Amana Plaza", pickupTime: "06:35", dropoffTime: "15:15" }, { name: "Katampe Extension", pickupTime: "06:55", dropoffTime: "15:35" }] },
+  { id: "bus-4", busNo: "EIA-04", route: "Lokogoma → Galadimawa", driver: "Mr. Ibrahim Sadiq", attendant: "Miss Joy Obiora", capacity: 20, stops: [{ name: "Lokogoma Junction", pickupTime: "06:15", dropoffTime: "15:25" }, { name: "Galadimawa Roundabout", pickupTime: "06:40", dropoffTime: "15:45" }] },
 ];
 
 const enquiries: Enquiry[] = Array.from({ length: 18 }, (_, i) => {
@@ -1421,9 +1421,9 @@ const emergencyNotices: EmergencyNotice[] = [
 ];
 
 const certificates: Certificate[] = [
-  { id: "cert-1", certificateNo: "CHA-2026-00021", studentId: DEMO_STUDENT_ID, award: "Academic Excellence", sessionName: "2025/2026", issuedAt: "2026-07-24T10:00:00.000Z" },
-  { id: "cert-2", certificateNo: "CHA-2026-00022", studentId: DEMO_STUDENT_ID, award: "Reading Champion", sessionName: "2025/2026", issuedAt: "2026-07-24T10:00:00.000Z" },
-  { id: "cert-3", certificateNo: "CHA-2026-00023", studentId: students[10].id, award: "Sports", sessionName: "2025/2026", issuedAt: "2026-07-24T10:00:00.000Z" },
+  { id: "cert-1", certificateNo: "EIA-2026-00021", studentId: DEMO_STUDENT_ID, award: "Academic Excellence", sessionName: "2025/2026", issuedAt: "2026-07-24T10:00:00.000Z" },
+  { id: "cert-2", certificateNo: "EIA-2026-00022", studentId: DEMO_STUDENT_ID, award: "Reading Champion", sessionName: "2025/2026", issuedAt: "2026-07-24T10:00:00.000Z" },
+  { id: "cert-3", certificateNo: "EIA-2026-00023", studentId: students[10].id, award: "Sports", sessionName: "2025/2026", issuedAt: "2026-07-24T10:00:00.000Z" },
 ];
 
 /* -------------------------------------------------------------------------- */
@@ -1435,29 +1435,29 @@ function addUser(u: Omit<User, "createdAt" | "active" | "avatarSeed"> & { avatar
   users.push({ ...u, avatarSeed: u.avatarSeed ?? u.name, active: true, createdAt: "2026-08-01T08:00:00.000Z" });
 }
 
-addUser({ id: "usr-admin", name: "Ngozi Adeleke", email: "admin@crestwoodheights.edu.ng", password: "crestwood", roles: ["admin", "super_admin"] as Role[], phone: phone() });
-addUser({ id: "usr-head", name: "Dr. Amaka N. Okafor", email: "headteacher@crestwoodheights.edu.ng", password: "crestwood", roles: ["headteacher", "admin"] as Role[], teacherId: "tch-001", phone: phone() });
-addUser({ id: "usr-teacher", name: "Miss Chiamaka Obi", email: "teacher@crestwoodheights.edu.ng", password: "crestwood", roles: ["teacher"] as Role[], teacherId: "tch-007", phone: phone() });
-addUser({ id: "usr-maths", name: "Mr. Samuel Yusuf", email: "s.yusuf@crestwoodheights.edu.ng", password: "crestwood", roles: ["teacher"] as Role[], teacherId: "tch-010", phone: phone() });
-addUser({ id: "usr-parent", name: "Mrs. Ada Chukwu", email: "parent@crestwoodheights.edu.ng", password: "crestwood", roles: ["parent"] as Role[], parentId: DEMO_PARENT_ID, phone: phone() });
-addUser({ id: "usr-pupil", name: "David Chukwu", email: "pupil@crestwoodheights.edu.ng", password: "crestwood", roles: ["pupil"] as Role[], studentId: DEMO_STUDENT_ID });
-addUser({ id: "usr-accountant", name: "Mr. Bola Ogunleye", email: "accounts@crestwoodheights.edu.ng", password: "crestwood", roles: ["accountant"] as Role[], phone: phone() });
-addUser({ id: "usr-admissions", name: "Mrs. Halima Sani", email: "admissions@crestwoodheights.edu.ng", password: "crestwood", roles: ["admissions_officer"] as Role[], phone: phone() });
-addUser({ id: "usr-librarian", name: "Mr. Uche Nnaji", email: "library@crestwoodheights.edu.ng", password: "crestwood", roles: ["librarian"] as Role[], phone: phone() });
-addUser({ id: "usr-applicant", name: "Mrs. Fatima Bello", email: "applicant@example.com", password: "crestwood", roles: ["applicant"] as Role[], phone: phone() });
+addUser({ id: "usr-admin", name: "Ngozi Adeleke", email: "admin@elbethel.edu.ng", password: "elbethel", roles: ["admin", "super_admin"] as Role[], phone: phone() });
+addUser({ id: "usr-head", name: "Dr. Amaka N. Okafor", email: "headteacher@elbethel.edu.ng", password: "elbethel", roles: ["headteacher", "admin"] as Role[], teacherId: "tch-001", phone: phone() });
+addUser({ id: "usr-teacher", name: "Miss Chiamaka Obi", email: "teacher@elbethel.edu.ng", password: "elbethel", roles: ["teacher"] as Role[], teacherId: "tch-007", phone: phone() });
+addUser({ id: "usr-maths", name: "Mr. Samuel Yusuf", email: "s.yusuf@elbethel.edu.ng", password: "elbethel", roles: ["teacher"] as Role[], teacherId: "tch-010", phone: phone() });
+addUser({ id: "usr-parent", name: "Mrs. Ada Chukwu", email: "parent@elbethel.edu.ng", password: "elbethel", roles: ["parent"] as Role[], parentId: DEMO_PARENT_ID, phone: phone() });
+addUser({ id: "usr-pupil", name: "David Chukwu", email: "pupil@elbethel.edu.ng", password: "elbethel", roles: ["pupil"] as Role[], studentId: DEMO_STUDENT_ID });
+addUser({ id: "usr-accountant", name: "Mr. Bola Ogunleye", email: "accounts@elbethel.edu.ng", password: "elbethel", roles: ["accountant"] as Role[], phone: phone() });
+addUser({ id: "usr-admissions", name: "Mrs. Halima Sani", email: "admissions@elbethel.edu.ng", password: "elbethel", roles: ["admissions_officer"] as Role[], phone: phone() });
+addUser({ id: "usr-librarian", name: "Mr. Uche Nnaji", email: "library@elbethel.edu.ng", password: "elbethel", roles: ["librarian"] as Role[], phone: phone() });
+addUser({ id: "usr-applicant", name: "Mrs. Fatima Bello", email: "applicant@example.com", password: "elbethel", roles: ["applicant"] as Role[], phone: phone() });
 
 // Every teacher and parent also has an account so authorization is real across the data set.
 for (const t of teachers) {
   if (users.some((u) => u.teacherId === t.id)) continue;
-  addUser({ id: `usr-${t.id}`, name: `${t.title} ${t.firstName} ${t.lastName}`, email: t.email, password: "crestwood", roles: ["teacher"] as Role[], teacherId: t.id, avatarSeed: t.avatarSeed });
+  addUser({ id: `usr-${t.id}`, name: `${t.title} ${t.firstName} ${t.lastName}`, email: t.email, password: "elbethel", roles: ["teacher"] as Role[], teacherId: t.id, avatarSeed: t.avatarSeed });
 }
 for (const p of parents) {
   if (users.some((u) => u.parentId === p.id)) continue;
-  addUser({ id: `usr-${p.id}`, name: `${p.title} ${p.firstName} ${p.lastName}`, email: p.email, password: "crestwood", roles: ["parent"] as Role[], parentId: p.id, avatarSeed: p.avatarSeed });
+  addUser({ id: `usr-${p.id}`, name: `${p.title} ${p.firstName} ${p.lastName}`, email: p.email, password: "elbethel", roles: ["parent"] as Role[], parentId: p.id, avatarSeed: p.avatarSeed });
 }
 for (const s of students) {
   if (users.some((u) => u.studentId === s.id)) continue;
-  addUser({ id: `usr-${s.id}`, name: `${s.firstName} ${s.lastName}`, email: `${s.studentNo.toLowerCase()}@pupils.crestwoodheights.edu.ng`, password: "crestwood", roles: ["pupil"] as Role[], studentId: s.id, avatarSeed: s.avatarSeed });
+  addUser({ id: `usr-${s.id}`, name: `${s.firstName} ${s.lastName}`, email: `${s.studentNo.toLowerCase()}@pupils.elbethel.edu.ng`, password: "elbethel", roles: ["pupil"] as Role[], studentId: s.id, avatarSeed: s.avatarSeed });
 }
 
 const notifications: AppNotification[] = [];
@@ -1530,8 +1530,8 @@ const messageThreads: MessageThread[] = [
     createdAt: iso(addDays(DEMO_TODAY, -14)),
     updatedAt: iso(addDays(DEMO_TODAY, -13)),
     messages: [
-      { id: "msg-6", senderId: "usr-parent", body: "Good morning. We are moving to Utako next month. Would it be possible to change the children to the Jabi–Utako route?", sentAt: iso(addDays(DEMO_TODAY, -14)), readBy: ["usr-parent", "usr-admin"] },
-      { id: "msg-7", senderId: "usr-admin", body: "Good morning Mrs. Chukwu. Yes, CHA-01 has space. Please confirm your new address in writing and we will update the route from the first of next month.", sentAt: iso(addDays(DEMO_TODAY, -13)), readBy: ["usr-parent", "usr-admin"] },
+      { id: "msg-6", senderId: "usr-parent", body: "Good morning. We are moving to Utako next month. Would it be possible to change the children to the Ushafa–Utako route?", sentAt: iso(addDays(DEMO_TODAY, -14)), readBy: ["usr-parent", "usr-admin"] },
+      { id: "msg-7", senderId: "usr-admin", body: "Good morning Mrs. Chukwu. Yes, EIA-01 has space. Please confirm your new address in writing and we will update the route from the first of next month.", sentAt: iso(addDays(DEMO_TODAY, -13)), readBy: ["usr-parent", "usr-admin"] },
     ],
   },
 ];
@@ -1567,7 +1567,7 @@ const AUDIT_ACTIONS: { action: string; entity: string; previous?: string; next?:
   { action: "Created assignment", entity: "Assignment", next: "Fractions Around Us" },
   { action: "Deactivated staff account", entity: "User", previous: "active", next: "inactive" },
   { action: "Approved admission", entity: "Application", previous: "under_review", next: "accepted" },
-  { action: "Verified payment", entity: "Payment", next: "CHA-PAY-000042" },
+  { action: "Verified payment", entity: "Payment", next: "EIA-PAY-000042" },
   { action: "Uploaded school document", entity: "Document", next: "Parent Handbook" },
   { action: "Edited homepage content", entity: "ContentBlock", previous: "Hero headline", next: "Hero headline" },
   { action: "Granted role", entity: "User", previous: "teacher", next: "teacher, class_teacher" },

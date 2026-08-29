@@ -12,7 +12,7 @@ import { formatDate } from "@/lib/school/format";
 export const metadata: Metadata = {
   title: "Our Stars — Pupil Achievements",
   description:
-    "Pupil achievements at Crestwood Heights Academy across academics, STEM, sport, music, arts, reading, leadership and community service.",
+    "Pupil achievements at El-Bethel International Academy across academics, STEM, sport, music, arts, reading, leadership and community service.",
   alternates: { canonical: "/school-life/achievements" },
 };
 
@@ -34,7 +34,7 @@ export default function AchievementsPage() {
       />
 
       <section className="border-b bg-muted/40 py-6">
-        <div className="cw-container flex flex-wrap items-center gap-2">
+        <div className="eb-container flex flex-wrap items-center gap-2">
           <span className="text-xs font-extrabold tracking-wide text-muted-foreground uppercase">
             Categories
           </span>
@@ -46,8 +46,8 @@ export default function AchievementsPage() {
         </div>
       </section>
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {achievements.map((achievement, i) => (
               <Reveal key={achievement.id} delay={i * 0.03}>
@@ -75,8 +75,8 @@ export default function AchievementsPage() {
         </div>
       </section>
 
-      <section className="cw-section border-t bg-muted/40">
-        <div className="cw-container max-w-3xl">
+      <section className="eb-section border-t bg-muted/40">
+        <div className="eb-container max-w-3xl">
           <SectionHeading eyebrow="Child privacy" title="Why we only publish initials" align="center" />
           <Card className="mt-8 gap-0 border-info/30 bg-info/10 p-6">
             <p className="flex items-start gap-3 text-sm leading-relaxed">

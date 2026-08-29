@@ -70,7 +70,7 @@ export default async function NewsArticlePage({ params }: PageProps<"/news/[slug
         <div className="relative">
           <ToneImage tone={post.tone} seed={post.slug} label={post.title} className="h-56 w-full sm:h-72 lg:h-96" />
           <div className="absolute inset-0 bg-linear-to-t from-navy via-navy/65 to-transparent" />
-          <div className="cw-container absolute inset-x-0 bottom-0 pb-8 sm:pb-12">
+          <div className="eb-container absolute inset-x-0 bottom-0 pb-8 sm:pb-12">
             <Button
               variant="ghost"
               size="sm"
@@ -92,8 +92,8 @@ export default async function NewsArticlePage({ params }: PageProps<"/news/[slug
           </div>
         </div>
 
-        <section className="cw-section">
-          <div className="cw-container grid gap-10 lg:grid-cols-[1.6fr_1fr]">
+        <section className="eb-section">
+          <div className="eb-container grid gap-10 lg:grid-cols-[1.6fr_1fr]">
             <div>
               <div className="flex items-center gap-3">
                 <Avatar className="size-11">

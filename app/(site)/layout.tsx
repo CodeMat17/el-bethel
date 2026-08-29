@@ -17,12 +17,11 @@ export default async function SiteLayout({ children }: LayoutProps<"/">) {
     url: SITE_URL,
     slogan: SCHOOL.motto,
     description: MISSION,
-    foundingDate: String(SCHOOL.established),
     email: SCHOOL.email,
     telephone: SCHOOL.phone,
     address: {
       "@type": "PostalAddress",
-      streetAddress: "18 Aso Heights Avenue, Jabi District",
+      streetAddress: "No.3 Engr. Demola Oduneye Avenue, Opposite Ushafa Mini Stadium, Ushafa",
       addressLocality: "Abuja",
       addressRegion: "Federal Capital Territory",
       addressCountry: "NG",

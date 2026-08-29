@@ -10,7 +10,7 @@ import { getSubjects } from "@/lib/school/data";
 export const metadata: Metadata = {
   title: "Subjects",
   description:
-    "The full subject offering at Crestwood Heights Academy — core and additional subjects from Primary 1 to Primary 6.",
+    "The full subject offering at El-Bethel International Academy — core and additional subjects from Primary 1 to Primary 6.",
   alternates: { canonical: "/academics/subjects" },
 };
 
@@ -79,8 +79,8 @@ export default function SubjectsPage() {
         ]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Core subjects"
             title="Taught to every pupil, every week"
@@ -90,8 +90,8 @@ export default function SubjectsPage() {
         </div>
       </section>
 
-      <section className="cw-section border-t bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-t bg-muted/40">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Additional subjects"
             title="Breadth, taught seriously"

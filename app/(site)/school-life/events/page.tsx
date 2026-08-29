@@ -12,7 +12,7 @@ import { formatDate } from "@/lib/school/format";
 export const metadata: Metadata = {
   title: "Events",
   description:
-    "Upcoming and past events at Crestwood Heights Academy, Abuja — sports day, cultural day, open days, excursions and examinations.",
+    "Upcoming and past events at El-Bethel International Academy, Abuja — sports day, cultural day, open days, excursions and examinations.",
   alternates: { canonical: "/school-life/events" },
 };
 
@@ -55,8 +55,8 @@ export default function EventsPage() {
         </Button>
       </PageHero>
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading eyebrow="Upcoming" title={`${upcoming.length} events coming up`} />
           {upcoming.length === 0 ? (
             <EmptyState
@@ -113,8 +113,8 @@ export default function EventsPage() {
       </section>
 
       {past.length > 0 ? (
-        <section className="cw-section border-t bg-muted/40">
-          <div className="cw-container">
+        <section className="eb-section border-t bg-muted/40">
+          <div className="eb-container">
             <SectionHeading eyebrow="Archive" title="Earlier this session" />
             <ul className="mt-10 grid gap-3 sm:grid-cols-2">
               {past.map((event) => (

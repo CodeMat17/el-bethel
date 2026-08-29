@@ -47,7 +47,7 @@ export function LoginForm() {
           autoComplete="email"
           autoFocus
           required
-          placeholder="you@crestwoodheights.edu.ng"
+          placeholder="you@elbethel.edu.ng"
           aria-invalid={Boolean(state.fieldErrors?.email) || undefined}
           className="h-11"
         />

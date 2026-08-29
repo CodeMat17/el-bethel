@@ -6,15 +6,15 @@ import { Counter, Reveal, ToneImage } from "@/components/motion";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { SCHOOL_STATS, WHY_CRESTWOOD } from "@/lib/school/config";
+import { SCHOOL_STATS, WHY_EL_BETHEL } from "@/lib/school/config";
 import { getTestimonials } from "@/lib/school/data";
 import { initials } from "@/lib/school/format";
 
 export const metadata: Metadata = {
-  title: "Why Crestwood",
+  title: "Why El-Bethel",
   description:
-    "Seven reasons families in Abuja choose Crestwood Heights Academy for their children's primary education.",
-  alternates: { canonical: "/admissions/why-crestwood" },
+    "Seven reasons families in Abuja choose El-Bethel International Academy for their children's primary education.",
+  alternates: { canonical: "/admissions/why-el-bethel" },
 };
 
 const EVIDENCE: Record<string, string> = {
@@ -27,25 +27,25 @@ const EVIDENCE: Record<string, string> = {
   "Holistic Development": "Sixteen clubs, four sports, a creative arts studio and a working school garden.",
 };
 
-export default function WhyCrestwoodPage() {
+export default function WhyElBethelPage() {
   const testimonials = getTestimonials();
 
   return (
     <>
       <PageHero
         eyebrow="Admissions"
-        title="Why Crestwood"
+        title="Why El-Bethel"
         lede="Seven reasons families choose us — each with the evidence behind it, not just the claim."
         breadcrumb={[
           { label: "Home", href: "/" },
           { label: "Admissions", href: "/admissions" },
-          { label: "Why Crestwood", href: "/admissions/why-crestwood" },
+          { label: "Why El-Bethel", href: "/admissions/why-el-bethel" },
         ]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container space-y-5">
-          {WHY_CRESTWOOD.map((item, i) => (
+      <section className="eb-section">
+        <div className="eb-container space-y-5">
+          {WHY_EL_BETHEL.map((item, i) => (
             <Reveal key={item.title} delay={i * 0.04}>
               <Card className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[auto_1fr_1fr] lg:items-center">
                 <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-navy text-gold">
@@ -68,8 +68,8 @@ export default function WhyCrestwoodPage() {
       </section>
 
       <section className="bg-navy py-14 text-navy-foreground sm:py-20">
-        <div className="cw-container grid gap-8 md:grid-cols-4">
-          {SCHOOL_STATS.slice(1, 5).map((stat, i) => (
+        <div className="eb-container grid gap-8 md:grid-cols-4">
+          {SCHOOL_STATS.slice(0, 4).map((stat, i) => (
             <Reveal key={stat.key} delay={i * 0.05}>
               <div className="border-l border-gold/25 pl-5">
                 <p className="font-heading text-3xl leading-none font-extrabold text-gold sm:text-4xl">
@@ -84,10 +84,10 @@ export default function WhyCrestwoodPage() {
         </div>
       </section>
 
-      <section className="cw-section">
-        <div className="cw-container grid gap-12 lg:grid-cols-[1fr_1fr] lg:items-center">
+      <section className="eb-section">
+        <div className="eb-container grid gap-12 lg:grid-cols-[1fr_1fr] lg:items-center">
           <Reveal>
-            <ToneImage tone="gold" seed="why-crestwood" label="Pupils at Crestwood Heights Academy" className="aspect-4/3 rounded-3xl" />
+            <ToneImage tone="gold" seed="why-el-bethel" label="Pupils at El-Bethel International Academy" className="aspect-4/3 rounded-3xl" />
           </Reveal>
           <div>
             <SectionHeading eyebrow="Parent voices" title="What families tell us" />

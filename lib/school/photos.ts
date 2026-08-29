@@ -10,19 +10,35 @@
 const px = (id: number) =>
   `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=1600`;
 
+/**
+ * Intrinsic pixel size of each file under /public/images. Recorded here so the
+ * school's own photography can be laid out at its natural aspect ratio instead of
+ * being cropped into a fixed-ratio box.
+ */
+export const LOCAL_DIMENSIONS: Record<string, { width: number; height: number }> = {
+  "/images/kid-1.jpg": { width: 524, height: 993 },
+  "/images/kid-2.jpg": { width: 528, height: 989 },
+  "/images/kid-3.jpg": { width: 520, height: 985 },
+  "/images/school-1.jpg": { width: 500, height: 667 },
+  "/images/school-2.jpg": { width: 500, height: 667 },
+  "/images/school-3.jpg": { width: 500, height: 667 },
+  "/images/the-kids-1.png": { width: 500, height: 332 },
+  "/images/head-teacher.webp": { width: 405, height: 424 },
+};
+
 /** seed -> photo. Seeds come from page literals, slugs, ids and titles. */
 const PHOTOS: Record<string, string> = {
   // Home page
-  "hero-a": px(28593051),
-  "hero-b": px(8471855),
-  "hero-c": px(7025567),
-  "hero-d": px(31772339),
-  intro: px(30546821),
-  headteacher: px(5905488),
+  "hero-a": "/images/kid-1.jpg",
+  "hero-b": "/images/kid-2.jpg",
+  "hero-c": "/images/kid-3.jpg",
+  "hero-d": "/images/school-1.jpg",
+  intro: "/images/the-kids-1.png",
+  headteacher: "/images/school-2.jpg",
 
   // About
-  "about-story": px(30546833),
-  "headteacher-portrait": px(5905743),
+  "about-story": "/images/school-3.jpg",
+  "headteacher-portrait": "/images/head-teacher.webp",
 
   // Academics
   approach: px(14554003),
@@ -32,7 +48,7 @@ const PHOTOS: Record<string, string> = {
   "Upper Primary": px(34162713),
 
   // Admissions / contact
-  "why-crestwood": px(31773583),
+  "why-el-bethel": px(31773583),
   "map-jabi": px(16237804),
 
   // Facilities
@@ -144,4 +160,9 @@ export function photoFor(seed: string | undefined, kind?: "portrait"): string | 
   if (!seed) return undefined;
   if (kind === "portrait") return PORTRAITS[hash(seed) % PORTRAITS.length];
   return PHOTOS[seed];
+}
+
+/** Intrinsic size for a local photo, or `undefined` for the hotlinked stock library. */
+export function dimensionsFor(photo: string | undefined) {
+  return photo ? LOCAL_DIMENSIONS[photo] : undefined;
 }

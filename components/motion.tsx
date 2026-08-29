@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion, useInView, useMotionValue, useSpring } from "framer-motion";
 
 import { cn } from "@/lib/utils";
-import { photoFor } from "@/lib/school/photos";
+import { dimensionsFor, photoFor } from "@/lib/school/photos";
 
 /** Fade-and-rise on first view. Honours prefers-reduced-motion via the CSS override. */
 export function Reveal({
@@ -65,6 +65,14 @@ export function Counter({
   );
 }
 
+/** Strips `aspect-*` utilities (incl. breakpoint variants) so they cannot re-crop an image. */
+function stripAspect(className?: string) {
+  return className
+    ?.split(/\s+/)
+    .filter((c) => !/^(?:[a-z]+:)*aspect-/.test(c))
+    .join(" ");
+}
+
 /** Decorative, brand-consistent stand-in for photography. No network requests. */
 const TONE_CLASS: Record<string, string> = {
   navy: "from-navy via-navy to-[color-mix(in_oklch,var(--navy),var(--info)_35%)]",
@@ -93,11 +101,29 @@ export function ToneImage({
   priority?: boolean;
 }) {
   const photo = photoFor(seed, kind);
+  const dimensions = dimensionsFor(photo);
   let hash = 0;
   for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
   const angle = hash % 360;
   const cx = 20 + (hash % 60);
   const cy = 20 + ((hash >> 3) % 60);
+
+  // The school's own photography is drawn at its natural aspect ratio: no wrapping
+  // box, no fixed `aspect-*`, so the whole frame is visible and the image itself
+  // takes up the space it is given.
+  if (photo && dimensions) {
+    return (
+      <Image
+        src={photo}
+        alt={label ?? ""}
+        width={dimensions.width}
+        height={dimensions.height}
+        sizes={sizes}
+        priority={priority}
+        className={cn("h-auto w-full", stripAspect(className))}
+      />
+    );
+  }
 
   return (
     <div

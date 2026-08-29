@@ -125,7 +125,7 @@ export function JobApplicationForm({ vacancySlug }: { vacancySlug: string }) {
 
       <Field data-invalid={Boolean(state.fieldErrors?.message) || undefined}>
         <FieldLabel htmlFor="job-message">Why this role?</FieldLabel>
-        <Textarea id="job-message" name="message" rows={5} required placeholder="Tell us about your experience with this age group and what draws you to Crestwood." />
+        <Textarea id="job-message" name="message" rows={5} required placeholder="Tell us about your experience with this age group and what draws you to El-Bethel." />
         {state.fieldErrors?.message ? <FieldError>{state.fieldErrors.message}</FieldError> : null}
       </Field>
 

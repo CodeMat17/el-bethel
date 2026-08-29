@@ -15,7 +15,7 @@ import {
 import { CtaBand, SectionHeading, StatusPill } from "@/components/common";
 import { Icon } from "@/components/icon";
 import { Counter, Reveal, ToneImage } from "@/components/motion";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,7 +27,7 @@ import {
   FACILITIES,
   SCHOOL,
   SCHOOL_STATS,
-  WHY_CRESTWOOD,
+  WHY_EL_BETHEL,
 } from "@/lib/school/config";
 import {
   getAchievements,
@@ -43,7 +43,7 @@ import { formatDate, initials } from "@/lib/school/format";
 export const metadata: Metadata = {
   title: "Premium Primary School in Abuja",
   description:
-    "Crestwood Heights Academy is a private Primary School in Abuja providing quality, child-centred education in a safe, stimulating and technology-enabled environment.",
+    "El-Bethel International Academy is a private Primary School in Abuja providing quality, child-centred education in a safe, stimulating and technology-enabled environment.",
   alternates: { canonical: "/" },
 };
 
@@ -68,7 +68,7 @@ export default function HomePage() {
           }}
           aria-hidden
         />
-        <div className="cw-container relative grid gap-12 py-14 sm:py-20 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-16 lg:py-24">
+        <div className="eb-container relative grid gap-12 py-8 sm:py-20 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-10 lg:py-8">
           <div>
             <Reveal>
               <span className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/12 px-3 py-1.5 text-[0.68rem] font-extrabold tracking-[0.16em] text-gold uppercase">
@@ -141,36 +141,26 @@ export default function HomePage() {
           </div>
 
           {/* Hero collage */}
-          <Reveal delay={0.15} className="relative">
+          <Reveal delay={0.15} className="relative lg:mx-auto lg:max-w-sm">
             <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-3 sm:space-y-4">
-                <ToneImage tone="gold" seed="hero-a" priority sizes="(max-width: 1024px) 45vw, 22vw" label="Pupils in a smart classroom" className="aspect-4/5 rounded-2xl ring-1 ring-navy-foreground/10" />
-                <ToneImage tone="info" seed="hero-b" priority sizes="(max-width: 1024px) 45vw, 22vw" label="Science practical session" className="aspect-square rounded-2xl ring-1 ring-navy-foreground/10" />
+                <ToneImage tone="gold" seed="hero-a" priority sizes="(max-width: 1024px) 45vw, 18vw" label="Pupils in a smart classroom" className="aspect-4/5 rounded-2xl ring-1 ring-navy-foreground/10 lg:aspect-square" />
+                <ToneImage tone="info" seed="hero-b" priority sizes="(max-width: 1024px) 45vw, 18vw" label="Science practical session" className="aspect-square rounded-2xl ring-1 ring-navy-foreground/10" />
               </div>
-              <div className="space-y-3 pt-8 sm:space-y-4 sm:pt-12">
-                <ToneImage tone="plum" seed="hero-c" sizes="(max-width: 1024px) 45vw, 22vw" label="Creative arts studio" className="aspect-square rounded-2xl ring-1 ring-navy-foreground/10" />
-                <ToneImage tone="success" seed="hero-d" sizes="(max-width: 1024px) 45vw, 22vw" label="Inter-house sports day" className="aspect-4/5 rounded-2xl ring-1 ring-navy-foreground/10" />
+              <div className="space-y-3 pt-8 sm:space-y-4 sm:pt-12 lg:pt-6">
+                <ToneImage tone="plum" seed="hero-c" sizes="(max-width: 1024px) 45vw, 18vw" label="Creative arts studio" className="aspect-square rounded-2xl ring-1 ring-navy-foreground/10" />
+                <ToneImage tone="success" seed="hero-d" sizes="(max-width: 1024px) 45vw, 18vw" label="Inter-house sports day" className="aspect-4/5 rounded-2xl ring-1 ring-navy-foreground/10 lg:aspect-square" />
               </div>
             </div>
 
-            <Card className="absolute -bottom-4 left-2 w-[min(17rem,80%)] gap-0 border-gold/25 bg-card/95 p-3.5 shadow-xl backdrop-blur sm:-bottom-6 sm:left-4">
-              <div className="flex items-center gap-3">
-                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-gold/15 text-gold-foreground dark:text-gold">
-                  <StarIcon className="size-5" />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-muted-foreground">Pupil–teacher ratio</p>
-                  <p className="font-heading text-lg leading-tight font-extrabold">12 : 1</p>
-                </div>
-              </div>
-            </Card>
+           
           </Reveal>
         </div>
 
         {/* Motto marquee */}
         <div className="relative border-t border-navy-foreground/10 py-3">
           <div className="flex overflow-hidden">
-            <div className="flex shrink-0 animate-[cw-marquee_36s_linear_infinite] items-center gap-8 pr-8">
+            <div className="flex shrink-0 animate-[eb-marquee_36s_linear_infinite] items-center gap-8 pr-8">
               {Array.from({ length: 2 }).map((_, dup) =>
                 ["Excellence", "Integrity", "Respect", "Curiosity", "Creativity", "Responsibility", "Compassion"].map(
                   (word) => (
@@ -190,25 +180,29 @@ export default function HomePage() {
       </section>
 
       {/* ---------------------------- Introduction --------------------------- */}
-      <section className="cw-section">
-        <div className="cw-container grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+      <section className="eb-section">
+        <div className="eb-container grid gap-12 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-14">
           <Reveal className="relative">
-            <ToneImage tone="navy" seed="intro" sizes="(max-width: 1024px) 100vw, 45vw" label="Crestwood Heights Academy campus" className="aspect-4/3 rounded-3xl" />
-            <Card className="absolute right-4 -bottom-6 w-[min(15rem,70%)] gap-1 border-gold/25 p-4 shadow-xl">
-              <p className="font-heading text-3xl leading-none font-extrabold text-gold-foreground dark:text-gold">
-                <Counter value={14} suffix="+" />
+            <ToneImage
+              tone="navy"
+              seed="intro"
+              sizes="(max-width: 1024px) 100vw, 48vw"
+              label="Pupils at El-Bethel International Academy"
+              className="rounded-3xl shadow-xl ring-1 ring-navy/10"
+            />
+            <div className="absolute -bottom-5 left-5 hidden rounded-2xl bg-navy px-5 py-3 text-navy-foreground shadow-lg sm:block">
+              <p className="font-heading text-sm font-extrabold leading-tight">{SCHOOL.type}</p>
+              <p className="mt-1 text-[0.7rem] font-bold tracking-[0.18em] text-gold uppercase">
+                {SCHOOL.city}, {SCHOOL.state}
               </p>
-              <p className="text-xs font-bold text-muted-foreground">
-                Years nurturing children in Abuja
-              </p>
-            </Card>
+            </div>
           </Reveal>
 
-          <div>
+          <Reveal delay={0.1}>
             <SectionHeading
               eyebrow={SCHOOL.motto}
               title="A primary school built entirely around how children actually learn"
-              lede={`Founded in ${SCHOOL.established}, ${SCHOOL.name} is a private Primary School in ${SCHOOL.city}. We combine a strong academic foundation with creativity, technology, character development and sport — because a child is never only a set of test scores.`}
+              lede={`${SCHOOL.name} is a private Primary School in ${SCHOOL.city}. We combine a strong academic foundation with creativity, technology, character development and sport — because a child is never only a set of test scores.`}
             />
             <ul className="mt-8 grid gap-4 sm:grid-cols-2">
               {[
@@ -234,15 +228,15 @@ export default function HomePage() {
                 Book a school tour
               </Button>
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
 
       {/* -------------------------- Headteacher note ------------------------- */}
       <section className="border-y bg-muted/40 py-14 sm:py-20">
-        <div className="cw-container grid gap-10 lg:grid-cols-[1.5fr_1fr] lg:items-center">
+        <div className="eb-container grid gap-10 lg:grid-cols-[1.15fr_1fr] lg:items-center">
           <Reveal>
-            <span className="cw-eyebrow">From the Headteacher</span>
+            <span className="eb-eyebrow">From the Headteacher</span>
             <blockquote className="mt-5">
               <QuoteIcon className="size-8 text-gold/50" />
               <p className="mt-3 text-pretty font-heading text-xl leading-snug sm:text-2xl">
@@ -270,23 +264,29 @@ export default function HomePage() {
               </Button>
             </div>
           </Reveal>
-          <Reveal delay={0.1}>
-            <ToneImage tone="gold" seed="headteacher" label="Headteacher with pupils" className="aspect-square rounded-3xl" />
+          <Reveal delay={0.1} className="lg:justify-self-end">
+            <ToneImage
+              tone="gold"
+              seed="headteacher-portrait"
+              label={SCHOOL.headteacher}
+              sizes="(max-width: 1024px) 100vw, 45vw"
+              className="mx-auto w-full rounded-3xl"
+            />
           </Reveal>
         </div>
       </section>
 
-      {/* ---------------------------- Why Crestwood -------------------------- */}
-      <section className="cw-section">
-        <div className="cw-container">
+      {/* ---------------------------- Why El-Bethel -------------------------- */}
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading
-            eyebrow="Why Crestwood"
+            eyebrow="Why El-Bethel"
             title="Seven reasons families choose us"
             lede="Every one of these is a promise we are measured against, term after term."
             align="center"
           />
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {WHY_CRESTWOOD.map((item, i) => (
+            {WHY_EL_BETHEL.map((item, i) => (
               <Reveal key={item.title} delay={i * 0.04}>
                 <Card className="group h-full gap-0 p-6 transition-all hover:-translate-y-1 hover:border-gold/40 hover:shadow-lg">
                   <span className="grid size-12 place-items-center rounded-2xl bg-navy text-gold transition-colors group-hover:bg-gold group-hover:text-gold-foreground">
@@ -316,8 +316,8 @@ export default function HomePage() {
       </section>
 
       {/* -------------------------- Academic programmes ---------------------- */}
-      <section className="cw-section border-y bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-y bg-muted/40">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Academic Programmes"
             title="From first steps to secondary-ready"
@@ -374,7 +374,7 @@ export default function HomePage() {
 
       {/* ------------------------------- Stats ------------------------------- */}
       <section className="bg-navy py-14 text-navy-foreground sm:py-20">
-        <div className="cw-container">
+        <div className="eb-container">
           <div className="grid gap-8 md:grid-cols-4">
             {SCHOOL_STATS.map((stat, i) => (
               <Reveal key={stat.key} delay={i * 0.04}>
@@ -393,8 +393,8 @@ export default function HomePage() {
       </section>
 
       {/* ----------------------------- Facilities ---------------------------- */}
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Facilities"
             title="Spaces designed around small people"
@@ -435,8 +435,8 @@ export default function HomePage() {
       </section>
 
       {/* -------------------------- Clubs & activities ----------------------- */}
-      <section className="cw-section border-y bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-y bg-muted/40">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Clubs & Activities"
             title="Sixteen ways to find what you love"
@@ -469,8 +469,8 @@ export default function HomePage() {
       </section>
 
       {/* ------------------------------ Our Stars ---------------------------- */}
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Our Stars"
             title="Pupil achievements worth celebrating"
@@ -507,8 +507,8 @@ export default function HomePage() {
       </section>
 
       {/* ------------------------------ Teachers ----------------------------- */}
-      <section className="cw-section border-y bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-y bg-muted/40">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Our Teachers"
             title="The people who will know your child by name"
@@ -548,12 +548,12 @@ export default function HomePage() {
       </section>
 
       {/* ------------------------- News and events --------------------------- */}
-      <section className="cw-section">
-        <div className="cw-container grid gap-12 lg:grid-cols-[1.6fr_1fr]">
+      <section className="eb-section">
+        <div className="eb-container grid gap-12 lg:grid-cols-[1.6fr_1fr]">
           <div>
             <SectionHeading
               eyebrow="Latest News"
-              title="What's happening at Crestwood"
+              title="What's happening at El-Bethel"
               action={
                 <Button variant="link" className="font-bold" render={<Link href="/news" />}>
                   All news <ArrowRightIcon />
@@ -620,8 +620,8 @@ export default function HomePage() {
       </section>
 
       {/* ------------------------------ Gallery ------------------------------ */}
-      <section className="cw-section border-y bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-y bg-muted/40">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Gallery"
             title="A term in pictures"
@@ -655,8 +655,8 @@ export default function HomePage() {
       </section>
 
       {/* ---------------------------- Testimonials --------------------------- */}
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Parent Voices"
             title="What families say"
@@ -692,8 +692,8 @@ export default function HomePage() {
       </section>
 
       {/* ------------------------------- Values ------------------------------ */}
-      <section className="cw-section border-t bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-t bg-muted/40">
+        <div className="eb-container">
           <SectionHeading eyebrow="Core Values" title="Seven values, taught and lived" align="center" />
           <div className="mt-10 flex flex-wrap justify-center gap-3">
             {CORE_VALUES.map((value, i) => (
@@ -711,8 +711,8 @@ export default function HomePage() {
       </section>
 
       {/* ------------------------------ Contact ------------------------------ */}
-      <section className="cw-section">
-        <div className="cw-container grid gap-8 lg:grid-cols-3">
+      <section className="eb-section">
+        <div className="eb-container grid gap-8 lg:grid-cols-3">
           {[
             { icon: "MapPin", title: "Visit us", lines: [SCHOOL.address], href: "/contact", cta: "Get directions" },
             { icon: "Phone", title: "Talk to us", lines: [SCHOOL.phone, SCHOOL.email], href: "/contact", cta: "Send an enquiry" },

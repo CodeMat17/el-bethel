@@ -22,7 +22,7 @@ import { money } from "@/lib/school/format";
 export const metadata: Metadata = {
   title: "School Fees",
   description:
-    "Termly school fees at Crestwood Heights Academy, Abuja, by class band, plus admission and optional fees.",
+    "Termly school fees at El-Bethel International Academy, Abuja, by class band, plus admission and optional fees.",
   alternates: { canonical: "/admissions/fees" },
 };
 
@@ -42,8 +42,8 @@ export default function FeesPage() {
         <Badge className="h-7 bg-gold/20 px-3 font-bold text-gold">Demo values — 2026/2027 session</Badge>
       </PageHero>
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading eyebrow="Termly fees" title="What a term costs, by class band" />
           <div className="mt-10 grid gap-5 lg:grid-cols-3">
             {FEE_STRUCTURE.map((band, i) => {
@@ -88,8 +88,8 @@ export default function FeesPage() {
         </div>
       </section>
 
-      <section className="cw-section border-y bg-muted/40">
-        <div className="cw-container grid gap-12 lg:grid-cols-2">
+      <section className="eb-section border-y bg-muted/40">
+        <div className="eb-container grid gap-12 lg:grid-cols-2">
           <div>
             <SectionHeading eyebrow="One-off" title="Admission fees" lede="Paid once, at the point of application and enrolment." />
             <div className="mt-8 overflow-hidden rounded-2xl border bg-card">
@@ -136,8 +136,8 @@ export default function FeesPage() {
         </div>
       </section>
 
-      <section className="cw-section">
-        <div className="cw-container grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="eb-section">
+        <div className="eb-container grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { title: "When fees are due", text: "Termly invoices are issued two weeks before resumption and are due by the end of the second week of term." },
             { title: "Payment methods", text: "Card, bank transfer or USSD through Paystack or Flutterwave. Receipts are generated automatically once a payment is verified." },
@@ -153,7 +153,7 @@ export default function FeesPage() {
           ))}
         </div>
 
-        <div className="cw-container mt-8">
+        <div className="eb-container mt-8">
           <Card className="gap-0 border-info/30 bg-info/10 p-5">
             <p className="flex items-start gap-2.5 text-sm leading-relaxed">
               <InfoIcon className="mt-0.5 size-4 shrink-0 text-info" />

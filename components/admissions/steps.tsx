@@ -84,7 +84,7 @@ export function AccountStep({ levels }: { levels: { id: string; name: string }[]
         </Field>
         <Field data-invalid={Boolean(state.fieldErrors?.phone) || undefined}>
           <FieldLabel htmlFor="phone">Phone number</FieldLabel>
-          <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" required className="h-11" placeholder="+234 809 456 7821" />
+          <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" required className="h-11" placeholder="0812 390 8499" />
           {state.fieldErrors?.phone ? <FieldError>{state.fieldErrors.phone}</FieldError> : null}
         </Field>
       </div>
@@ -520,7 +520,7 @@ export function SubmitStep({ applicationNo }: { applicationNo: string }) {
         <Checkbox name="declaration" className="mt-0.5" />
         <span className="text-sm leading-relaxed">
           I confirm that the information provided in this application is true and complete to the best of
-          my knowledge, and I consent to Crestwood Heights Academy processing it for admission purposes.
+          my knowledge, and I consent to El-Bethel International Academy processing it for admission purposes.
         </span>
       </label>
 

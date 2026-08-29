@@ -131,7 +131,7 @@ export function PortalShell({
           <BrandMark className="size-9" />
           <div className="min-w-0">
             <p className="truncate font-heading text-sm leading-tight font-extrabold text-sidebar-foreground">
-              Crestwood
+              El-Bethel
             </p>
             <p className="truncate text-[0.65rem] font-bold tracking-wide text-sidebar-primary uppercase">
               {portalName}
@@ -158,7 +158,7 @@ export function PortalShell({
                     <BrandMark className="size-9" />
                     <span className="min-w-0">
                       <span className="block truncate font-heading text-sm leading-tight font-extrabold text-sidebar-foreground">
-                        Crestwood
+                        El-Bethel
                       </span>
                       <span className="block truncate text-[0.65rem] font-bold tracking-wide text-sidebar-primary uppercase">
                         {portalName}

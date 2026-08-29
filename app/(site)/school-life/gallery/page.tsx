@@ -7,7 +7,7 @@ import { getGallery } from "@/lib/school/data";
 export const metadata: Metadata = {
   title: "Gallery",
   description:
-    "Photographs from classrooms, sports, excursions, cultural events, science, arts and facilities at Crestwood Heights Academy, Abuja.",
+    "Photographs from classrooms, sports, excursions, cultural events, science, arts and facilities at El-Bethel International Academy, Abuja.",
   alternates: { canonical: "/school-life/gallery" },
 };
 
@@ -25,8 +25,8 @@ export default function GalleryPage() {
         ]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <GalleryGrid items={getGallery()} />
         </div>
       </section>

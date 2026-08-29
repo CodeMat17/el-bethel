@@ -1,8 +1,8 @@
-# Crestwood Heights Academy — Primary School Digital Platform
+# El-Bethel International Academy — Primary School Digital Platform
 ## Complete Product Requirements & Development Specification
 
 > **Project Type:** Modern Primary School Website + Digital School Platform  
-> **Demo School:** Crestwood Heights Academy  
+> **Demo School:** El-Bethel International Academy  
 > **Location:** Abuja, Federal Capital Territory, Nigeria  
 > **Purpose:** Development specification for Claude Code  
 > **Status:** Development / Demo Data  
@@ -12,7 +12,7 @@
 
 # 1. Project Vision
 
-Build a premium, modern, mobile-first digital platform for **Crestwood Heights Academy**, a fictional private Primary School in Abuja.
+Build a premium, modern, mobile-first digital platform for **El-Bethel International Academy**, a fictional private Primary School in Abuja.
 
 The product must be substantially more than a traditional school website. It should combine:
 
@@ -38,17 +38,17 @@ The platform should feel like a **premium educational product**, not a generic s
 
 ## Basic Information
 
-- **School Name:** Crestwood Heights Academy
-- **Short Name:** CHA
+- **School Name:** El-Bethel International Academy
+- **Short Name:** EIA
 - **School Type:** Private Primary School
 - **Location:** Abuja, Federal Capital Territory, Nigeria
-- **Address:** 18 Aso Heights Avenue, Jabi District, Abuja, Nigeria
-- **Phone:** +234 809 456 7821
-- **Email:** info@crestwoodheights.edu.ng
-- **Admissions Email:** admissions@crestwoodheights.edu.ng
-- **Website:** www.crestwoodheights.edu.ng
-- **Established:** 2012
-- **Motto:** Nurturing Minds, Building Futures
+- **Address:** No.3 Engr. Demola Oduneye Avenue, Opposite Ushafa Mini Stadium, Ushafa, Abuja
+- **Phone:** 0812 390 8499, 0803 567 2400
+- **WhatsApp:** 0812 390 8499
+- **Email:** info@elbethel.edu.ng
+- **Admissions Email:** admissions@elbethel.edu.ng
+- **Website:** www.elbethel.edu.ng
+- **Motto:** Knowledge and the fear of God
 - **School Colors:** Deep Navy, Warm Gold, Ivory
 - **School Type:** Day School
 - **Academic Calendar:** September – July
@@ -60,13 +60,13 @@ The platform should feel like a **premium educational product**, not a generic s
 
 ## Who We Are
 
-Crestwood Heights Academy is a forward-thinking private Primary School located in the heart of Abuja, Nigeria. Established in 2012, the school was founded on the belief that every child deserves an inspiring, safe and nurturing environment in which to discover their abilities, develop confidence and build a strong foundation for lifelong learning.
+El-Bethel International Academy is a forward-thinking private Primary School located in the heart of Abuja, Nigeria. The school was founded on the belief that every child deserves an inspiring, safe and nurturing environment in which to discover their abilities, develop confidence and build a strong foundation for lifelong learning.
 
 We combine a carefully structured academic programme with character development, creativity, technology, physical activity and practical learning experiences.
 
 Our approach goes beyond preparing children for examinations. We seek to develop curious thinkers, confident communicators, responsible citizens and compassionate leaders.
 
-With dedicated teachers, modern learning facilities and a strong partnership between school and home, Crestwood Heights Academy provides an environment where children can learn, explore, create and thrive.
+With dedicated teachers, modern learning facilities and a strong partnership between school and home, El-Bethel International Academy provides an environment where children can learn, explore, create and thrive.
 
 ---
 
@@ -101,7 +101,7 @@ Headteacher
 
 ### Welcome Message
 
-Welcome to Crestwood Heights Academy.
+Welcome to El-Bethel International Academy.
 
 At our school, we believe that education is not simply about filling young minds with information. It is about helping children discover who they are, what they can achieve and how they can contribute positively to the world around them.
 
@@ -109,7 +109,7 @@ Every child who walks through our gates is unique. Our responsibility is to reco
 
 We combine strong academic foundations with creativity, technology, character development, sports and practical experiences. Most importantly, we believe that children learn best when they feel safe, valued, encouraged and inspired.
 
-We invite you to explore our school, meet our community and discover why Crestwood Heights Academy is becoming one of Abuja's trusted destinations for quality primary education.
+We invite you to explore our school, meet our community and discover why El-Bethel International Academy is becoming one of Abuja's trusted destinations for quality primary education.
 
 **Dr. Amaka N. Okafor**  
 Headteacher
@@ -120,7 +120,6 @@ Headteacher
 
 Use animated counters on the public homepage.
 
-- Years of Excellence: 14+
 - Pupils: 390
 - Teachers: 34
 - Classes: 15
@@ -184,7 +183,7 @@ Suggested demo subjects:
 
 # 11. Academic Philosophy
 
-Crestwood Heights Academy uses a child-centred, activity-based approach to learning.
+El-Bethel International Academy uses a child-centred, activity-based approach to learning.
 
 Teaching methods include:
 
@@ -273,7 +272,7 @@ The homepage should include:
 
 **Supporting Text:**
 
-> At Crestwood Heights Academy, we nurture curious minds, build confident character and inspire children to learn, create and thrive.
+> At El-Bethel International Academy, we nurture curious minds, build confident character and inspire children to learn, create and thrive.
 
 **Primary CTA:** Apply for Admission
 
@@ -301,7 +300,7 @@ ACADEMICS
 └── Learning Approach
 
 ADMISSIONS
-├── Why Crestwood
+├── Why El-Bethel
 ├── Admission Process
 ├── Requirements
 ├── Fees
@@ -348,7 +347,7 @@ Create:
 
 ---
 
-# 17. Why Choose Crestwood
+# 17. Why Choose El-Bethel
 
 Use these content blocks:
 
@@ -1247,7 +1246,7 @@ School Auditorium
 
 ### Inter-House Sports
 October 17, 2026  
-Crestwood Heights Sports Field
+El-Bethel International Sports Field
 
 ### Cultural Day
 November 21, 2026  
@@ -1304,9 +1303,9 @@ Each post should support:
 
 **Published:** September 1, 2026
 
-Welcome to the 2026/2027 academic session at Crestwood Heights Academy.
+Welcome to the 2026/2027 academic session at El-Bethel International Academy.
 
-We are delighted to welcome our returning pupils and new members of the Crestwood family. We look forward to another exciting year of learning, discovery, friendship and achievement.
+We are delighted to welcome our returning pupils and new members of the El-Bethel family. We look forward to another exciting year of learning, discovery, friendship and achievement.
 
 ---
 
@@ -2189,7 +2188,7 @@ Example:
 ```text
 Certificate Verified
 
-Certificate No: CHA-2026-00021
+Certificate No: EIA-2026-00021
 Award: Academic Excellence
 Session: 2025/2026
 ```
@@ -2606,8 +2605,8 @@ At minimum model relationships between:
 
 ## David Chukwu
 
-- Student ID: CHA-2026-00482
-- Admission No.: CHA/2022/0184
+- Student ID: EIA-2026-00482
+- Admission No.: EIA/2022/0184
 - Class: Primary 4A
 - Class Teacher: Miss Chiamaka Obi
 
@@ -2662,7 +2661,7 @@ and remember to simplify your answers."
 
 ### Mrs. Aisha Bello
 
-> Crestwood Heights has given my daughter the confidence to express herself and the academic foundation she needs. The teachers are attentive and genuinely care about the children.
+> El-Bethel International has given my daughter the confidence to express herself and the academic foundation she needs. The teachers are attentive and genuinely care about the children.
 
 ### Mr. Emeka Okafor
 
@@ -2670,23 +2669,23 @@ and remember to simplify your answers."
 
 ### Mrs. Grace Ibrahim
 
-> The combination of academics, technology, sports and creative activities makes Crestwood a wonderful environment for children.
+> The combination of academics, technology, sports and creative activities makes El-Bethel a wonderful environment for children.
 
 ---
 
 # 105. Contact Information
 
-**Crestwood Heights Academy**
+**El-Bethel International Academy**
 
-18 Aso Heights Avenue  
-Jabi District  
+No.3 Engr. Demola Oduneye Avenue, Opposite Ushafa Mini Stadium  
+Ushafa  
 Abuja, Nigeria
 
-**Phone:** +234 809 456 7821
+**Phone:** 0812 390 8499
 
-**Email:** info@crestwoodheights.edu.ng
+**Email:** info@elbethel.edu.ng
 
-**Admissions:** admissions@crestwoodheights.edu.ng
+**Admissions:** admissions@elbethel.edu.ng
 
 **Office Hours:**
 
@@ -2697,10 +2696,10 @@ Monday – Friday
 
 # 106. Demo Social Media
 
-- Facebook: @CrestwoodHeightsAcademy
-- Instagram: @crestwoodheightsacademy
-- YouTube: @CrestwoodHeightsAcademy
-- X: @CrestwoodHeights
+- Facebook: @ElBethelInternationalAcademy
+- Instagram: @elbethelheightsacademy
+- YouTube: @ElBethelInternationalAcademy
+- X: @ElBethelInternational
 
 ---
 
@@ -3189,11 +3188,11 @@ Use Abuja naturally in relevant public metadata/content.
 
 Example page title:
 
-> Crestwood Heights Academy | Premium Primary School in Abuja
+> El-Bethel International Academy | Premium Primary School in Abuja
 
 Example description:
 
-> Crestwood Heights Academy is a private Primary School in Abuja providing quality, child-centred education in a safe, stimulating and technology-enabled environment.
+> El-Bethel International Academy is a private Primary School in Abuja providing quality, child-centred education in a safe, stimulating and technology-enabled environment.
 
 Avoid keyword stuffing.
 
@@ -3306,7 +3305,7 @@ Claude Code should:
 
 The finished application should be presented as:
 
-> **Crestwood Heights Academy Digital School**
+> **El-Bethel International Academy Digital School**
 
 A complete digital ecosystem connecting:
 
@@ -3386,4 +3385,4 @@ Prioritize:
 9. Clear authorization boundaries.
 10. A polished visual identity.
 
-The final experience should feel like a **premium education technology platform built specifically for Crestwood Heights Academy**, while keeping the architecture reusable enough to support additional schools in the future.
+The final experience should feel like a **premium education technology platform built specifically for El-Bethel International Academy**, while keeping the architecture reusable enough to support additional schools in the future.

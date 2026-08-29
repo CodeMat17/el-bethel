@@ -8,6 +8,7 @@ import {
   ChevronDownIcon,
   LogInIcon,
   MailIcon,
+  MessageCircleIcon,
   MenuIcon,
   PhoneIcon,
   SearchIcon,
@@ -58,13 +59,16 @@ export function SiteHeader({ signedIn, portalHref }: { signedIn: boolean; portal
     <header className="sticky top-0 z-50">
       {/* Utility bar — hidden on small screens to keep the mobile header tight */}
       <div className="hidden bg-navy text-navy-foreground lg:block">
-        <div className="cw-container flex h-9 items-center justify-between text-xs">
+        <div className="eb-container flex h-9 items-center justify-between text-xs">
           <div className="flex items-center gap-5">
             <a href={`tel:${SCHOOL.phoneHref}`} className="flex items-center gap-1.5 opacity-90 transition-opacity hover:opacity-100">
               <PhoneIcon className="size-3.5" /> {SCHOOL.phone}
             </a>
             <a href={`mailto:${SCHOOL.email}`} className="flex items-center gap-1.5 opacity-90 transition-opacity hover:opacity-100">
               <MailIcon className="size-3.5" /> {SCHOOL.email}
+            </a>
+            <a href={SCHOOL.whatsappHref} target="_blank" rel="noreferrer noopener" className="flex items-center gap-1.5 opacity-90 transition-opacity hover:opacity-100">
+              <MessageCircleIcon className="size-3.5" /> {SCHOOL.whatsapp}
             </a>
           </div>
           <div className="flex items-center gap-4">
@@ -93,7 +97,7 @@ export function SiteHeader({ signedIn, portalHref }: { signedIn: boolean; portal
             : "border-transparent bg-background",
         )}
       >
-        <div className="cw-container flex h-16 items-center gap-3 lg:h-[4.5rem]">
+        <div className="eb-container flex h-16 items-center gap-3 lg:h-[4.5rem]">
           <Brand className="mr-auto" />
 
           <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Primary">

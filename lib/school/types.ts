@@ -1,4 +1,4 @@
-// Core domain model for the Crestwood Heights Academy digital school platform.
+// Core domain model for the El-Bethel International Academy digital school platform.
 // Strict types only — the `any` type is never used anywhere in this module.
 
 export type ID = string;

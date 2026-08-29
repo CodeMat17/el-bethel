@@ -59,7 +59,7 @@ export function EmergencyBanner({ notice }: { notice: EmergencyNotice }) {
       role="alert"
       className="relative z-50 bg-destructive text-[oklch(0.985_0.01_84)] dark:bg-destructive/90"
     >
-      <div className="cw-container flex items-start gap-3 py-2.5 pr-10 text-sm sm:items-center">
+      <div className="eb-container flex items-start gap-3 py-2.5 pr-10 text-sm sm:items-center">
         <TriangleAlertIcon className="mt-0.5 size-4 shrink-0 sm:mt-0" />
         <p className="min-w-0">
           <span className="font-extrabold tracking-wide uppercase">{notice.title}</span>

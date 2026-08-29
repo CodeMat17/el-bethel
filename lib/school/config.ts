@@ -7,39 +7,85 @@ import type {
 } from "./types";
 
 export const SCHOOL = {
-  name: "Crestwood Heights Academy",
-  shortName: "CHA",
+  name: "El-Bethel International Academy",
+  shortName: "EBIA",
   type: "Private Primary School",
   city: "Abuja",
   state: "Federal Capital Territory",
   country: "Nigeria",
-  address: "18 Aso Heights Avenue, Jabi District, Abuja, Nigeria",
-  phone: "+234 809 456 7821",
-  phoneHref: "+2348094567821",
-  email: "info@crestwoodheights.edu.ng",
-  admissionsEmail: "admissions@crestwoodheights.edu.ng",
-  website: "www.crestwoodheights.edu.ng",
-  established: 2012,
-  motto: "Nurturing Minds, Building Futures",
+  address: "No.3 Engr. Demola Oduneye Avenue, Opposite Ushafa Mini Stadium, Ushafa, Abuja",
+  phone: "0812 390 8499",
+  phoneHref: "+2348123908499",
+  phoneAlt: "0803 567 2400",
+  phoneAltHref: "+2348035672400",
+  whatsapp: "0812 390 8499",
+  whatsappHref: "https://wa.me/2348123908499",
+  email: "info@elbethel.edu.ng",
+  admissionsEmail: "admissions@elbethel.edu.ng",
+  website: "www.elbethel.edu.ng",
+  motto: "Knowledge and the fear of God",
   calendar: "September – July",
   session: "2026/2027",
   officeHours: "Monday – Friday, 7:30 AM – 4:00 PM",
   headteacher: "Dr. Amaka N. Okafor",
   social: {
-    facebook: "https://facebook.com/CrestwoodHeightsAcademy",
-    instagram: "https://instagram.com/crestwoodheightsacademy",
-    youtube: "https://youtube.com/@CrestwoodHeightsAcademy",
-    x: "https://x.com/CrestwoodHeights",
+    facebook: "https://facebook.com/ElBethelInternationalAcademy",
+    instagram: "https://instagram.com/elbethelinternationalacademy",
+    youtube: "https://youtube.com/@ElBethelInternationalAcademy",
+    x: "https://x.com/ElBethelInternational",
   },
 } as const;
 
-export const SITE_URL = "https://www.crestwoodheights.edu.ng";
+export const SITE_URL = "https://www.elbethel.edu.ng";
 
 export const VISION =
   "To be a leading primary school recognised for academic excellence, character development and the holistic growth of every child.";
 
 export const MISSION =
   "To provide a safe, stimulating and inclusive learning environment where every child is challenged to discover their potential, develop strong character and acquire the knowledge, skills and values necessary for lifelong success.";
+
+export const SCHOOL_ANTHEM: { kind: "verse" | "chorus"; label: string; lines: string[] }[] = [
+  {
+    kind: "verse",
+    label: "Verse 1",
+    lines: [
+      "El Bethel International, we proudly stand,",
+      "A place of wisdom, built by God’s own hand,",
+      "With hearts so pure and minds so bright,",
+      "We walk in truth, we shine His light.",
+    ],
+  },
+  {
+    kind: "chorus",
+    label: "Chorus",
+    lines: [
+      "Knowledge and the fear of God, our guide,",
+      "In faith and learning, we abide,",
+      "With strength and grace, we rise each day,",
+      "El Bethel leads us all the way.",
+    ],
+  },
+  {
+    kind: "verse",
+    label: "Verse 2",
+    lines: [
+      "In righteousness, we grow and learn,",
+      "With passion deep and hearts that yearn",
+      "To serve the world in love and truth,",
+      "Empowered minds and godly youth.",
+    ],
+  },
+  {
+    kind: "chorus",
+    label: "Chorus",
+    lines: [
+      "Knowledge and the fear of God, our guide,",
+      "In faith and learning, we abide,",
+      "With strength and grace, we rise each day,",
+      "El Bethel leads us all the way.",
+    ],
+  },
+];
 
 export const CORE_VALUES = [
   { name: "Excellence", icon: "Sparkles", text: "We set a high bar and support every child in reaching it." },
@@ -52,15 +98,14 @@ export const CORE_VALUES = [
 ] as const;
 
 export const HEADTEACHER_MESSAGE = [
-  "Welcome to Crestwood Heights Academy.",
+  "Welcome to El-Bethel International Academy.",
   "At our school, we believe that education is not simply about filling young minds with information. It is about helping children discover who they are, what they can achieve and how they can contribute positively to the world around them.",
   "Every child who walks through our gates is unique. Our responsibility is to recognise that uniqueness, nurture it and provide the support and opportunities necessary for it to flourish.",
   "We combine strong academic foundations with creativity, technology, character development, sports and practical experiences. Most importantly, we believe that children learn best when they feel safe, valued, encouraged and inspired.",
-  "We invite you to explore our school, meet our community and discover why Crestwood Heights Academy is becoming one of Abuja's trusted destinations for quality primary education.",
+  "We invite you to explore our school, meet our community and discover why El-Bethel International Academy is becoming one of Abuja's trusted destinations for quality primary education.",
 ];
 
 export const SCHOOL_STATS = [
-  { key: "years", label: "Years of Excellence", value: 14, suffix: "+" },
   { key: "pupils", label: "Pupils Enrolled", value: 390, suffix: "" },
   { key: "teachers", label: "Teaching Staff", value: 34, suffix: "" },
   { key: "classes", label: "Classes", value: 15, suffix: "" },
@@ -119,7 +164,7 @@ export const TEACHING_METHODS = [
   "Continuous assessment",
 ];
 
-export const WHY_CRESTWOOD = [
+export const WHY_EL_BETHEL = [
   {
     title: "Strong Academic Foundation",
     icon: "GraduationCap",

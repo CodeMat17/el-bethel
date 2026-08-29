@@ -12,7 +12,7 @@ import { APPLICATION_DOCUMENT_REQUIREMENTS, CLASS_LEVELS } from "@/lib/school/co
 export const metadata: Metadata = {
   title: "Admission Requirements",
   description:
-    "Documents, age requirements and entry criteria for admission to Crestwood Heights Academy, Abuja.",
+    "Documents, age requirements and entry criteria for admission to El-Bethel International Academy, Abuja.",
   alternates: { canonical: "/admissions/requirements" },
 };
 
@@ -45,8 +45,8 @@ export default function RequirementsPage() {
         ]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container grid gap-12 lg:grid-cols-[1.3fr_1fr]">
+      <section className="eb-section">
+        <div className="eb-container grid gap-12 lg:grid-cols-[1.3fr_1fr]">
           <div>
             <SectionHeading eyebrow="Documents" title="What to upload" />
             <div className="mt-8 grid gap-3">

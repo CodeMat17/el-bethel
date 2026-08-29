@@ -14,15 +14,15 @@ import { SCHOOL } from "@/lib/school/config";
 
 export const metadata: Metadata = {
   title: "Sign in",
-  description: "Sign in to the Crestwood Heights Academy parent, pupil, teacher or admin portal.",
+  description: "Sign in to the El-Bethel International Academy parent, pupil, teacher or admin portal.",
   robots: { index: false, follow: false },
 };
 
 const DEMO_ACCOUNTS = [
-  { label: "Parent", name: "Mrs. Ada Chukwu", email: "parent@crestwoodheights.edu.ng", detail: "Three children across Primary 1, Primary 3 and Primary 5", icon: "Users" },
-  { label: "Pupil", name: "David Chukwu", email: "pupil@crestwoodheights.edu.ng", detail: "Primary 4A · CHA-2026-00482", icon: "Backpack" },
-  { label: "Teacher", name: "Miss Chiamaka Obi", email: "teacher@crestwoodheights.edu.ng", detail: "Class teacher, Primary 4A", icon: "GraduationCap" },
-  { label: "Administrator", name: "Ngozi Adeleke", email: "admin@crestwoodheights.edu.ng", detail: "Full school control centre", icon: "LayoutDashboard" },
+  { label: "Parent", name: "Mrs. Ada Chukwu", email: "parent@elbethel.edu.ng", detail: "Three children across Primary 1, Primary 3 and Primary 5", icon: "Users" },
+  { label: "Pupil", name: "David Chukwu", email: "pupil@elbethel.edu.ng", detail: "Primary 4A · EIA-2026-00482", icon: "Backpack" },
+  { label: "Teacher", name: "Miss Chiamaka Obi", email: "teacher@elbethel.edu.ng", detail: "Class teacher, Primary 4A", icon: "GraduationCap" },
+  { label: "Administrator", name: "Ngozi Adeleke", email: "admin@elbethel.edu.ng", detail: "Full school control centre", icon: "LayoutDashboard" },
 ];
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
@@ -68,7 +68,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           </ul>
         </div>
         <p className="relative text-xs text-navy-foreground/50">
-          © {SCHOOL.established + 14} {SCHOOL.name} · Demo environment
+          © {new Date().getFullYear()} {SCHOOL.name} · Demo environment
         </p>
       </div>
 
@@ -103,11 +103,11 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
 
             <div className="mt-8">
               <div className="flex items-center gap-3">
-                <span className="h-px flex-1 cw-hairline" />
+                <span className="h-px flex-1 eb-hairline" />
                 <span className="text-[0.68rem] font-extrabold tracking-[0.16em] text-muted-foreground uppercase">
                   Demo accounts
                 </span>
-                <span className="h-px flex-1 cw-hairline" />
+                <span className="h-px flex-1 eb-hairline" />
               </div>
 
               <div className="mt-4 grid gap-2">
@@ -132,7 +132,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
                 ))}
               </div>
               <p className="mt-3 text-center text-xs text-muted-foreground">
-                Every demo account uses the password <code className="rounded bg-muted px-1.5 py-0.5 font-semibold">crestwood</code>.
+                Every demo account uses the password <code className="rounded bg-muted px-1.5 py-0.5 font-semibold">elbethel</code>.
               </p>
             </div>
 

@@ -44,7 +44,7 @@ export default async function ParentChildrenPage() {
     <>
       <PortalPageHeader
         title="My children"
-        description={`${myChildren.length} ${myChildren.length === 1 ? "child" : "children"} enrolled at Crestwood Heights Academy.`}
+        description={`${myChildren.length} ${myChildren.length === 1 ? "child" : "children"} enrolled at El-Bethel International Academy.`}
       />
 
       <div className="grid gap-5 lg:grid-cols-2">

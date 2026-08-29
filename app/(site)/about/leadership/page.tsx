@@ -9,7 +9,7 @@ import { getTeachers } from "@/lib/school/data";
 export const metadata: Metadata = {
   title: "Leadership",
   description:
-    "Meet the leadership team guiding Crestwood Heights Academy — the Headteacher, deputies and heads of school.",
+    "Meet the leadership team guiding El-Bethel International Academy — the Headteacher, deputies and heads of school.",
   alternates: { canonical: "/about/leadership" },
 };
 
@@ -38,8 +38,8 @@ export default function LeadershipPage() {
         ]}
       />
 
-      <section className="cw-section">
-        <div className="cw-container">
+      <section className="eb-section">
+        <div className="eb-container">
           <SectionHeading eyebrow="Academic leadership" title="Setting and holding the standard" />
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {leaders.map((leader, i) => (
@@ -73,8 +73,8 @@ export default function LeadershipPage() {
         </div>
       </section>
 
-      <section className="cw-section border-t bg-muted/40">
-        <div className="cw-container">
+      <section className="eb-section border-t bg-muted/40">
+        <div className="eb-container">
           <SectionHeading
             eyebrow="Operations"
             title="The team that keeps the school running"
