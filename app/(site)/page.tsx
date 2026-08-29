@@ -189,7 +189,7 @@ export default function HomePage() {
               seed="intro"
               sizes="(max-width: 1024px) 100vw, 48vw"
               label="Pupils at El-Bethel International Academy"
-              className="rounded-3xl shadow-xl ring-1 ring-navy/10"
+              className="rounded-3xl"
             />
             <div className="absolute -bottom-5 left-5 hidden rounded-2xl bg-navy px-5 py-3 text-navy-foreground shadow-lg sm:block">
               <p className="font-heading text-sm font-extrabold leading-tight">{SCHOOL.type}</p>
