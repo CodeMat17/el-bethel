@@ -22,6 +22,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
   CLASS_LEVELS,
+  STAGES,
   CORE_VALUES,
   HEADTEACHER_MESSAGE,
   FACILITIES,
@@ -41,7 +42,7 @@ import {
 import { formatDate, initials } from "@/lib/school/format";
 
 export const metadata: Metadata = {
-  title: "Premium Primary School in Abuja",
+  title: "Creche, Primary & Junior Secondary School in Abuja",
   description:
     "El-Bethel International Academy is a private Primary School in Abuja providing quality, child-centred education in a safe, stimulating and technology-enabled environment.",
   alternates: { canonical: "/" },
@@ -201,8 +202,8 @@ export default function HomePage() {
           <Reveal delay={0.1}>
             <SectionHeading
               eyebrow={SCHOOL.motto}
-              title="A primary school built entirely around how children actually learn"
-              lede={`${SCHOOL.name} is a private Primary School in ${SCHOOL.city}. We combine a strong academic foundation with creativity, technology, character development and sport — because a child is never only a set of test scores.`}
+              title="A school built entirely around how children actually learn"
+              lede={`${SCHOOL.name} is a private creche, nursery, primary and junior secondary school in ${SCHOOL.city}. We combine a strong academic foundation with creativity, technology, character development and sport — because a child is never only a set of test scores.`}
             />
             <ul className="mt-8 grid gap-4 sm:grid-cols-2">
               {[
@@ -321,7 +322,7 @@ export default function HomePage() {
           <SectionHeading
             eyebrow="Academic Programmes"
             title="From first steps to secondary-ready"
-            lede="Six class levels across lower and upper primary, each with its own curriculum, assessment rhythm and pastoral care."
+            lede="Fourteen class levels from creche to JSS 3, each with its own curriculum, assessment rhythm and pastoral care."
             action={
               <Button variant="outline" size="lg" className="font-bold" render={<Link href="/academics" />}>
                 All academics
@@ -330,31 +331,17 @@ export default function HomePage() {
             }
           />
 
-          <div className="mt-12 grid gap-6 lg:grid-cols-2">
-            {[
-              {
-                stage: "lower_primary" as const,
-                title: "Lower Primary",
-                href: "/academics/primary",
-                tone: "gold",
-                text: "Primary 1 to Primary 3. Structured literacy and numeracy, taught actively — the years where a reader and a mathematician are made.",
-              },
-              {
-                stage: "upper_primary" as const,
-                title: "Upper Primary",
-                href: "/academics/primary",
-                tone: "info",
-                text: "Primary 4 to Primary 6. Deeper science, reasoning, technology and the arts, with the study habits secondary school will demand.",
-              },
-            ].map((programme, i) => (
-              <Reveal key={programme.title} delay={i * 0.08}>
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {STAGES.map((programme, i) => (
+              <Reveal key={programme.key} delay={i * 0.06}>
                 <Card className="h-full gap-0 overflow-hidden p-0">
-                  <ToneImage tone={programme.tone} seed={programme.title} label={programme.title} className="aspect-21/9" />
+                  <ToneImage tone={programme.tone} seed={programme.name} label={programme.name} className="aspect-21/9" />
                   <CardContent className="p-6">
-                    <h3 className="font-heading text-xl font-extrabold">{programme.title}</h3>
+                    <h3 className="font-heading text-xl font-extrabold">{programme.name}</h3>
+                    <p className="text-xs font-bold tracking-wide text-muted-foreground uppercase">{programme.ages}</p>
                     <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{programme.text}</p>
                     <div className="mt-5 flex flex-wrap gap-2">
-                      {CLASS_LEVELS.filter((l) => l.stage === programme.stage).map((level) => (
+                      {CLASS_LEVELS.filter((l) => l.stage === programme.key).map((level) => (
                         <Badge key={level.id} variant="secondary" className="h-7 px-3 font-bold">
                           {level.name}
                         </Badge>

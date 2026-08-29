@@ -5,7 +5,7 @@ import { Icon } from "@/components/icon";
 import { Reveal, ToneImage } from "@/components/motion";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { PERIODS, CLASS_LEVELS } from "@/lib/school/config";
+import { PERIODS, levelsForStage } from "@/lib/school/config";
 import { getSubjects } from "@/lib/school/data";
 
 export const metadata: Metadata = {
@@ -34,7 +34,7 @@ const YEARS = [
 ];
 
 export default function PrimaryPage() {
-  const levels = CLASS_LEVELS;
+  const levels = [...levelsForStage("lower_primary"), ...levelsForStage("upper_primary")];
   const subjects = getSubjects().filter((s) => s.levelIds.includes("lvl-p4"));
 
   return (

@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   ASSESSMENT_WEIGHTING,
   CLASS_LEVELS,
+  STAGES,
   LEVEL_POPULATION,
   LEVEL_SECTIONS,
   TEACHING_METHODS,
@@ -20,7 +21,7 @@ import { getSubjects } from "@/lib/school/data";
 export const metadata: Metadata = {
   title: "Academics",
   description:
-    "The El-Bethel International Academy curriculum: six class levels from Primary 1 to Primary 6, seventeen subjects and continuous assessment.",
+    "The El-Bethel International Academy curriculum: fourteen class levels from Creche to JSS 3, thirty subjects and continuous assessment.",
   alternates: { canonical: "/academics" },
 };
 
@@ -39,36 +40,22 @@ export default function AcademicsPage() {
       <PageHero
         eyebrow="Academics"
         title="A curriculum children can actually use"
-        lede="Six class levels, seventeen subjects and an assessment rhythm designed to catch a struggling child in week three — not at the end of term."
+        lede="Fourteen class levels from creche to JSS 3, thirty subjects and an assessment rhythm designed to catch a struggling child in week three — not at the end of term."
         breadcrumb={[{ label: "Home", href: "/" }, { label: "Academics", href: "/academics" }]}
       />
 
       <section className="eb-section">
         <div className="eb-container grid gap-6 lg:grid-cols-2">
-          {[
-            {
-              stage: "lower_primary" as const,
-              title: "Lower Primary",
-              href: "/academics/primary",
-              tone: "gold",
-              text: "Primary 1 to Primary 3. Structured literacy and numeracy, taught actively — the years where a reader and a mathematician are made.",
-            },
-            {
-              stage: "upper_primary" as const,
-              title: "Upper Primary",
-              href: "/academics/primary",
-              tone: "info",
-              text: "Primary 4 to Primary 6. Deeper science, reasoning, technology and the arts, with the study habits secondary school will demand.",
-            },
-          ].map((programme, i) => (
-            <Reveal key={programme.title} delay={i * 0.08}>
+          {STAGES.map((programme, i) => (
+            <Reveal key={programme.key} delay={i * 0.08}>
               <Card className="h-full gap-0 overflow-hidden p-0">
-                <ToneImage tone={programme.tone} seed={programme.title} label={programme.title} className="aspect-21/9" />
+                <ToneImage tone={programme.tone} seed={programme.name} label={programme.name} className="aspect-21/9" />
                 <CardContent className="p-7">
-                  <h2 className="font-heading text-2xl font-extrabold">{programme.title}</h2>
+                  <h2 className="font-heading text-2xl font-extrabold">{programme.name}</h2>
+                  <p className="text-xs font-bold tracking-wide text-muted-foreground uppercase">{programme.ages}</p>
                   <p className="mt-2 leading-relaxed text-muted-foreground">{programme.text}</p>
                   <div className="mt-5 flex flex-wrap gap-2">
-                    {CLASS_LEVELS.filter((l) => l.stage === programme.stage).map((level) => (
+                    {CLASS_LEVELS.filter((l) => l.stage === programme.key).map((level) => (
                       <Badge key={level.id} variant="secondary" className="h-7 px-3 font-bold">
                         {level.name}
                       </Badge>
@@ -114,7 +101,7 @@ export default function AcademicsPage() {
           <div>
             <SectionHeading
               eyebrow="Class structure"
-              title="Fifteen classes across six levels"
+              title="Twenty-nine classes across fourteen levels"
               lede="Sections are kept deliberately small. Our average class size is 24 pupils."
             />
             <div className="mt-8 overflow-hidden rounded-2xl border">

@@ -19,7 +19,7 @@ const STAGES = [
     stage: "Before you apply",
     items: [
       { title: "Explore the school", text: "Read about our academics, facilities and fees. Book a physical or virtual tour if you would like to see us first." },
-      { title: "Check availability", text: "Confirm the class you want is open. Primary 1 to Primary 4 are currently accepting applications." },
+      { title: "Check availability", text: "Every class — Creche, Pre-School, Nursery 1–3, Primary 1–6 and JSS 1–3 — is currently accepting applications, though spaces in some are limited." },
     ],
   },
   {

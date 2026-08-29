@@ -15,7 +15,7 @@ const nunito = Nunito({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SCHOOL.name} | Premium Primary School in Abuja`,
+    default: `${SCHOOL.name} | Creche, Primary & Junior Secondary School in Abuja`,
     template: `%s | ${SCHOOL.name}`,
   },
   description:
@@ -23,6 +23,9 @@ export const metadata: Metadata = {
   applicationName: SCHOOL.name,
   keywords: [
     "primary school Abuja",
+    "nursery school Abuja",
+    "creche Abuja",
+    "junior secondary school Abuja",
     "primary school Ushafa",
     "private school Ushafa",
     "El-Bethel International Academy",

@@ -13,7 +13,7 @@ import { formatDate } from "@/lib/school/format";
 export const metadata: Metadata = {
   title: "Careers",
   description:
-    "Teaching and support vacancies at El-Bethel International Academy, a private Primary School in Ushafa, Abuja.",
+    "Teaching and support vacancies at El-Bethel International Academy, a private creche, nursery, primary and junior secondary school in Ushafa, Abuja.",
   alternates: { canonical: "/careers" },
 };
 

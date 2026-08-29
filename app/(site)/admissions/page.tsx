@@ -13,6 +13,7 @@ import {
   ADMISSION_OPEN_LEVELS,
   APPLICATION_DOCUMENT_REQUIREMENTS,
   CLASS_LEVELS,
+  STAGE_LABELS,
   SCHOOL,
 } from "@/lib/school/config";
 import { getFaqs } from "@/lib/school/data";
@@ -21,7 +22,7 @@ import { money } from "@/lib/school/format";
 export const metadata: Metadata = {
   title: "Admissions",
   description:
-    "Admission to El-Bethel International Academy, Abuja is open for the 2026/2027 session — Primary 1 to Primary 4. Apply online in seven steps.",
+    "Admission to El-Bethel International Academy, Abuja is open for the 2026/2027 session — Creche, Pre-School, Nursery 1–3, Primary 1–6 and JSS 1–3. Apply online in seven steps.",
   alternates: { canonical: "/admissions" },
 };
 
@@ -44,7 +45,7 @@ export default function AdmissionsPage() {
       <PageHero
         eyebrow={`${SCHOOL.session} admission`}
         title="Admission is open"
-        lede="We are accepting applications for Primary 1 through Primary 4 for the 2026/2027 session. Limited spaces are available in some classes."
+        lede="Admission is open for every class — Creche, Pre-School, Nursery 1–3, Primary 1–6 and JSS 1–3 — for the 2026/2027 session. Limited spaces are available in some classes."
         breadcrumb={[{ label: "Home", href: "/" }, { label: "Admissions", href: "/admissions" }]}
       >
         <div className="flex flex-col gap-3 sm:flex-row">
@@ -77,7 +78,7 @@ export default function AdmissionsPage() {
                   <div>
                     <p className="font-heading text-base font-extrabold">{level.name}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {level.stage === "lower_primary" ? "Lower Primary" : "Upper Primary"}
+                      {STAGE_LABELS[level.stage]}
                     </p>
                   </div>
                   <StatusPill tone="success">Open</StatusPill>

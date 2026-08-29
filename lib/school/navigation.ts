@@ -38,7 +38,9 @@ export const PUBLIC_NAV: NavSection[] = [
     label: "Academics",
     href: "/academics",
     items: [
+      { label: "Creche, Pre-School & Nursery", href: "/academics/early-years", description: "Creche to Nursery 3.", icon: "Baby" },
       { label: "Primary School", href: "/academics/primary", description: "Primary 1 to Primary 6.", icon: "School" },
+      { label: "Junior Secondary", href: "/academics/junior-secondary", description: "JSS 1 to JSS 3.", icon: "GraduationCap" },
       { label: "Curriculum", href: "/academics/curriculum", description: "What your child learns, year by year.", icon: "BookOpen" },
       { label: "Subjects", href: "/academics/subjects", description: "Our full subject offering.", icon: "Library" },
       { label: "Learning Approach", href: "/academics/approach", description: "Child-centred and activity-based.", icon: "Lightbulb" },
@@ -59,7 +61,7 @@ export const PUBLIC_NAV: NavSection[] = [
     ],
     featured: {
       title: "2026/2027 admission is open",
-      text: "Primary 1 to Primary 4. Limited spaces are available in some classes.",
+      text: "Creche, Pre-School, Nursery, Primary and JSS 1–3. Limited spaces are available in some classes.",
       href: "/admissions/apply",
       cta: "Apply online",
     },

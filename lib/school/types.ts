@@ -35,13 +35,20 @@ export interface User {
   studentId?: ID;
 }
 
-export type StageKey = "lower_primary" | "upper_primary";
+export type StageKey =
+  | "early_years"
+  | "nursery"
+  | "lower_primary"
+  | "upper_primary"
+  | "junior_secondary";
 
 export interface ClassLevel {
   id: ID;
   name: string;
   stage: StageKey;
   order: number;
+  /** Typical age of a child entering this level, in years. */
+  entryAge: number;
 }
 
 export interface SchoolClass {

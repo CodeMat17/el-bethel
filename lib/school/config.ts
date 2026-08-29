@@ -4,12 +4,13 @@ import type {
   Facility,
   FeeCategory,
   Role,
+  StageKey,
 } from "./types";
 
 export const SCHOOL = {
   name: "El-Bethel International Academy",
   shortName: "EBIA",
-  type: "Private Primary School",
+  type: "Private Creche, Nursery, Primary & Junior Secondary School",
   city: "Abuja",
   state: "Federal Capital Territory",
   country: "Nigeria",
@@ -39,7 +40,7 @@ export const SCHOOL = {
 export const SITE_URL = "https://www.elbethel.edu.ng";
 
 export const VISION =
-  "To be a leading primary school recognised for academic excellence, character development and the holistic growth of every child.";
+  "To be a leading school — from creche to junior secondary — recognised for academic excellence, character development and the holistic growth of every child.";
 
 export const MISSION =
   "To provide a safe, stimulating and inclusive learning environment where every child is challenged to discover their potential, develop strong character and acquire the knowledge, skills and values necessary for lifelong success.";
@@ -102,53 +103,142 @@ export const HEADTEACHER_MESSAGE = [
   "At our school, we believe that education is not simply about filling young minds with information. It is about helping children discover who they are, what they can achieve and how they can contribute positively to the world around them.",
   "Every child who walks through our gates is unique. Our responsibility is to recognise that uniqueness, nurture it and provide the support and opportunities necessary for it to flourish.",
   "We combine strong academic foundations with creativity, technology, character development, sports and practical experiences. Most importantly, we believe that children learn best when they feel safe, valued, encouraged and inspired.",
-  "We invite you to explore our school, meet our community and discover why El-Bethel International Academy is becoming one of Abuja's trusted destinations for quality primary education.",
+  "We invite you to explore our school, meet our community and discover why El-Bethel International Academy is becoming one of Abuja's trusted destinations for quality education, from creche through junior secondary school.",
 ];
 
 export const SCHOOL_STATS = [
-  { key: "pupils", label: "Pupils Enrolled", value: 390, suffix: "" },
-  { key: "teachers", label: "Teaching Staff", value: 34, suffix: "" },
-  { key: "classes", label: "Classes", value: 15, suffix: "" },
+  { key: "pupils", label: "Pupils Enrolled", value: 688, suffix: "" },
+  { key: "teachers", label: "Teaching Staff", value: 58, suffix: "" },
+  { key: "classes", label: "Classes", value: 29, suffix: "" },
+  { key: "levels", label: "Class Levels", value: 14, suffix: "" },
   { key: "clubs", label: "Clubs & Activities", value: 16, suffix: "" },
   { key: "classSize", label: "Average Class Size", value: 24, suffix: "" },
   { key: "ratio", label: "Pupils per Teacher", value: 12, suffix: ":1" },
   { key: "events", label: "Annual School Events", value: 30, suffix: "+" },
 ];
 
-export const CLASS_LEVELS: ClassLevel[] = [
-  { id: "lvl-p1", name: "Primary 1", stage: "lower_primary", order: 1 },
-  { id: "lvl-p2", name: "Primary 2", stage: "lower_primary", order: 2 },
-  { id: "lvl-p3", name: "Primary 3", stage: "lower_primary", order: 3 },
-  { id: "lvl-p4", name: "Primary 4", stage: "upper_primary", order: 4 },
-  { id: "lvl-p5", name: "Primary 5", stage: "upper_primary", order: 5 },
-  { id: "lvl-p6", name: "Primary 6", stage: "upper_primary", order: 6 },
+export const STAGES: {
+  key: StageKey;
+  name: string;
+  shortName: string;
+  href: string;
+  tone: "gold" | "info" | "success" | "neutral";
+  ages: string;
+  text: string;
+}[] = [
+  {
+    key: "early_years",
+    name: "Creche & Pre-School",
+    shortName: "Early Years",
+    href: "/academics/early-years",
+    tone: "success",
+    ages: "6 months – 3 years",
+    text: "A warm, safe first step away from home — care, play, language and the routines that make a confident learner.",
+  },
+  {
+    key: "nursery",
+    name: "Nursery",
+    shortName: "Nursery",
+    href: "/academics/early-years",
+    tone: "gold",
+    ages: "3 – 6 years",
+    text: "Nursery 1 to Nursery 3. Phonics, number work, rhymes and discovery play — the years reading is born in.",
+  },
+  {
+    key: "lower_primary",
+    name: "Lower Primary",
+    shortName: "Lower Primary",
+    href: "/academics/primary",
+    tone: "gold",
+    ages: "6 – 9 years",
+    text: "Primary 1 to Primary 3. Structured literacy and numeracy, taught actively — the years where a reader and a mathematician are made.",
+  },
+  {
+    key: "upper_primary",
+    name: "Upper Primary",
+    shortName: "Upper Primary",
+    href: "/academics/primary",
+    tone: "info",
+    ages: "9 – 12 years",
+    text: "Primary 4 to Primary 6. Deeper science, reasoning, technology and the arts, with the study habits secondary school will demand.",
+  },
+  {
+    key: "junior_secondary",
+    name: "Junior Secondary",
+    shortName: "Junior Secondary",
+    href: "/academics/junior-secondary",
+    tone: "info",
+    ages: "12 – 15 years",
+    text: "JSS 1 to JSS 3. The full junior secondary curriculum, subject specialists and the study discipline the BECE demands.",
+  },
 ];
 
-/** Sections per level, per the specification's sample class structure. */
+export const STAGE_LABELS: Record<StageKey, string> = {
+  early_years: "Creche & Pre-School",
+  nursery: "Nursery",
+  lower_primary: "Lower Primary",
+  upper_primary: "Upper Primary",
+  junior_secondary: "Junior Secondary",
+};
+
+export const CLASS_LEVELS: ClassLevel[] = [
+  { id: "lvl-cre", name: "Creche", stage: "early_years", order: 1, entryAge: 1 },
+  { id: "lvl-pre", name: "Pre-School", stage: "early_years", order: 2, entryAge: 2 },
+  { id: "lvl-n1", name: "Nursery 1", stage: "nursery", order: 3, entryAge: 3 },
+  { id: "lvl-n2", name: "Nursery 2", stage: "nursery", order: 4, entryAge: 4 },
+  { id: "lvl-n3", name: "Nursery 3", stage: "nursery", order: 5, entryAge: 5 },
+  { id: "lvl-p1", name: "Primary 1", stage: "lower_primary", order: 6, entryAge: 6 },
+  { id: "lvl-p2", name: "Primary 2", stage: "lower_primary", order: 7, entryAge: 7 },
+  { id: "lvl-p3", name: "Primary 3", stage: "lower_primary", order: 8, entryAge: 8 },
+  { id: "lvl-p4", name: "Primary 4", stage: "upper_primary", order: 9, entryAge: 9 },
+  { id: "lvl-p5", name: "Primary 5", stage: "upper_primary", order: 10, entryAge: 10 },
+  { id: "lvl-p6", name: "Primary 6", stage: "upper_primary", order: 11, entryAge: 11 },
+  { id: "lvl-j1", name: "JSS 1", stage: "junior_secondary", order: 12, entryAge: 12 },
+  { id: "lvl-j2", name: "JSS 2", stage: "junior_secondary", order: 13, entryAge: 13 },
+  { id: "lvl-j3", name: "JSS 3", stage: "junior_secondary", order: 14, entryAge: 14 },
+];
+
+export function levelsForStage(stage: StageKey): ClassLevel[] {
+  return CLASS_LEVELS.filter((l) => l.stage === stage);
+}
+
+/** Sections per level. */
 export const LEVEL_SECTIONS: Record<string, string[]> = {
+  "lvl-cre": ["A"],
+  "lvl-pre": ["A"],
+  "lvl-n1": ["A", "B"],
+  "lvl-n2": ["A", "B"],
+  "lvl-n3": ["A", "B"],
   "lvl-p1": ["A", "B", "C"],
   "lvl-p2": ["A", "B", "C"],
   "lvl-p3": ["A", "B", "C"],
   "lvl-p4": ["A", "B"],
   "lvl-p5": ["A", "B"],
   "lvl-p6": ["A", "B"],
+  "lvl-j1": ["A", "B"],
+  "lvl-j2": ["A", "B"],
+  "lvl-j3": ["A", "B"],
 };
 
 export const LEVEL_POPULATION: Record<string, number> = {
+  "lvl-cre": 18,
+  "lvl-pre": 22,
+  "lvl-n1": 40,
+  "lvl-n2": 42,
+  "lvl-n3": 44,
   "lvl-p1": 72,
   "lvl-p2": 75,
   "lvl-p3": 78,
   "lvl-p4": 58,
   "lvl-p5": 55,
   "lvl-p6": 52,
+  "lvl-j1": 48,
+  "lvl-j2": 44,
+  "lvl-j3": 40,
 };
 
-export const ADMISSION_OPEN_LEVELS = [
-  "lvl-p1",
-  "lvl-p2",
-  "lvl-p3",
-  "lvl-p4",
-];
+/** Admission is open for every class level this session. */
+export const ADMISSION_OPEN_LEVELS: string[] = CLASS_LEVELS.map((l) => l.id);
 
 export const TEACHING_METHODS = [
   "Classroom instruction",
@@ -351,6 +441,26 @@ export const FEE_STRUCTURE: {
   lines: { category: FeeCategory; label: string; amount: number }[];
 }[] = [
   {
+    band: "Creche & Pre-School",
+    levelIds: ["lvl-cre", "lvl-pre"],
+    lines: [
+      { category: "tuition", label: "Tuition", amount: 200000 },
+      { category: "learning_resources", label: "Learning Resources", amount: 25000 },
+      { category: "activities", label: "Activities", amount: 15000 },
+      { category: "technology", label: "Technology", amount: 8000 },
+    ],
+  },
+  {
+    band: "Nursery 1 – Nursery 3",
+    levelIds: ["lvl-n1", "lvl-n2", "lvl-n3"],
+    lines: [
+      { category: "tuition", label: "Tuition", amount: 240000 },
+      { category: "learning_resources", label: "Learning Resources", amount: 30000 },
+      { category: "activities", label: "Activities", amount: 18000 },
+      { category: "technology", label: "Technology", amount: 12000 },
+    ],
+  },
+  {
     band: "Primary 1 – Primary 3",
     levelIds: ["lvl-p1", "lvl-p2", "lvl-p3"],
     lines: [
@@ -368,6 +478,16 @@ export const FEE_STRUCTURE: {
       { category: "learning_resources", label: "Learning Resources", amount: 40000 },
       { category: "activities", label: "Activities", amount: 20000 },
       { category: "technology", label: "Technology", amount: 15000 },
+    ],
+  },
+  {
+    band: "JSS 1 – JSS 3",
+    levelIds: ["lvl-j1", "lvl-j2", "lvl-j3"],
+    lines: [
+      { category: "tuition", label: "Tuition", amount: 360000 },
+      { category: "learning_resources", label: "Learning Resources", amount: 55000 },
+      { category: "activities", label: "Activities", amount: 25000 },
+      { category: "technology", label: "Technology", amount: 20000 },
     ],
   },
 ];

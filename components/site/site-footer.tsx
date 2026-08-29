@@ -69,7 +69,7 @@ export function SiteFooter() {
           <div>
             <Brand className="[&_span]:text-navy-foreground" />
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-navy-foreground/70">
-              A private Primary School in Abuja providing quality, child-centred education
+              A private creche, nursery, primary and junior secondary school in Abuja providing quality, child-centred education
               in a safe, stimulating and technology-enabled environment.
             </p>
 

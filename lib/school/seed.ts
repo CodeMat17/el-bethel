@@ -165,28 +165,52 @@ const ACTIVE_TERM_ID = "term-2026-1";
 /* -------------------------------------------------------------------------- */
 
 const ALL_LEVELS = CLASS_LEVELS.map((l) => l.id);
-const PRIMARY_LEVELS = ALL_LEVELS;
+const EARLY_YEARS = ["lvl-cre", "lvl-pre"];
+const NURSERY_LEVELS = ["lvl-n1", "lvl-n2", "lvl-n3"];
+const PRIMARY_LEVELS = ["lvl-p1", "lvl-p2", "lvl-p3", "lvl-p4", "lvl-p5", "lvl-p6"];
 const UPPER_PRIMARY = ["lvl-p4", "lvl-p5", "lvl-p6"];
+const JSS_LEVELS = ["lvl-j1", "lvl-j2", "lvl-j3"];
+const PRIMARY_AND_JSS = [...PRIMARY_LEVELS, ...JSS_LEVELS];
+const NURSERY_AND_UP = [...NURSERY_LEVELS, ...PRIMARY_LEVELS, ...JSS_LEVELS];
 
 const subjects: Subject[] = [
-  { id: "sub-eng", name: "English Studies", code: "ENG", group: "core", levelIds: ALL_LEVELS },
-  { id: "sub-mth", name: "Mathematics", code: "MTH", group: "core", levelIds: ALL_LEVELS },
-  { id: "sub-bsc", name: "Basic Science", code: "BSC", group: "core", levelIds: PRIMARY_LEVELS },
-  { id: "sub-sst", name: "Social Studies", code: "SST", group: "core", levelIds: PRIMARY_LEVELS },
-  { id: "sub-civ", name: "Civic Education", code: "CIV", group: "core", levelIds: PRIMARY_LEVELS },
-  { id: "sub-cmp", name: "Computer Studies", code: "CMP", group: "additional", levelIds: ALL_LEVELS },
+  // Creche and Pre-School
+  { id: "sub-play", name: "Play & Discovery", code: "PLY", group: "core", levelIds: EARLY_YEARS },
+  { id: "sub-lang", name: "Language & Communication", code: "LNG", group: "core", levelIds: EARLY_YEARS },
+  { id: "sub-motor", name: "Motor Skills & Movement", code: "MOT", group: "core", levelIds: EARLY_YEARS },
+  { id: "sub-hab", name: "Health & Self-Help Habits", code: "HAB", group: "additional", levelIds: [...EARLY_YEARS, ...NURSERY_LEVELS] },
+
+  // Nursery
+  { id: "sub-lit", name: "Literacy & Rhymes", code: "LIT", group: "core", levelIds: NURSERY_LEVELS },
+  { id: "sub-num", name: "Number Work", code: "NUM", group: "core", levelIds: NURSERY_LEVELS },
+  { id: "sub-pho", name: "Phonics", code: "PHO", group: "core", levelIds: NURSERY_LEVELS },
+  { id: "sub-env", name: "Basic Science & Environment", code: "ENV", group: "core", levelIds: NURSERY_LEVELS },
+
+  // Primary and Junior Secondary
+  { id: "sub-eng", name: "English Studies", code: "ENG", group: "core", levelIds: PRIMARY_AND_JSS },
+  { id: "sub-mth", name: "Mathematics", code: "MTH", group: "core", levelIds: PRIMARY_AND_JSS },
+  { id: "sub-bsc", name: "Basic Science", code: "BSC", group: "core", levelIds: PRIMARY_AND_JSS },
+  { id: "sub-sst", name: "Social Studies", code: "SST", group: "core", levelIds: PRIMARY_AND_JSS },
+  { id: "sub-civ", name: "Civic Education", code: "CIV", group: "core", levelIds: PRIMARY_AND_JSS },
+  { id: "sub-cmp", name: "Computer Studies", code: "CMP", group: "additional", levelIds: NURSERY_AND_UP },
   { id: "sub-qr", name: "Quantitative Reasoning", code: "QNR", group: "additional", levelIds: PRIMARY_LEVELS },
   { id: "sub-vr", name: "Verbal Reasoning", code: "VBR", group: "additional", levelIds: PRIMARY_LEVELS },
-  { id: "sub-fre", name: "French", code: "FRE", group: "additional", levelIds: PRIMARY_LEVELS },
-  { id: "sub-crs", name: "Christian Religious Studies", code: "CRS", group: "additional", levelIds: PRIMARY_LEVELS },
-  { id: "sub-irs", name: "Islamic Religious Studies", code: "IRS", group: "additional", levelIds: PRIMARY_LEVELS },
-  { id: "sub-art", name: "Creative Arts", code: "ART", group: "additional", levelIds: ALL_LEVELS },
-  { id: "sub-mus", name: "Music", code: "MUS", group: "additional", levelIds: ALL_LEVELS },
-  { id: "sub-phe", name: "Physical & Health Education", code: "PHE", group: "additional", levelIds: ALL_LEVELS },
-  { id: "sub-hec", name: "Home Economics", code: "HEC", group: "additional", levelIds: UPPER_PRIMARY },
-  { id: "sub-agr", name: "Agricultural Science", code: "AGR", group: "additional", levelIds: UPPER_PRIMARY },
-  { id: "sub-lit", name: "Literacy & Rhymes", code: "LIT", group: "core", levelIds: ["lvl-n1", "lvl-n2", "lvl-n3"] },
-  { id: "sub-num", name: "Number Work", code: "NUM", group: "core", levelIds: ["lvl-n1", "lvl-n2", "lvl-n3"] },
+  { id: "sub-fre", name: "French", code: "FRE", group: "additional", levelIds: PRIMARY_AND_JSS },
+  { id: "sub-crs", name: "Christian Religious Studies", code: "CRS", group: "additional", levelIds: PRIMARY_AND_JSS },
+  { id: "sub-irs", name: "Islamic Religious Studies", code: "IRS", group: "additional", levelIds: PRIMARY_AND_JSS },
+  { id: "sub-art", name: "Creative Arts", code: "ART", group: "additional", levelIds: NURSERY_AND_UP },
+  { id: "sub-mus", name: "Music", code: "MUS", group: "additional", levelIds: NURSERY_AND_UP },
+  { id: "sub-phe", name: "Physical & Health Education", code: "PHE", group: "additional", levelIds: NURSERY_AND_UP },
+  { id: "sub-hec", name: "Home Economics", code: "HEC", group: "additional", levelIds: [...UPPER_PRIMARY, ...JSS_LEVELS] },
+  { id: "sub-agr", name: "Agricultural Science", code: "AGR", group: "additional", levelIds: [...UPPER_PRIMARY, ...JSS_LEVELS] },
+
+  // Junior Secondary only
+  { id: "sub-bte", name: "Basic Technology", code: "BTE", group: "core", levelIds: JSS_LEVELS },
+  { id: "sub-bus", name: "Business Studies", code: "BUS", group: "core", levelIds: JSS_LEVELS },
+  { id: "sub-nva", name: "National Values Education", code: "NVE", group: "core", levelIds: JSS_LEVELS },
+  { id: "sub-lng", name: "Nigerian Language (Hausa)", code: "HAU", group: "additional", levelIds: JSS_LEVELS },
+  { id: "sub-cca", name: "Cultural & Creative Arts", code: "CCA", group: "additional", levelIds: JSS_LEVELS },
+  { id: "sub-lir", name: "Literature-in-English", code: "LIR", group: "additional", levelIds: JSS_LEVELS },
 ];
 
 /** Subjects a class actually studies (assessed subjects, capped for report cards). */
@@ -204,13 +228,22 @@ const NAMED_STAFF: {
 }[] = [
   { title: "Dr.", firstName: "Amaka", lastName: "Okafor", position: "Headteacher", department: "Leadership", subjectIds: [], featured: true },
   { title: "Mr.", firstName: "Ifeanyi", lastName: "Adeyemi", position: "Deputy Headteacher (Academics)", department: "Leadership", subjectIds: ["sub-mth"], featured: true },
-  { title: "Mrs.", firstName: "Zainab", lastName: "Lawal", position: "Head of Lower Primary", department: "Leadership", subjectIds: ["sub-lit"], featured: true },
+  { title: "Mrs.", firstName: "Zainab", lastName: "Lawal", position: "Head of Early Years", department: "Leadership", subjectIds: ["sub-lit"], featured: true },
+  { title: "Mr.", firstName: "Emeka", lastName: "Nnamdi", position: "Head of Junior Secondary", department: "Leadership", subjectIds: ["sub-bsc"], featured: true },
+  { title: "Miss", firstName: "Blessing", lastName: "Ogun", position: "Creche Care Lead", department: "Early Years", className: "Creche", subjectIds: ["sub-play", "sub-motor"], featured: true },
+  { title: "Mrs.", firstName: "Ngozi", lastName: "Uche", position: "Pre-School Teacher", department: "Early Years", className: "Pre-School", subjectIds: ["sub-play", "sub-lang"], featured: true },
+  { title: "Miss", firstName: "Rukayat", lastName: "Salami", position: "Class Teacher", department: "Nursery", className: "Nursery 1A", subjectIds: ["sub-lit", "sub-num"], featured: true },
+  { title: "Mrs.", firstName: "Joy", lastName: "Aliyu", position: "Class Teacher", department: "Nursery", className: "Nursery 2A", subjectIds: ["sub-pho", "sub-num"], featured: true },
+  { title: "Mrs.", firstName: "Patience", lastName: "Etim", position: "Class Teacher", department: "Nursery", className: "Nursery 3A", subjectIds: ["sub-lit", "sub-env"], featured: true },
   { title: "Mrs.", firstName: "Grace", lastName: "Eze", position: "Class Teacher", department: "Lower Primary", className: "Primary 1A", subjectIds: ["sub-eng", "sub-mth"], featured: true },
   { title: "Mr.", firstName: "Daniel", lastName: "Ibrahim", position: "Class Teacher", department: "Lower Primary", className: "Primary 2A", subjectIds: ["sub-eng", "sub-mth"], featured: true },
   { title: "Mrs.", firstName: "Sarah", lastName: "Adeyemi", position: "Class Teacher", department: "Lower Primary", className: "Primary 3A", subjectIds: ["sub-eng", "sub-bsc"], featured: true },
   { title: "Miss", firstName: "Chiamaka", lastName: "Obi", position: "Class Teacher", department: "Upper Primary", className: "Primary 4A", subjectIds: ["sub-eng", "sub-sst"], featured: true },
   { title: "Mr.", firstName: "David", lastName: "Musa", position: "Class Teacher", department: "Upper Primary", className: "Primary 5A", subjectIds: ["sub-bsc", "sub-agr"], featured: true },
   { title: "Mrs.", firstName: "Helen", lastName: "Okoro", position: "Class Teacher", department: "Upper Primary", className: "Primary 6A", subjectIds: ["sub-mth", "sub-qr"], featured: true },
+  { title: "Mr.", firstName: "Kelechi", lastName: "Anyanwu", position: "Form Teacher", department: "Junior Secondary", className: "JSS 1A", subjectIds: ["sub-mth", "sub-bte"], featured: true },
+  { title: "Mrs.", firstName: "Fatima", lastName: "Sani", position: "Form Teacher", department: "Junior Secondary", className: "JSS 2A", subjectIds: ["sub-eng", "sub-lir"], featured: true },
+  { title: "Mr.", firstName: "Peter", lastName: "Danjuma", position: "Form Teacher", department: "Junior Secondary", className: "JSS 3A", subjectIds: ["sub-bsc", "sub-bus"], featured: true },
   { title: "Mr.", firstName: "Samuel", lastName: "Yusuf", position: "Mathematics Teacher", department: "Mathematics", subjectIds: ["sub-mth", "sub-qr"], featured: true },
   { title: "Mrs.", firstName: "Esther", lastName: "Bello", position: "English Teacher", department: "Languages", subjectIds: ["sub-eng", "sub-vr"], featured: true },
   { title: "Mr.", firstName: "Michael", lastName: "Nwosu", position: "ICT Teacher", department: "Technology", subjectIds: ["sub-cmp"], featured: true },
@@ -222,6 +255,7 @@ const NAMED_STAFF: {
 const QUALIFICATIONS = [
   "B.Ed Primary Education", "B.A Education (English)", "B.Sc Mathematics", "PGDE",
   "M.Ed Curriculum Studies", "NCE Primary Education", "B.Sc Computer Science", "B.A Education (History)",
+  "NCE Early Childhood Education", "B.Ed Early Childhood & Care", "B.Sc Integrated Science", "B.Sc Business Education",
 ];
 
 const teachers: Teacher[] = [];
@@ -231,12 +265,12 @@ const classes: SchoolClass[] = [];
 const classShells: { id: string; levelId: string; name: string; section: string }[] = [];
 for (const level of CLASS_LEVELS) {
   for (const section of LEVEL_SECTIONS[level.id]) {
-    const name = `${level.name}${section}`;
+    const name = LEVEL_SECTIONS[level.id].length > 1 ? `${level.name}${section}` : level.name;
     classShells.push({ id: `cls-${level.id.replace("lvl-", "")}${section.toLowerCase()}`, levelId: level.id, name, section });
   }
 }
 
-for (let i = 0; i < 34; i++) {
+for (let i = 0; i < 58; i++) {
   const named = NAMED_STAFF[i];
   const isFemale = named ? ["Mrs.", "Miss", "Dr.", "Mme."].includes(named.title) : chance(0.62);
   const firstName = named ? named.firstName : pick(isFemale ? FEMALE_FIRST : MALE_FIRST);
@@ -251,7 +285,7 @@ for (let i = 0; i < 34; i++) {
     lastName,
     title,
     position: named ? named.position : pick(["Class Teacher", "Subject Teacher", "Assistant Teacher", "Learning Support Teacher"]),
-    department: named ? named.department : pick(["Lower Primary", "Upper Primary", "Languages", "Mathematics", "Sciences", "Creative Arts", "Sports", "Technology"]),
+    department: named ? named.department : pick(["Early Years", "Nursery", "Lower Primary", "Upper Primary", "Junior Secondary", "Languages", "Mathematics", "Sciences", "Creative Arts", "Sports", "Technology"]),
     email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@elbethel.edu.ng`,
     phone: phone(),
     qualifications: [pick(QUALIFICATIONS), ...(chance(0.4) ? [pick(QUALIFICATIONS)] : [])],
@@ -273,10 +307,10 @@ NAMED_STAFF.forEach((s, i) => {
   if (s.className) namedClassTeacher.set(s.className, `tch-${String(i + 1).padStart(3, "0")}`);
 });
 
-let rotatingTeacher = 15;
+let rotatingTeacher = NAMED_STAFF.length + 1;
 for (const shell of classShells) {
   const explicit = namedClassTeacher.get(shell.name);
-  const teacherId = explicit ?? `tch-${String((rotatingTeacher++ % 34) + 1).padStart(3, "0")}`;
+  const teacherId = explicit ?? `tch-${String((rotatingTeacher++ % 58) + 1).padStart(3, "0")}`;
   const teacher = teachers.find((t) => t.id === teacherId);
   if (teacher) {
     teacher.isClassTeacher = true;
@@ -366,7 +400,7 @@ function makeStudent(classId: string, lastName: string, parentIds: string[], for
   const firstName = forced?.firstName ?? pick(gender === "Male" ? MALE_FIRST : FEMALE_FIRST);
   const cls = classes.find((c) => c.id === classId);
   const level = CLASS_LEVELS.find((l) => l.id === cls?.levelId);
-  const age = 2 + (level?.order ?? 1);
+  const age = level?.entryAge ?? 6;
   const student: Student = {
     id: forced?.id ?? `std-${String(studentCounter).padStart(4, "0")}`,
     studentNo: forced?.studentNo ?? `EIA-2026-${String(studentCounter).padStart(5, "0")}`,
@@ -505,7 +539,11 @@ const ASSIGNMENT_TEMPLATES: { subjectId: string; title: string; topic: string; i
 const assignments: Assignment[] = [];
 const submissions: Submission[] = [];
 
-const TEACHING_CLASSES = classes.filter((c) => c.levelId.startsWith("lvl-p"));
+// Assignments, materials and quizzes run from Primary 1 upwards; the early years
+// are assessed through observation rather than set work.
+const TEACHING_CLASSES = classes.filter(
+  (c) => c.levelId.startsWith("lvl-p") || c.levelId.startsWith("lvl-j"),
+);
 let assignmentCounter = 0;
 
 for (const cls of TEACHING_CLASSES) {
@@ -910,7 +948,7 @@ for (let i = 0; i < 34; i++) {
   const firstName = pick(gender === "Male" ? MALE_FIRST : FEMALE_FIRST);
   const lastName = pick(SURNAMES);
   const status = i === 0 ? "assessment_scheduled" : pick(APP_STATUSES);
-  const levelId = pick(["lvl-n1", "lvl-n2", "lvl-n3", "lvl-p1", "lvl-p2", "lvl-p3", "lvl-p4"]);
+  const levelId = pick(CLASS_LEVELS.map((l) => l.id));
   const createdAt = addDays(DEMO_TODAY, -int(4, 70));
   const guardianFirst = pick(chance(0.5) ? FEMALE_FIRST : MALE_FIRST);
   const email = i === 0 ? "applicant@example.com" : `${guardianFirst.toLowerCase()}.${lastName.toLowerCase()}${i}@example.com`;
@@ -1251,11 +1289,11 @@ const testimonials: Testimonial[] = [
 ];
 
 const FAQ_DEFS: { category: string; question: string; answer: string }[] = [
-  { category: "Admissions", question: "When does admission open for the 2026/2027 session?", answer: "Admission for the 2026/2027 session is currently OPEN for Primary 1 to Primary 4. Limited spaces are available in some classes, so early application is encouraged." },
+  { category: "Admissions", question: "When does admission open for the 2026/2027 session?", answer: "Admission for the 2026/2027 session is currently OPEN for every class — Creche, Pre-School, Nursery 1 to Nursery 3, Primary 1 to Primary 6 and JSS 1 to JSS 3. Limited spaces are available in some classes, so early application is encouraged." },
   { category: "Admissions", question: "How do I apply?", answer: "Create a parent account, complete the online application form, upload the required documents, pay the application fee and submit. You will receive an application number to track your progress." },
-  { category: "Admissions", question: "Is there an entrance assessment?", answer: "Yes. All applicants take a short, age-appropriate assessment. Primary 1 applicants sit a gentle readiness assessment covering early literacy and numeracy." },
+  { category: "Admissions", question: "Is there an entrance assessment?", answer: "Yes, from Nursery 1 upwards. All applicants take a short, age-appropriate assessment: a gentle readiness activity in the nursery and early primary years, and written English and mathematics papers for Primary 4 and above. Creche and Pre-School places need only a settling visit." },
   { category: "Admissions", question: "What documents are required?", answer: "A birth certificate or declaration of age, a passport photograph, medical information and parent identification are required. A previous school report and transfer document are needed where applicable." },
-  { category: "Fees", question: "What are the school fees?", answer: "Fees range from ₦350,000 per term in Primary 1 to 3 to ₦375,000 per term in Primary 4 to 6, covering tuition, learning resources, activities and technology. Transport and meals are optional extras." },
+  { category: "Fees", question: "What are the school fees?", answer: "Fees range from ₦248,000 per term in Creche and Pre-School to ₦460,000 per term in JSS 1 to 3, covering tuition, learning resources, activities and technology. Transport and meals are optional extras." },
   { category: "Fees", question: "Can fees be paid in instalments?", answer: "Yes. Please contact the school accountant before the start of term to agree a payment plan. Payment records and receipts are always available in the Parent Portal." },
   { category: "Fees", question: "How do I get a receipt?", answer: "Receipts are generated automatically once a payment is verified and can be downloaded from the Fees section of the Parent Portal." },
   { category: "Classes", question: "How large are your classes?", answer: "Our average class size is 24 pupils, with a pupil-to-teacher ratio of 12:1. Every class also has a class teacher who knows each child personally." },
@@ -1400,7 +1438,7 @@ const tourBookings: TourBooking[] = Array.from({ length: 9 }, (_, i) => {
     preferredDate: dayKey(addDays(DEMO_TODAY, int(2, 20))),
     preferredTime: pick(["09:00", "10:00", "11:00", "12:00"]),
     visitors: int(1, 4),
-    intendedLevelId: pick(["lvl-n1", "lvl-n2", "lvl-p1", "lvl-p2", "lvl-p3"]),
+    intendedLevelId: pick(CLASS_LEVELS.map((l) => l.id)),
     mode: pick(["physical", "virtual", "consultation"] as const),
     status: pick(["requested", "confirmed", "completed"] as const),
     createdAt: iso(addDays(DEMO_TODAY, -int(1, 14))),

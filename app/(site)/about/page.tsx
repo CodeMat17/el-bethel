@@ -12,7 +12,7 @@ import { CORE_VALUES, MISSION, SCHOOL, SCHOOL_STATS, VISION } from "@/lib/school
 export const metadata: Metadata = {
   title: "Our Story",
   description:
-    "El-Bethel International Academy is a private Primary School in Ushafa, Abuja, built around how children actually learn.",
+    "El-Bethel International Academy is a private creche, nursery, primary and junior secondary school in Ushafa, Abuja, built around how children actually learn.",
   alternates: { canonical: "/about" },
 };
 
@@ -22,7 +22,7 @@ const TIMELINE = [
   { label: "Innovation", title: "ICT & Innovation Lab", text: "We opened a dedicated lab and introduced coding and robotics from Primary 3 upwards." },
   { label: "Going digital", title: "Digital classrooms", text: "Every class gained a digital classroom, giving parents visibility of assignments, attendance and results." },
   { label: "Growth", title: "Campus expansion", text: "New science laboratory, expanded library and a refurbished creative arts studio." },
-  { label: "Today", title: "390 pupils, 34 teachers", text: "Fifteen classes across six levels, with a pupil-to-teacher ratio of twelve to one." },
+  { label: "Today", title: "688 pupils, 58 teachers", text: "Twenty-nine classes from creche to JSS 3, with a pupil-to-teacher ratio of twelve to one." },
 ];
 
 export default function AboutPage() {
@@ -31,7 +31,7 @@ export default function AboutPage() {
       <PageHero
         eyebrow="About us"
         title="A school built around how children actually learn"
-        lede={`Based in Ushafa, Abuja, ${SCHOOL.name} has grown from two classrooms into a community of 390 pupils — without ever losing sight of the individual child.`}
+        lede={`Based in Ushafa, Abuja, ${SCHOOL.name} has grown from two classrooms into a community of 688 pupils — without ever losing sight of the individual child.`}
         breadcrumb={[{ label: "Home", href: "/" }, { label: "About", href: "/about" }]}
       />
 
@@ -51,7 +51,8 @@ export default function AboutPage() {
               </p>
               <p>
                 That premise has not changed, but the school around it has. We now
-                teach six class levels across fifteen classes, with a science laboratory, an ICT and
+                teach fourteen class levels across twenty-nine classes — creche, pre-school, nursery,
+                primary and junior secondary — with a science laboratory, an ICT and
                 innovation lab, a library, a creative arts studio and full sporting facilities.
               </p>
               <p>

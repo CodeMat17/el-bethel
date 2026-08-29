@@ -64,7 +64,7 @@ export default async function AdminAdmissionsPage({ searchParams }: PageProps<"/
         <StatCard
           label="Classes open"
           value={ADMISSION_OPEN_LEVELS.length}
-          hint="Primary 1 to Primary 4"
+          hint="Every class level"
           icon="School"
           tone="gold"
         />

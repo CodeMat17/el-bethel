@@ -19,16 +19,19 @@ export const metadata: Metadata = {
 const DOC_NOTES: Record<string, string> = {
   birth_certificate: "A national birth certificate or a sworn declaration of age. Used to confirm the correct class placement.",
   passport: "A recent, clear photograph on a plain background. Used for the pupil record and identification card.",
-  school_report: "The most recent report card from your child's current school. Required for Primary 1 and above where the child has been in school.",
+  school_report: "The most recent report card from your child's current school. Required for Nursery 1 and above where the child has been in school.",
   transfer: "A transfer letter or certificate from the previous school, where applicable.",
   medical: "Immunisation record, blood group, allergies and any condition our school nurse should know about.",
   guardian_id: "A national identity card, international passport, driver's licence or voter's card for the parent or guardian.",
   other: "Anything else you would like the admissions team to consider — for example an educational psychologist's report.",
 };
 
-const AGE_GUIDE = CLASS_LEVELS.map((level, i) => ({
+const AGE_GUIDE = CLASS_LEVELS.map((level) => ({
   level: level.name,
-  age: `${2 + i} – ${3 + i} years`,
+  age:
+    level.id === "lvl-cre"
+      ? "6 months – 2 years"
+      : `${level.entryAge} – ${level.entryAge + 1} years`,
 }));
 
 export default function RequirementsPage() {

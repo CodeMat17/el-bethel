@@ -8,11 +8,6 @@ const nextConfig: NextConfig = {
     // Enables the `unauthorized()` and `forbidden()` server guards used by the portals.
     authInterrupts: true,
   },
-  async redirects() {
-    return [
-      { source: "/academics/early-years", destination: "/academics/primary", permanent: true },
-    ];
-  },
   async headers() {
     return [
       {

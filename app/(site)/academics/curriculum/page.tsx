@@ -15,11 +15,36 @@ import { formatDate } from "@/lib/school/format";
 export const metadata: Metadata = {
   title: "Curriculum",
   description:
-    "The El-Bethel International Academy curriculum — the Nigerian national curriculum, enriched and sequenced from Primary 1 to Primary 6.",
+    "The El-Bethel International Academy curriculum — the Nigerian national curriculum, enriched and sequenced from Creche and Nursery through Primary and JSS 1 to JSS 3.",
   alternates: { canonical: "/academics/curriculum" },
 };
 
 const YEAR_DETAIL: Record<string, { english: string; maths: string; wider: string }> = {
+  Creche: {
+    english: "Songs, naming games and one-word to two-word talk with a familiar adult.",
+    maths: "Sorting, stacking, counting to five in play and daily routine.",
+    wider: "Care routines, sensory play, gross motor movement, settling and separation.",
+  },
+  "Pre-School": {
+    english: "Listening and speaking in short sentences, rhymes, letter sounds by ear.",
+    maths: "Counting to ten, matching, shapes and colours, one-to-one correspondence.",
+    wider: "Self-help habits, sharing and turn-taking, painting, outdoor play.",
+  },
+  "Nursery 1": {
+    english: "Phonics sounds a–z, letter formation, picture talk and story time.",
+    maths: "Number recognition to 20, counting objects, patterns and shapes.",
+    wider: "My body and my family, colours in art, simple songs, first computer play.",
+  },
+  "Nursery 2": {
+    english: "Blending simple words, tracing and writing letters, sight words.",
+    maths: "Writing numerals to 50, more and less, simple addition with objects.",
+    wider: "Plants and animals around us, rhythm and movement, mouse and keyboard skills.",
+  },
+  "Nursery 3": {
+    english: "Reading three-letter words, first sentences, handwriting on lines.",
+    maths: "Numbers to 100, addition and subtraction to 10, days and months.",
+    wider: "Weather and seasons, our community, drawing and craft, Primary 1 readiness.",
+  },
   "Primary 1": {
     english: "Reading fluency, sentence writing, punctuation, guided reading groups.",
     maths: "Number bonds to 20, place value, telling time, money.",
@@ -50,6 +75,21 @@ const YEAR_DETAIL: Record<string, { english: string; maths: string; wider: strin
     maths: "Revision across all strands, speed and accuracy, entrance-exam style questions.",
     wider: "Transition programme, study skills, secondary-school preparation and guidance.",
   },
+  "JSS 1": {
+    english: "Formal grammar, summary writing, oral English, first set texts.",
+    maths: "Whole numbers, fractions and decimals, algebraic expressions, basic geometry.",
+    wider: "Basic science and technology, business studies, national values, a Nigerian language.",
+  },
+  "JSS 2": {
+    english: "Argumentative essays, comprehension under time, literature analysis.",
+    maths: "Algebraic equations, ratio and proportion, statistics, plane geometry.",
+    wider: "Laboratory science, technical drawing, book-keeping, pre-vocational studies.",
+  },
+  "JSS 3": {
+    english: "BECE examination technique, extended writing, full literature texts.",
+    maths: "Revision across the junior syllabus, past-question practice, speed and accuracy.",
+    wider: "BECE preparation, subject-choice counselling and senior secondary guidance.",
+  },
 };
 
 export default function CurriculumPage() {
@@ -58,7 +98,7 @@ export default function CurriculumPage() {
       <PageHero
         eyebrow="Academics"
         title="Curriculum"
-        lede="We follow the Nigerian national curriculum, enriched with reasoning, digital literacy and a reading programme that runs the length of the school."
+        lede="We follow the Nigerian national curriculum from the early years to the BECE, enriched with reasoning, digital literacy and a reading programme that runs the length of the school."
         breadcrumb={[
           { label: "Home", href: "/" },
           { label: "Academics", href: "/academics" },

@@ -9,7 +9,7 @@ import { CORE_VALUES, MISSION, VISION } from "@/lib/school/config";
 export const metadata: Metadata = {
   title: "Vision & Mission",
   description:
-    "The vision and mission of El-Bethel International Academy, a private Primary School in Abuja.",
+    "The vision and mission of El-Bethel International Academy, a private creche, nursery, primary and junior secondary school in Abuja.",
   alternates: { canonical: "/about/vision-mission" },
 };
 

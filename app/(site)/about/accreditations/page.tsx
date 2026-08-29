@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 const ACCREDITATIONS = [
-  { title: "FCT Universal Basic Education Board", detail: "Registered private Primary School, Federal Capital Territory.", year: "Registered" },
+  { title: "FCT Universal Basic Education Board", detail: "Registered private creche, nursery, primary and junior secondary school, Federal Capital Territory.", year: "Registered" },
   { title: "Federal Ministry of Education", detail: "Approved to deliver the Nigerian national primary curriculum.", year: "Since 2013" },
   { title: "National Association of Proprietors of Private Schools", detail: "Member in good standing, FCT chapter.", year: "Since 2015" },
   { title: "Child Safeguarding Standards", detail: "Annual independent safeguarding and child protection review.", year: "Renewed 2026" },

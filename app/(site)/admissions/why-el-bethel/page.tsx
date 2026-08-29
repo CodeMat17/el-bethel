@@ -13,7 +13,7 @@ import { initials } from "@/lib/school/format";
 export const metadata: Metadata = {
   title: "Why El-Bethel",
   description:
-    "Seven reasons families in Abuja choose El-Bethel International Academy for their children's primary education.",
+    "Seven reasons families in Abuja choose El-Bethel International Academy for their children's education, from creche to junior secondary.",
   alternates: { canonical: "/admissions/why-el-bethel" },
 };
 

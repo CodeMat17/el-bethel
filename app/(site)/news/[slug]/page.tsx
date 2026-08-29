@@ -182,7 +182,7 @@ export default async function NewsArticlePage({ params }: PageProps<"/news/[slug
               <Card className="gap-0 border-gold/25 bg-gold/8 p-6">
                 <h2 className="font-heading text-base font-extrabold">Admission is open</h2>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Primary 1 to Primary 4 for the {SCHOOL.session} session.
+                  Creche, Pre-School, Nursery 1–3, Primary 1–6 and JSS 1–3 for the {SCHOOL.session} session.
                 </p>
                 <Button className="mt-4 w-full font-bold" size="lg" render={<Link href="/admissions/apply" />}>
                   Apply online
