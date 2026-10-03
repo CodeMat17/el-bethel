@@ -10,9 +10,10 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { requireAdmin } from "@/lib/school/auth";
 import { ADMISSION_OPEN_LEVELS, CLASS_LEVELS } from "@/lib/school/config";
-import { getApplicationsByStatus, getLevel, paginate } from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { query } from "@/lib/school/convex";
+import { pageParam, param } from "@/lib/school/data";
 import { APPLICATION_STATUS, formatDate } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
 import type { ApplicationStatus } from "@/lib/school/types";
 
 export const metadata: Metadata = { title: "Admissions" };
@@ -21,44 +22,27 @@ export default async function AdminAdmissionsPage({ searchParams }: PageProps<"/
   await requireAdmin();
   const params = await searchParams;
 
-  const q = (typeof params.q === "string" ? params.q : "").trim().toLowerCase();
-  const status = typeof params.status === "string" ? params.status : "all";
-  const levelId = typeof params.level === "string" ? params.level : "all";
-  const page = Number(typeof params.page === "string" ? params.page : "1") || 1;
+  const q = param(params.q).trim();
+  const status = param(params.status, "all");
+  const levelId = param(params.level, "all");
+  const page = pageParam(params.page);
 
-  const db = getDb();
-  const filtered = db.applications
-    .filter((application) => {
-      if (status !== "all" && application.status !== status) return false;
-      if (levelId !== "all" && application.intendedLevelId !== levelId) return false;
-      if (!q) return true;
-      return (
-        application.applicationNo.toLowerCase().includes(q) ||
-        `${application.pupil.firstName} ${application.pupil.lastName}`.toLowerCase().includes(q) ||
-        application.guardian.name.toLowerCase().includes(q) ||
-        application.ownerEmail.toLowerCase().includes(q)
-      );
-    })
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-
-  const result = paginate(filtered, page, 10);
-  const byStatus = getApplicationsByStatus();
-  const pending = db.applications.filter((a) =>
-    ["submitted", "under_review", "documents_required"].includes(a.status),
-  ).length;
-  const accepted = db.applications.filter((a) =>
-    ["accepted", "conditionally_accepted", "enrolled"].includes(a.status),
-  ).length;
+  const result = await query(api.admissions.list, { search: q, status, levelId, page, pageSize: 10 });
+  const byStatus = Object.entries(result.statusCounts)
+    .map(([key, count]) => ({ status: key, count }))
+    .sort((a, b) => b.count - a.count);
+  const pending = result.totals.pending;
+  const accepted = result.totals.accepted;
 
   return (
     <>
       <PortalPageHeader
         title="Admissions"
-        description="Every application for the 2026/2027 session, with review, assessment and decision tracking."
+        description="Every submitted application, with review, assessment and decision tracking. Mark the application fee as received when it is paid."
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Applications" value={db.applications.length} icon="FileCheck" tone="info" />
+        <StatCard label="Applications" value={result.totals.all} icon="FileCheck" tone="info" />
         <StatCard label="Awaiting action" value={pending} icon="Clock" tone={pending > 0 ? "warning" : "success"} />
         <StatCard label="Offers made" value={accepted} icon="BadgeCheck" tone="success" />
         <StatCard
@@ -128,7 +112,7 @@ export default async function AdminAdmissionsPage({ searchParams }: PageProps<"/
                             "Pupil name pending"}
                         </h3>
                         <p className="mt-0.5 text-sm text-muted-foreground">
-                          {getLevel(application.intendedLevelId)?.name} · applied{" "}
+                          {CLASS_LEVELS.find((l) => l.id === application.intendedLevelId)?.name} · applied{" "}
                           {formatDate(application.createdAt)}
                         </p>
                       </div>
@@ -139,6 +123,7 @@ export default async function AdminAdmissionsPage({ searchParams }: PageProps<"/
                           applicationNo={application.applicationNo}
                           pupilName={`${application.pupil.firstName} ${application.pupil.lastName}`.trim() || "Applicant"}
                           currentStatus={application.status}
+                          feePaid={application.applicationFeePaid}
                         />
                       </div>
                     </div>

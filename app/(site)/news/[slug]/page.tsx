@@ -11,16 +11,16 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { SCHOOL, SITE_URL } from "@/lib/school/config";
-import { getNewsBySlug, getPublishedNews } from "@/lib/school/data";
+import { getNewsBySlug, getPublishedNews } from "@/lib/school/site-data";
 import { formatDate, initials } from "@/lib/school/format";
 
-export function generateStaticParams() {
-  return getPublishedNews().map((post) => ({ slug: post.slug }));
+export async function generateStaticParams() {
+  return (await getPublishedNews()).map((post) => ({ slug: post.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/news/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const post = getNewsBySlug(slug);
+  const post = await getNewsBySlug(slug);
   if (!post) return { title: "Article not found" };
   return {
     title: post.seoTitle.replace(` | ${SCHOOL.name}`, ""),
@@ -41,10 +41,10 @@ export async function generateMetadata({ params }: PageProps<"/news/[slug]">): P
 
 export default async function NewsArticlePage({ params }: PageProps<"/news/[slug]">) {
   const { slug } = await params;
-  const post = getNewsBySlug(slug);
+  const post = await getNewsBySlug(slug);
   if (!post) notFound();
 
-  const all = getPublishedNews();
+  const all = await getPublishedNews();
   const index = all.findIndex((p) => p.slug === post.slug);
   const previous = index > 0 ? all[index - 1] : null;
   const next = index < all.length - 1 ? all[index + 1] : null;
@@ -68,7 +68,7 @@ export default async function NewsArticlePage({ params }: PageProps<"/news/[slug
 
       <article>
         <div className="relative">
-          <ToneImage tone={post.tone} seed={post.slug} label={post.title} className="h-56 w-full sm:h-72 lg:h-96" />
+          <ToneImage tone={post.tone} seed={post.slug} media={post.cover} label={post.title} className="h-56 w-full sm:h-72 lg:h-96" />
           <div className="absolute inset-0 bg-linear-to-t from-navy via-navy/65 to-transparent" />
           <div className="eb-container absolute inset-x-0 bottom-0 pb-8 sm:pb-12">
             <Button
@@ -163,7 +163,7 @@ export default async function NewsArticlePage({ params }: PageProps<"/news/[slug
                     {related.map((item) => (
                       <li key={item.id}>
                         <Link href={`/news/${item.slug}`} className="group flex gap-3">
-                          <ToneImage tone={item.tone} seed={item.slug} label={item.title} className="size-14 shrink-0 rounded-xl" />
+                          <ToneImage tone={item.tone} seed={item.slug} media={item.cover} label={item.title} className="size-14 shrink-0 rounded-xl" />
                           <span className="min-w-0">
                             <span className="block text-sm font-bold group-hover:text-primary dark:group-hover:text-gold">
                               {item.title}

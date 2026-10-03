@@ -7,32 +7,28 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { requirePupil } from "@/lib/school/auth";
 import { DAY_NAMES } from "@/lib/school/config";
-import {
-  classDisplayName,
-  getStudent,
-  getSubject,
-  getTimetableForClass,
-  teacherNameById,
-} from "@/lib/school/data";
-import { DEMO_TODAY } from "@/lib/school/seed";
+import { api } from "@/convex/_generated/api";
+import { query } from "@/lib/school/convex";
+import { schoolDay, sortTimetable } from "@/lib/school/data";
+import { getDirectory } from "@/lib/school/directory";
 
 export const metadata: Metadata = { title: "My timetable" };
 
 export default async function PupilTimetablePage() {
   const user = await requirePupil();
-  const student = user.studentId ? getStudent(user.studentId) : null;
+  const student = user.studentId ? await query(api.people.myStudent, {}) : null;
   if (!student) {
     return <EmptyState icon="Backpack" title="No pupil record" description="Please ask your class teacher." />;
   }
 
-  const slots = getTimetableForClass(student.classId);
-  const weekday = DEMO_TODAY.getUTCDay();
-  const activeDay = weekday === 0 || weekday === 6 ? 1 : weekday;
+  const [rows, dir] = await Promise.all([query(api.timetable.forClass, { classId: student.classId }), getDirectory()]);
+  const slots = sortTimetable(rows);
+  const activeDay = schoolDay();
 
   return (
     <>
       <PortalPageHeader
-        eyebrow={classDisplayName(student.classId)}
+        eyebrow={dir.className(student.classId)}
         title="My timetable"
         description="Your lessons for the whole week."
       />
@@ -68,11 +64,11 @@ export default async function PupilTimetablePage() {
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-bold">
-                        {slot.label ?? getSubject(slot.subjectId ?? "")?.name}
+                        {slot.label ?? dir.subjectName(slot.subjectId)}
                       </span>
                       {slot.teacherId ? (
                         <span className="block truncate text-xs text-muted-foreground">
-                          {teacherNameById(slot.teacherId)}
+                          {dir.teacherName(slot.teacherId)}
                         </span>
                       ) : null}
                     </span>
@@ -84,7 +80,7 @@ export default async function PupilTimetablePage() {
       </div>
 
       <div className="hidden lg:block">
-        <TimetableGrid slots={slots} />
+        <TimetableGrid slots={slots} dir={dir} />
       </div>
     </>
   );

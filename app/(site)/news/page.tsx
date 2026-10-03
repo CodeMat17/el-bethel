@@ -6,7 +6,7 @@ import { CtaBand, PageHero, SectionHeading } from "@/components/common";
 import { Reveal, ToneImage } from "@/components/motion";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { getPublishedNews } from "@/lib/school/data";
+import { getPublishedNews } from "@/lib/school/site-data";
 import { formatDate } from "@/lib/school/format";
 
 export const metadata: Metadata = {
@@ -16,8 +16,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/news" },
 };
 
-export default function NewsPage() {
-  const news = getPublishedNews();
+export default async function NewsPage() {
+  const news = await getPublishedNews();
   const [lead, ...rest] = news;
   const categories = Array.from(new Set(news.map((n) => n.category)));
 
@@ -44,7 +44,7 @@ export default function NewsPage() {
           <div className="eb-container">
             <Link href={`/news/${lead.slug}`} className="group block">
               <Card className="grid gap-0 overflow-hidden p-0 transition-all group-hover:shadow-xl lg:grid-cols-2">
-                <ToneImage tone={lead.tone} seed={lead.slug} label={lead.title} className="aspect-16/10 lg:aspect-auto lg:min-h-80" />
+                <ToneImage tone={lead.tone} seed={lead.slug} media={lead.cover} label={lead.title} className="aspect-16/10 lg:aspect-auto lg:min-h-80" />
                 <CardContent className="flex flex-col justify-center p-7 sm:p-10">
                   <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
                     <Badge className="font-bold">Featured</Badge>
@@ -75,7 +75,7 @@ export default function NewsPage() {
               <Reveal key={post.id} delay={(i % 6) * 0.04}>
                 <Link href={`/news/${post.slug}`} className="group block h-full">
                   <Card className="h-full gap-0 overflow-hidden p-0 transition-all group-hover:-translate-y-1 group-hover:shadow-lg">
-                    <ToneImage tone={post.tone} seed={post.slug} label={post.title} className="aspect-16/10" />
+                    <ToneImage tone={post.tone} seed={post.slug} media={post.cover} label={post.title} className="aspect-16/10" />
                     <CardContent className="flex flex-1 flex-col p-5">
                       <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
                         <Badge variant="secondary" className="font-bold">{post.category}</Badge>

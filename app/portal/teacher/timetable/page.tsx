@@ -6,9 +6,10 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { requireTeacher } from "@/lib/school/auth";
 import { DAY_NAMES, PERIODS } from "@/lib/school/config";
-import { classDisplayName, getSubject } from "@/lib/school/data";
-import { getDb } from "@/lib/school/store";
-import { DEMO_TODAY } from "@/lib/school/seed";
+import { api } from "@/convex/_generated/api";
+import { query } from "@/lib/school/convex";
+import { schoolDay } from "@/lib/school/data";
+import { getDirectory } from "@/lib/school/directory";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "My timetable" };
@@ -20,10 +21,9 @@ export default async function TeacherTimetablePage() {
   }
 
   // A teacher's timetable is their own lessons only — never the whole school grid.
-  const slots = getDb().timetable.filter((s) => s.teacherId === user.teacherId);
+  const [slots, dir] = await Promise.all([query(api.timetable.forTeacher, {}), getDirectory()]);
   const byKey = new Map(slots.map((s) => [`${s.day}-${s.period}`, s]));
-  const weekday = DEMO_TODAY.getUTCDay();
-  const activeDay = weekday === 0 || weekday === 6 ? 1 : weekday;
+  const activeDay = schoolDay();
 
   const lessonsPerDay = [1, 2, 3, 4, 5].map((day) => ({
     day,
@@ -57,10 +57,10 @@ export default async function TeacherTimetablePage() {
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-bold">
-                        {getSubject(slot.subjectId ?? "")?.name}
+                        {dir.subjectName(slot.subjectId)}
                       </span>
                       <span className="block truncate text-xs text-muted-foreground">
-                        {classDisplayName(slot.classId)}
+                        {dir.className(slot.classId)}
                       </span>
                     </span>
                   </li>
@@ -106,10 +106,10 @@ export default async function TeacherTimetablePage() {
                       {slot ? (
                         <div className="rounded-lg border bg-background p-2.5">
                           <p className="truncate text-xs font-bold">
-                            {getSubject(slot.subjectId ?? "")?.name}
+                            {dir.subjectName(slot.subjectId)}
                           </p>
                           <p className="mt-0.5 truncate text-[0.68rem] text-muted-foreground">
-                            {classDisplayName(slot.classId)}
+                            {dir.className(slot.classId)}
                           </p>
                         </div>
                       ) : (

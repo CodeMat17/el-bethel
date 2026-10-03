@@ -77,10 +77,10 @@ export default function HeadteacherPage() {
       </section>
 
       <CtaBand
-        title="Come and see for yourself"
-        text="The Headteacher hosts a short question-and-answer session at the end of every scheduled school tour."
-        primary={{ label: "Book a school tour", href: "/contact/tour" }}
-        secondary={{ label: "Contact the office", href: "/contact" }}
+        title="Have a question for us?"
+        text="Our school office answers enquiries within one working day and passes questions for the Headteacher on directly."
+        primary={{ label: "Contact the office", href: "/contact" }}
+        secondary={{ label: "Apply for admission", href: "/admissions/apply" }}
       />
     </>
   );

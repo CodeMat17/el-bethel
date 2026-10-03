@@ -9,6 +9,7 @@ import {
   Phone, Puzzle, Receipt, School, ScrollText, Search, Settings, Shield, ShieldCheck, Sparkles,
   Sprout, Star, Stethoscope, Telescope, Timer, ToyBrick, Trophy, UserRound, Users,
   UtensilsCrossed, Volleyball,
+  Bot, BookHeart, Brain, ChartLine, Footprints, Gift, HandHeart, Headphones, Map as MapIcon, Navigation, Radio, Route, ShoppingBag, Store, Video,
   type LucideIcon,
 } from "lucide-react";
 
@@ -23,6 +24,7 @@ const ICONS: Record<string, LucideIcon> = {
   Phone, Puzzle, Receipt, School, ScrollText, Search, Settings, Shield, ShieldCheck, Sparkles,
   Sprout, Star, Stethoscope, Telescope, Timer, ToyBrick, Trophy, UserRound, Users,
   UtensilsCrossed, Volleyball,
+  Bot, BookHeart, Brain, ChartLine, Footprints, Gift, HandHeart, Headphones, Map: MapIcon, Navigation, Radio, Route, ShoppingBag, Store, Video,
 };
 
 export function Icon({ name, className }: { name: string; className?: string }) {

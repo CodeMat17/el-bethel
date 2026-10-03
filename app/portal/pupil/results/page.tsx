@@ -8,27 +8,26 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { api } from "@/convex/_generated/api";
 import { requirePupil } from "@/lib/school/auth";
-import {
-  getPublishedResultTerms,
-  getReportCard,
-  getResultsForStudent,
-  getStudent,
-  getStudentAssignments,
-} from "@/lib/school/data";
+import { query } from "@/lib/school/convex";
+import { getDirectory } from "@/lib/school/directory";
 
 export const metadata: Metadata = { title: "My results" };
 
 export default async function PupilResultsPage() {
   const user = await requirePupil();
-  const student = user.studentId ? getStudent(user.studentId) : null;
-  if (!student) {
+  if (!user.studentId) {
     return <EmptyState icon="Backpack" title="No pupil record" description="Please ask your class teacher." />;
   }
 
-  const terms = getPublishedResultTerms(student.id);
-  const assignments = getStudentAssignments(student.id);
-  const graded = assignments.filter((a) => a.submission?.status === "graded");
+  const [reports, assignments, dir] = await Promise.all([
+    query(api.results.allForStudent, { studentId: user.studentId }),
+    query(api.assignments.forStudent, { studentId: user.studentId }),
+    getDirectory(),
+  ]);
+  const terms = reports.map((r) => r.term);
+  const graded = assignments.filter((a) => a.progress === "graded");
   const average = graded.length
     ? Math.round(
         (graded.reduce((s, a) => s + (a.submission?.score ?? 0) / a.assignment.maxScore, 0) / graded.length) * 100,
@@ -39,7 +38,7 @@ export default async function PupilResultsPage() {
     <>
       <PortalPageHeader
         title="My results"
-        description="How you are doing this term, and your report cards from earlier terms."
+        description="Your marked assignments and a summary of your published exam results. Your full report card is given to you at school."
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -50,7 +49,7 @@ export default async function PupilResultsPage() {
           icon="ChartColumn"
           tone={average >= 70 ? "success" : "warning"}
         />
-        <StatCard label="Report cards" value={terms.length} icon="Trophy" tone="gold" />
+        <StatCard label="Terms with results" value={terms.length} icon="Trophy" tone="gold" />
       </div>
 
       <Card className="mt-6 gap-0 p-5 sm:p-6">
@@ -63,14 +62,14 @@ export default async function PupilResultsPage() {
           </div>
         ) : (
           <ul className="space-y-3">
-            {graded.map(({ assignment, submission, subject }) => {
+            {graded.map(({ assignment, submission }) => {
               const pct = Math.round(((submission?.score ?? 0) / assignment.maxScore) * 100);
               return (
                 <li key={assignment.id} className="rounded-xl border bg-card p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-extrabold">{assignment.title}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{subject?.name}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{dir.subjectName(assignment.subjectId)}</p>
                     </div>
                     <p className="shrink-0 font-heading text-base font-extrabold tabular-nums">
                       {submission?.score}/{assignment.maxScore}
@@ -92,7 +91,7 @@ export default async function PupilResultsPage() {
 
       {terms.length > 0 ? (
         <div className="mt-6">
-          <h2 className="mb-4 font-heading text-base font-extrabold">My report cards</h2>
+          <h2 className="mb-4 font-heading text-base font-extrabold">My exam results</h2>
           <Tabs defaultValue={terms[0].id}>
             <TabsList className="h-auto w-full overflow-x-auto sm:w-fit">
               {terms.map((term) => (
@@ -102,8 +101,9 @@ export default async function PupilResultsPage() {
               ))}
             </TabsList>
             {terms.map((term) => {
-              const results = getResultsForStudent(student.id, term.id);
-              const report = getReportCard(student.id, term.id);
+              const entry = reports.find((r) => r.term.id === term.id);
+              const results = entry?.results ?? [];
+              const report = entry?.reportCard ?? null;
               return (
                 <TabsContent key={term.id} value={term.id} className="mt-5 space-y-5">
                   {report ? (
@@ -133,7 +133,7 @@ export default async function PupilResultsPage() {
                       </p>
                     </Card>
                   ) : null}
-                  <ResultsTable results={results} />
+                  <ResultsTable results={results} dir={dir} />
                   <GradeKey />
                 </TabsContent>
               );

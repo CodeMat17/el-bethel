@@ -89,6 +89,7 @@ export function GalleryGrid({ items }: { items: GalleryItem[] }) {
                   <ToneImage
                     tone={item.tone}
                     seed={item.id}
+                    media={item.media}
                     label={item.title}
                     className="aspect-square transition-transform duration-500 group-hover:scale-105"
                   />
@@ -109,7 +110,7 @@ export function GalleryGrid({ items }: { items: GalleryItem[] }) {
             <>
               <DialogTitle className="sr-only">{active.title}</DialogTitle>
               <div className="relative">
-                <ToneImage tone={active.tone} seed={active.id} label={active.title} className="aspect-4/3 w-full" />
+                <ToneImage tone={active.tone} seed={active.id} media={active.media} label={active.title} className="aspect-4/3 w-full" />
                 <Button
                   variant="ghost"
                   size="icon"

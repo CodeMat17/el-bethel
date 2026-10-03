@@ -1,44 +1,63 @@
 import type { Metadata } from "next";
-import { BookOpenIcon } from "lucide-react";
 
-import { EmptyState, StatCard, StatusPill } from "@/components/common";
+import { EmptyState, StatCard } from "@/components/common";
+import { AdminFilters } from "@/components/portal/admin-filters";
+import { LoanList } from "@/components/portal/library-views";
 import { PortalPageHeader } from "@/components/portal/page-header";
+import { DigitalShelf, Holds, LogReadingDialog, ReadingDiary, ReadingStats, ReserveButton } from "@/components/portal/reading-views";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { requirePupil } from "@/lib/school/auth";
-import { getStudent } from "@/lib/school/data";
-import { formatDate } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
-import { DEMO_TODAY } from "@/lib/school/seed";
+import { api } from "@/convex/_generated/api";
+import { query } from "@/lib/school/convex";
+import { param } from "@/lib/school/data";
 
 export const metadata: Metadata = { title: "My library" };
 
-export default async function PupilLibraryPage() {
+export default async function PupilLibraryPage({ searchParams }: PageProps<"/portal/pupil/library">) {
   const user = await requirePupil();
-  const student = user.studentId ? getStudent(user.studentId) : null;
-  if (!student) {
+  if (!user.studentId) {
     return <EmptyState icon="Backpack" title="No pupil record" description="Please ask your class teacher." />;
   }
+  const params = await searchParams;
+  const q = param(params.q).trim().toLowerCase();
+  const category = param(params.category, "all");
 
-  const db = getDb();
-  // A pupil only ever sees their own borrowing record.
-  const mine = db.borrowings
-    .filter((b) => b.studentId === student.id)
-    .sort((a, b) => b.borrowedAt.localeCompare(a.borrowedAt));
-  const current = mine.filter((b) => b.status !== "returned");
-  const returned = mine.filter((b) => b.status === "returned");
-  const available = db.books.filter((b) => b.copiesAvailable > 0).slice(0, 8);
+  // A pupil only ever sees their own borrowing record and diary (enforced in Convex).
+  const [db, shelf] = await Promise.all([
+    query(api.library.forStudent, { studentId: user.studentId }),
+    query(api.reading.shelf, { studentId: user.studentId }),
+  ]);
+  const current = db.loans.filter((b) => b.status !== "returned");
+  const returned = db.loans.filter((b) => b.status === "returned");
+  const categories = Array.from(new Set(db.books.map((b) => b.category))).sort();
+  const held = new Set(shelf.holds.map((h) => h.bookId as string));
+  const shelfBooks = db.books
+    .filter((b) => (category === "all" || b.category === category) && (!q || `${b.title} ${b.author}`.toLowerCase().includes(q)))
+    .sort((a, b) => Number(b.copiesAvailable > 0) - Number(a.copiesAvailable > 0) || a.title.localeCompare(b.title));
 
   return (
     <>
       <PortalPageHeader
         title="My library"
-        description="Books you have borrowed, when they are due back, and what is on the shelves."
+        description="Books you have borrowed, e-books and read-alongs for your class, and your reading diary."
+        action={
+          <LogReadingDialog
+            studentId={user.studentId}
+            resources={shelf.resources.map((r) => ({ id: r.id, title: r.title }))}
+            books={[...current, ...returned].flatMap((l) => {
+              const b = db.books.find((x) => x.id === l.bookId);
+              return b ? [{ id: b.id, title: b.title }] : [];
+            })}
+          />
+        }
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <ReadingStats stats={shelf.stats} pupil />
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <StatCard label="Books out now" value={current.length} icon="BookOpen" tone={current.length > 0 ? "info" : "neutral"} />
-        <StatCard label="Books returned" value={returned.length} icon="CircleCheck" tone="success" />
+        <StatCard label="Books I have read" value={returned.length} icon="CircleCheck" tone="success" />
         <StatCard
           label="Overdue"
           value={current.filter((b) => b.status === "overdue").length}
@@ -47,86 +66,66 @@ export default async function PupilLibraryPage() {
         />
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      <Card className="mt-6 gap-0 p-5 sm:p-6">
+        <h2 className="font-heading text-base font-extrabold">Digital shelf</h2>
+        <p className="mt-1 text-xs text-muted-foreground">E-books, audiobooks and read-alongs picked for your class. Suggestions are based on what you like reading.</p>
+        <Separator className="my-4" />
+        <DigitalShelf shelf={shelf} />
+      </Card>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.2fr]">
+        <div className="space-y-6">
+          <Card className="gap-0 p-5 sm:p-6">
+            <h2 className="font-heading text-base font-extrabold">My books</h2>
+            <Separator className="my-4" />
+            <LoanList loans={db.loans} books={db.books} emptyText="You haven't borrowed any books yet. Visit the library desk to borrow one." />
+            {shelf.holds.length > 0 ? (
+              <>
+                <h3 className="mt-5 mb-2 text-sm font-extrabold">Reserved</h3>
+                <Holds holds={shelf.holds} />
+              </>
+            ) : null}
+          </Card>
+          <Card className="gap-0 p-5 sm:p-6">
+            <h2 className="font-heading text-base font-extrabold">My reading diary</h2>
+            <Separator className="my-4" />
+            <ReadingDiary logs={shelf.logs} viewerId={user.id} />
+          </Card>
+        </div>
+
         <Card className="gap-0 p-5 sm:p-6">
-          <h2 className="font-heading text-base font-extrabold">Books I have out</h2>
+          <h2 className="font-heading text-base font-extrabold">Find a book</h2>
+          <div className="mt-4">
+            <AdminFilters searchPlaceholder="Search by title or author" filters={[{ key: "category", label: "All kinds", options: categories.map((c) => ({ value: c, label: c })) }]} />
+          </div>
           <Separator className="my-4" />
-          {current.length === 0 ? (
-            <div className="py-8 text-center">
-              <BookOpenIcon className="mx-auto size-9 text-muted-foreground/50" />
-              <p className="mt-3 text-sm text-muted-foreground">
-                You do not have any books out. Visit the library desk to borrow one.
-              </p>
-            </div>
+          {shelfBooks.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">No books match. Try another word.</p>
           ) : (
-            <ul className="space-y-3">
-              {current.map((borrowing) => {
-                const book = db.books.find((b) => b.id === borrowing.bookId);
-                const overdue = new Date(borrowing.dueDate) < DEMO_TODAY;
-                return (
-                  <li key={borrowing.id} className="rounded-xl border bg-card p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-extrabold">{book?.title}</p>
-                        <p className="mt-0.5 truncate text-xs text-muted-foreground">{book?.author}</p>
-                      </div>
-                      <StatusPill tone={overdue ? "danger" : "info"}>
-                        {overdue ? "Overdue" : "Due soon"}
-                      </StatusPill>
-                    </div>
-                    <p className="mt-3 text-xs text-muted-foreground">
-                      Borrowed {formatDate(borrowing.borrowedAt)} · return by {formatDate(borrowing.dueDate)}
+            <ul className="space-y-2.5">
+              {shelfBooks.slice(0, 30).map((book) => (
+                <li key={book.id} className="flex items-center justify-between gap-3 rounded-xl border bg-card p-3.5">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold">{book.title}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {book.author} · {book.category} · ages {book.ageRange}
                     </p>
-                  </li>
-                );
-              })}
+                  </div>
+                  {book.copiesAvailable > 0 ? (
+                    <span className="shrink-0 rounded-lg bg-success/12 px-2.5 py-1 text-xs font-bold text-success">{book.copiesAvailable} on the shelf</span>
+                  ) : held.has(book.id) ? (
+                    <span className="shrink-0 rounded-lg bg-info/12 px-2.5 py-1 text-xs font-bold text-info">Reserved</span>
+                  ) : current.some((l) => l.bookId === book.id) ? (
+                    <span className="shrink-0 rounded-lg bg-muted px-2.5 py-1 text-xs font-bold text-muted-foreground">You have it</span>
+                  ) : (
+                    <ReserveButton bookId={book.id} studentId={user.studentId!} />
+                  )}
+                </li>
+              ))}
             </ul>
           )}
         </Card>
-
-        <Card className="gap-0 p-5 sm:p-6">
-          <h2 className="font-heading text-base font-extrabold">On the shelves now</h2>
-          <Separator className="my-4" />
-          <ul className="space-y-2.5">
-            {available.map((book) => (
-              <li key={book.id} className="flex items-center justify-between gap-3 rounded-xl border bg-card p-3.5">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-bold">{book.title}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {book.author} · ages {book.ageRange}
-                  </p>
-                </div>
-                <span className="shrink-0 rounded-lg bg-success/12 px-2.5 py-1 text-xs font-bold text-success">
-                  {book.copiesAvailable} left
-                </span>
-              </li>
-            ))}
-          </ul>
-        </Card>
       </div>
-
-      {returned.length > 0 ? (
-        <Card className="mt-6 gap-0 p-5 sm:p-6">
-          <h2 className="font-heading text-base font-extrabold">Books I have read</h2>
-          <Separator className="my-4" />
-          <ul className="grid gap-2.5 sm:grid-cols-2">
-            {returned.map((borrowing) => {
-              const book = db.books.find((b) => b.id === borrowing.bookId);
-              return (
-                <li key={borrowing.id} className="flex items-center justify-between gap-3 rounded-xl border bg-card p-3.5">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-bold">{book?.title}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      returned {borrowing.returnedAt ? formatDate(borrowing.returnedAt) : "—"}
-                    </p>
-                  </div>
-                  <StatusPill tone="success">Read</StatusPill>
-                </li>
-              );
-            })}
-          </ul>
-        </Card>
-      ) : null}
     </>
   );
 }

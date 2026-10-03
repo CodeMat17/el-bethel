@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
-import { sendMessage, type SimpleState } from "@/lib/school/actions/portal";
+import { markThreadRead, sendMessage, type SimpleState } from "@/lib/school/actions/portal";
 import { avatarTone, formatDateTime, initials } from "@/lib/school/format";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +46,13 @@ export function MessageThreadView({
   const [state, action] = useActionState<SimpleState, FormData>(sendMessage, INITIAL);
   const formRef = React.useRef<HTMLFormElement>(null);
   const endRef = React.useRef<HTMLDivElement>(null);
+
+  // Opening a conversation marks it as read.
+  React.useEffect(() => {
+    const form = new FormData();
+    form.set("threadId", threadId);
+    void markThreadRead(form);
+  }, [threadId]);
 
   React.useEffect(() => {
     if (state.ok) {

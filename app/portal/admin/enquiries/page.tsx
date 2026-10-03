@@ -8,9 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { requireAdmin } from "@/lib/school/auth";
-import { paginate } from "@/lib/school/data";
+import { EnquiryDialog } from "@/components/admin/office-dialogs";
+import { api } from "@/convex/_generated/api";
+import { query } from "@/lib/school/convex";
+import { pageParam, paginate, param } from "@/lib/school/data";
 import { formatDateTime } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
 import type { ToneName } from "@/lib/school/format";
 
 export const metadata: Metadata = { title: "Enquiries" };
@@ -27,12 +29,12 @@ export default async function AdminEnquiriesPage({ searchParams }: PageProps<"/p
   await requireAdmin();
   const params = await searchParams;
 
-  const q = (typeof params.q === "string" ? params.q : "").trim().toLowerCase();
-  const status = typeof params.status === "string" ? params.status : "all";
-  const category = typeof params.category === "string" ? params.category : "all";
-  const page = Number(typeof params.page === "string" ? params.page : "1") || 1;
+  const q = param(params.q).trim().toLowerCase();
+  const status = param(params.status, "all");
+  const category = param(params.category, "all");
+  const page = pageParam(params.page);
 
-  const db = getDb();
+  const db = { enquiries: await query(api.office.enquiries, {}) };
   const filtered = db.enquiries
     .filter((enquiry) => {
       if (status !== "all" && enquiry.status !== status) return false;
@@ -85,7 +87,6 @@ export default async function AdminEnquiriesPage({ searchParams }: PageProps<"/p
                 { value: "admissions", label: "Admissions" },
                 { value: "fees", label: "Fees" },
                 { value: "academics", label: "Academics" },
-                { value: "transport", label: "Transport" },
                 { value: "general", label: "General" },
               ],
             },
@@ -132,10 +133,13 @@ export default async function AdminEnquiriesPage({ searchParams }: PageProps<"/p
                     </p>
                   ) : null}
 
-                  <p className="mt-4 text-xs text-muted-foreground">
-                    Received {formatDateTime(enquiry.createdAt)}
-                    {enquiry.assignedTo ? ` · assigned to ${enquiry.assignedTo}` : ""}
-                  </p>
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs text-muted-foreground">
+                      Received {formatDateTime(enquiry.createdAt)}
+                      {enquiry.assignedTo ? ` · handled by ${enquiry.assignedTo}` : ""}
+                    </p>
+                    <EnquiryDialog enquiry={enquiry} />
+                  </div>
                 </Card>
               </li>
             ))}

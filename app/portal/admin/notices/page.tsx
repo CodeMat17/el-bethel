@@ -1,45 +1,36 @@
 import type { Metadata } from "next";
-import { MegaphoneIcon, PlusIcon, TriangleAlertIcon } from "lucide-react";
+import { MegaphoneIcon, TrashIcon, TriangleAlertIcon } from "lucide-react";
+
+import { NoticeDialog } from "@/components/admin/content-dialogs";
+import { ConfirmAction } from "@/components/portal/confirm-action";
 
 import { EmptyState, StatCard, StatusPill } from "@/components/common";
 import { PortalPageHeader } from "@/components/portal/page-header";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { requireAdmin } from "@/lib/school/auth";
 import { formatDateTime } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
-import { DEMO_TODAY } from "@/lib/school/seed";
+import { api } from "@/convex/_generated/api";
+import { removeNotice } from "@/lib/school/actions/admin";
+import { query } from "@/lib/school/convex";
 
 export const metadata: Metadata = { title: "Emergency notices" };
 
-const CHANNELS = [
-  { name: "In-app banner", detail: "Shown at the top of every page on the public site and in the portals." },
-  { name: "Email", detail: "Sent to every address in the chosen audience within minutes." },
-  { name: "SMS", detail: "Sent through a Nigerian SMS provider for critical notices only." },
-  { name: "Push notification", detail: "Delivered to families who have installed the app to their home screen." },
-];
-
 export default async function AdminNoticesPage() {
   await requireAdmin();
-  const db = getDb();
-  const notices = db.emergencyNotices;
+  const notices = await query(api.content.adminNotices, {});
+  const now = new Date();
   const active = notices.filter(
-    (n) => n.active && new Date(n.startsAt) <= DEMO_TODAY && new Date(n.endsAt) >= DEMO_TODAY,
+    (n) => n.active && new Date(n.startsAt) <= now && new Date(n.endsAt) >= now,
   );
 
   return (
     <>
       <PortalPageHeader
         title="Emergency notices"
-        description="High-visibility notices shown across the website and portals, with a defined audience and window."
-        action={
-          <Button size="lg" className="font-bold" disabled>
-            <PlusIcon />
-            Publish notice
-          </Button>
-        }
+        description="High-visibility notices shown as a banner across the website while they are active."
+        action={<NoticeDialog />}
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
@@ -50,7 +41,7 @@ export default async function AdminNoticesPage() {
           icon="TriangleAlert"
           tone={active.length > 0 ? "warning" : "success"}
         />
-        <StatCard label="Delivery channels" value={CHANNELS.length} icon="Send" tone="info" />
+        <StatCard label="Notices on record" value={notices.length} icon="Megaphone" tone="info" />
       </div>
 
       {notices.length === 0 ? (
@@ -64,8 +55,8 @@ export default async function AdminNoticesPage() {
           {notices.map((notice) => {
             const live =
               notice.active &&
-              new Date(notice.startsAt) <= DEMO_TODAY &&
-              new Date(notice.endsAt) >= DEMO_TODAY;
+              new Date(notice.startsAt) <= now &&
+              new Date(notice.endsAt) >= now;
             return (
               <li key={notice.id}>
                 <Card className={`gap-0 p-5 ${live ? "border-destructive/40 bg-destructive/8" : ""}`}>
@@ -86,9 +77,25 @@ export default async function AdminNoticesPage() {
 
                   <Separator className="my-4" />
 
-                  <p className="text-xs text-muted-foreground">
-                    Shows from {formatDateTime(notice.startsAt)} until {formatDateTime(notice.endsAt)}
-                  </p>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs text-muted-foreground">
+                      Shows from {formatDateTime(notice.startsAt)} until {formatDateTime(notice.endsAt)}
+                    </p>
+                    <div className="flex gap-1">
+                      <NoticeDialog notice={notice} />
+                      <ConfirmAction
+                        action={removeNotice.bind(null, notice.id)}
+                        icon={<TrashIcon />}
+                        variant="ghost"
+                        className="font-bold text-destructive"
+                        pendingText="Deleting…"
+                        destructive
+                        confirm={{ title: "Delete this notice?", description: "It will disappear from the website straight away.", confirmLabel: "Delete" }}
+                      >
+                        Delete
+                      </ConfirmAction>
+                    </div>
+                  </div>
                 </Card>
               </li>
             );
@@ -96,18 +103,6 @@ export default async function AdminNoticesPage() {
         </ul>
       )}
 
-      <Card className="mt-6 gap-0 p-5 sm:p-6">
-        <h2 className="font-heading text-base font-extrabold">Delivery channels</h2>
-        <Separator className="my-5" />
-        <ul className="grid gap-3 sm:grid-cols-2">
-          {CHANNELS.map((channel) => (
-            <li key={channel.name} className="rounded-xl border bg-card p-4">
-              <p className="text-sm font-extrabold">{channel.name}</p>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{channel.detail}</p>
-            </li>
-          ))}
-        </ul>
-      </Card>
     </>
   );
 }

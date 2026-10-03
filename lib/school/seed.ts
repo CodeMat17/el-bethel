@@ -34,6 +34,8 @@ import type {
   NewsPost,
   Parent,
   Payment,
+  Question,
+  QuestionAnswer,
   Quiz,
   QuizAttempt,
   ReportCard,
@@ -259,7 +261,7 @@ const QUALIFICATIONS = [
 ];
 
 const teachers: Teacher[] = [];
-const classes: SchoolClass[] = [];
+const classes: (SchoolClass & { classTeacherId: string })[] = [];
 
 // Build class shells first so class teachers can be attached.
 const classShells: { id: string; levelId: string; name: string; section: string }[] = [];
@@ -347,6 +349,9 @@ for (const cls of classes) {
     teachingAssignments.set(`${cls.id}:${subject.id}`, chosen ? chosen.id : cls.classTeacherId);
   }
 }
+// The demo maths and English teachers own those subjects in the demo pupil's class.
+teachingAssignments.set("cls-p4a:sub-mth", "tch-019");
+teachingAssignments.set("cls-p4a:sub-eng", "tch-013");
 
 /* -------------------------------------------------------------------------- */
 /* Students and parents                                                        */
@@ -419,7 +424,7 @@ function makeStudent(classId: string, lastName: string, parentIds: string[], for
     avatarSeed: `${firstName}${lastName}${studentCounter}`,
     house: pick(HOUSES),
     bloodGroup: pick(BLOOD),
-    transportRouteId: chance(0.35) ? `bus-${int(1, 4)}` : undefined,
+    transportRouteId: undefined,
   };
   return student;
 }
@@ -488,7 +493,7 @@ for (const s of students) {
 const timetable: TimetableSlot[] = [];
 for (const cls of classes) {
   const levelSubjects = subjectsForLevel(cls.levelId);
-  for (let day = 1 as 1 | 2 | 3 | 4 | 5; day <= 5; day = (day + 1) as 1 | 2 | 3 | 4 | 5) {
+  for (let day = 1; day <= 5; day++) {
     PERIODS.forEach((p, idx) => {
       const isBreak = Boolean(p.label);
       const subject = isBreak ? null : levelSubjects[(day * 3 + idx) % levelSubjects.length];
@@ -499,8 +504,8 @@ for (const cls of classes) {
         period: p.period,
         startTime: p.startTime,
         endTime: p.endTime,
-        subjectId: subject ? subject.id : null,
-        teacherId: subject ? teachingAssignments.get(`${cls.id}:${subject.id}`) ?? cls.classTeacherId : null,
+        subjectId: subject ? subject.id : undefined,
+        teacherId: subject ? teachingAssignments.get(`${cls.id}:${subject.id}`) ?? cls.classTeacherId : undefined,
         label: p.label,
       });
     });
@@ -539,6 +544,37 @@ const ASSIGNMENT_TEMPLATES: { subjectId: string; title: string; topic: string; i
 const assignments: Assignment[] = [];
 const submissions: Submission[] = [];
 
+const OTHER_TOPICS = ["Shapes", "Animals", "Weather", "Transport", "Music", "Festivals", "Money", "Time"];
+
+/** Every demo assignment uses the three answer formats a teacher can choose from. */
+function demoQuestions(topic: string, instructions: string): Question[] {
+  const distractors = OTHER_TOPICS.filter((t) => t !== topic).slice(0, 3);
+  const correctAt = int(0, 3);
+  const options = [...distractors];
+  options.splice(correctAt, 0, topic);
+  return [
+    { id: "q1", type: "single", prompt: "Which of these is the topic of this assignment?", options, correct: [correctAt], points: 5 },
+    {
+      id: "q2",
+      type: "multiple",
+      prompt: "Tick every habit that helps you do your best work.",
+      options: ["Reading the instructions first", "Checking my work before submitting", "Copying a friend's answers", "Rushing to finish quickly"],
+      correct: [0, 1],
+      points: 5,
+    },
+    { id: "q3", type: "text", prompt: instructions, options: [], correct: [], points: 10 },
+  ];
+}
+
+const FLAGSHIP_QUESTIONS: Question[] = [
+  { id: "q1", type: "single", prompt: "A pizza is cut into 8 equal slices and you eat 3. What fraction of the pizza is left?", options: ["3/8", "5/8", "8/3", "1/2"], correct: [1], points: 4 },
+  { id: "q2", type: "multiple", prompt: "Tick all the fractions that are equal to one half.", options: ["2/4", "3/6", "2/3", "5/10"], correct: [0, 1, 3], points: 4 },
+  { id: "q3", type: "single", prompt: "Which of these fractions is the largest?", options: ["1/4", "1/3", "1/2", "1/5"], correct: [2], points: 4 },
+  { id: "q4", type: "text", prompt: "Explain how you would share 3 oranges equally among 4 children. How much does each child get?", options: [], correct: [], points: 8 },
+];
+
+const sumPoints = (qs: Question[]) => qs.reduce((n, q) => n + q.points, 0);
+
 // Assignments, materials and quizzes run from Primary 1 upwards; the early years
 // are assessed through observation rather than set work.
 const TEACHING_CLASSES = classes.filter(
@@ -572,13 +608,10 @@ for (const cls of TEACHING_CLASSES) {
       publishedAt: iso(publishedAt),
       startDate: iso(publishedAt),
       dueDate: iso(dueDate),
+      questions: demoQuestions(template.topic, template.instructions),
       maxScore: 20,
-      submissionTypes: ["image", "pdf", "text"],
-      allowResubmission: chance(0.5),
-      attachments: chance(0.4)
-        ? [{ id: `att-${assignmentCounter}`, name: `${template.title.replace(/\s+/g, "-").toLowerCase()}-worksheet.pdf`, mime: "application/pdf", sizeBytes: int(120000, 900000), url: "#" }]
-        : [],
       status: "published",
+      createdAt: iso(publishedAt),
     });
   }
 }
@@ -589,89 +622,104 @@ const flagship: Assignment = {
   title: "Fractions Around Us",
   topic: "Fractions",
   description: "Pupils identify and work with fractions using everyday objects at home.",
-  instructions:
-    "Solve questions 1–10 in your mathematics exercise book. Take a clear photograph of your completed work and upload it through the assignment portal.",
+  instructions: "Answer every question. Show your thinking in the written answer.",
   classId: "cls-p4a",
   subjectId: "sub-mth",
-  teacherId: "tch-010",
+  teacherId: "tch-019",
   termId: ACTIVE_TERM_ID,
   publishedAt: "2026-09-01T08:00:00.000Z",
   startDate: "2026-09-01T08:00:00.000Z",
   dueDate: "2026-09-04T17:00:00.000Z",
-  maxScore: 20,
-  submissionTypes: ["image", "pdf", "text"],
-  allowResubmission: true,
-  attachments: [],
+  questions: FLAGSHIP_QUESTIONS,
+  maxScore: sumPoints(FLAGSHIP_QUESTIONS),
   status: "published",
+  createdAt: "2026-09-01T08:00:00.000Z",
 };
 assignments.unshift(flagship);
 
 let submissionCounter = 0;
+
+function autoMark(q: Question, selected: number[]): number {
+  const want = [...q.correct].sort().join(",");
+  return [...selected].sort().join(",") === want ? q.points : 0;
+}
+
+function demoAnswers(assignment: Assignment, graded: boolean, skill: number): QuestionAnswer[] {
+  return assignment.questions.map((q) => {
+    if (q.type === "text") {
+      return {
+        questionId: q.id,
+        text: "I worked through this step by step and wrote my answer neatly.",
+        awarded: graded ? Math.max(0, Math.round(q.points * (0.5 + skill * 0.5))) : undefined,
+      };
+    }
+    const right = rng() < 0.4 + skill * 0.55;
+    const selected = right
+      ? [...q.correct]
+      : q.type === "single"
+        ? [(q.correct[0] + 1) % q.options.length]
+        : [q.correct[0]];
+    return { questionId: q.id, selected, awarded: autoMark(q, selected), autoMarked: true };
+  });
+}
+
 for (const assignment of assignments) {
   const roster = studentsByClass.get(assignment.classId) ?? [];
   const overdue = new Date(assignment.dueDate) < DEMO_TODAY;
   for (const student of roster) {
     const roll = rng();
-    let status: Submission["status"];
-    if (!overdue) status = roll < 0.45 ? "submitted" : roll < 0.6 ? "in_progress" : "not_started";
-    else if (roll < 0.62) status = "graded";
-    else if (roll < 0.74) status = "submitted";
-    else if (roll < 0.82) status = "late";
-    else if (roll < 0.88) status = "resubmission_required";
-    else status = "not_started";
+    // Pupils who never submitted simply have no submission record.
+    const submitted = overdue ? roll < 0.88 : roll < 0.45;
+    if (!submitted) continue;
+    const graded = overdue && roll < 0.7;
+    const answers = demoAnswers(assignment, graded, rng());
+    const score = answers.reduce((n, a) => n + (a.awarded ?? 0), 0);
 
     submissionCounter += 1;
-    const submittedAt = status === "not_started" || status === "in_progress"
-      ? undefined
-      : iso(addDays(new Date(assignment.dueDate), status === "late" ? int(1, 3) : -int(0, 2)));
-    const score = status === "graded" ? int(9, assignment.maxScore) : undefined;
     submissions.push({
       id: `sub-${String(submissionCounter).padStart(5, "0")}`,
       assignmentId: assignment.id,
       studentId: student.id,
-      status,
-      textAnswer: status === "not_started" ? undefined : "Please see my uploaded work.",
-      files:
-        status === "not_started" || status === "in_progress"
-          ? []
-          : [{ id: `f-${submissionCounter}`, name: `${student.firstName.toLowerCase()}-work.jpg`, mime: "image/jpeg", sizeBytes: int(400000, 2400000), url: "#" }],
-      submittedAt,
-      version: status === "resubmission_required" ? 2 : 1,
+      status: graded ? "graded" : "submitted",
+      answers,
+      submittedAt: iso(addDays(new Date(assignment.dueDate), -int(0, 2))),
       score,
-      grade: score !== undefined ? gradeFor((score / assignment.maxScore) * 100).grade : undefined,
-      feedback:
-        status === "graded"
-          ? pick([
-              "Well done. Your working is clear and easy to follow.",
-              "Good effort. Check your subtraction in the last two questions.",
-              "Excellent presentation — keep it up.",
-              "Neat work. Remember to show every step next time.",
-            ])
-          : status === "resubmission_required"
-            ? "Some pages are missing from your upload. Please photograph the full exercise and submit again."
-            : undefined,
-      gradedAt: status === "graded" ? iso(addDays(new Date(assignment.dueDate), int(1, 4))) : undefined,
-      gradedBy: status === "graded" ? assignment.teacherId : undefined,
+      grade: graded ? gradeFor((score / assignment.maxScore) * 100).grade : undefined,
+      feedback: graded
+        ? pick([
+            "Well done. Your working is clear and easy to follow.",
+            "Good effort. Read each question twice before you answer.",
+            "Excellent presentation — keep it up.",
+            "Neat work. Remember to explain every step next time.",
+          ])
+        : undefined,
+      gradedAt: graded ? iso(addDays(new Date(assignment.dueDate), int(1, 4))) : undefined,
     });
   }
 }
 
 // The spec's demo submission for David Chukwu.
-const davidFlagship = submissions.find((s) => s.assignmentId === "asg-flagship" && s.studentId === DEMO_STUDENT_ID);
-if (davidFlagship) {
-  davidFlagship.status = "graded";
-  davidFlagship.submittedAt = "2026-09-03T14:20:00.000Z";
-  davidFlagship.score = 18;
-  davidFlagship.grade = "A";
-  davidFlagship.feedback =
-    "Excellent work, David. Review questions 7 and 9 and remember to simplify your answers.";
-  davidFlagship.gradedAt = "2026-09-05T10:00:00.000Z";
-  davidFlagship.gradedBy = "tch-010";
-  davidFlagship.files = [
-    { id: "f-david-1", name: "david-fractions-page1.jpg", mime: "image/jpeg", sizeBytes: 1_284_332, url: "#" },
-    { id: "f-david-2", name: "david-fractions-page2.jpg", mime: "image/jpeg", sizeBytes: 1_102_884, url: "#" },
-  ];
-}
+const davidAnswers: QuestionAnswer[] = [
+  { questionId: "q1", selected: [1], awarded: 4, autoMarked: true },
+  { questionId: "q2", selected: [0, 1, 3], awarded: 4, autoMarked: true },
+  { questionId: "q3", selected: [2], awarded: 4, autoMarked: true },
+  { questionId: "q4", text: "Cut each orange into 4 equal pieces. That makes 12 pieces, so each child gets 3 pieces, which is 3/4 of an orange.", awarded: 6 },
+];
+const davidIdx = submissions.findIndex((s) => s.assignmentId === "asg-flagship" && s.studentId === DEMO_STUDENT_ID);
+const davidFlagship: Submission = {
+  id: davidIdx >= 0 ? submissions[davidIdx].id : "sub-david",
+  assignmentId: "asg-flagship",
+  studentId: DEMO_STUDENT_ID,
+  status: "graded",
+  answers: davidAnswers,
+  submittedAt: "2026-09-03T14:20:00.000Z",
+  score: 18,
+  grade: "A",
+  feedback: "Excellent work, David. Your explanation for question 4 is right — next time also write the answer as a fraction.",
+  gradedAt: "2026-09-05T10:00:00.000Z",
+};
+if (davidIdx >= 0) submissions[davidIdx] = davidFlagship;
+else submissions.push(davidFlagship);
 
 /* -------------------------------------------------------------------------- */
 /* Attendance                                                                  */
@@ -735,7 +783,6 @@ for (const cls of classes) {
           subjectId: subject.id,
           classId: cls.id,
           termId,
-          scores: { classwork, assignment, test, exam },
           ca,
           exam,
           total,
@@ -790,7 +837,6 @@ for (const student of students) {
   const cls = classes.find((c) => c.id === student.classId);
   const band = FEE_STRUCTURE.find((b) => cls && b.levelIds.includes(cls.levelId)) ?? FEE_STRUCTURE[1];
   const lines = [...band.lines];
-  if (student.transportRouteId) lines.push({ category: "transport", label: "Transport", amount: 65000 });
   const total = lines.reduce((sum, l) => sum + l.amount, 0);
   const roll = rng();
   const amountPaid = roll < 0.62 ? total : roll < 0.85 ? Math.round(total * 0.5) : 0;
@@ -816,7 +862,7 @@ for (const student of students) {
       invoiceId: invoice.id,
       studentId: student.id,
       amount: amountPaid,
-      provider: pick(["paystack", "flutterwave", "bank_transfer"] as const),
+      provider: pick(["bank_transfer", "cash"] as const),
       status: "successful",
       paidAt: iso(addDays(DEMO_TODAY, -int(3, 40))),
       verifiedAt: iso(addDays(DEMO_TODAY, -int(3, 40))),
@@ -1126,17 +1172,6 @@ const news: NewsPost[] = [
     featured: false,
   },
   {
-    id: "nws-10", slug: "school-transport-routes-2026",
-    title: "School Transport Routes for the New Session",
-    excerpt: "Four routes now cover Ushafa, Gwarinpa, Wuse, Maitama, Utako, Lokogoma and Life Camp.",
-    content:
-      "Our transport service now runs four routes covering Ushafa, Gwarinpa, Wuse, Maitama, Utako, Lokogoma and Life Camp.\n\nEvery bus carries a trained attendant in addition to the driver, and pickup and drop-off are logged for each child. Parents receive an in-app notification when their child boards and alights.\n\nRoute details and pickup times are available in the Parent Portal.",
-    category: "Operations", tags: ["transport"], authorName: "School Administration",
-    publishedAt: "2026-09-05T07:30:00.000Z", status: "published", tone: "navy",
-    seoTitle: "School Transport Routes for the New Session", seoDescription: "El-Bethel International Academy transport routes across Abuja districts.",
-    featured: false,
-  },
-  {
     id: "nws-11", slug: "art-exhibition-preview",
     title: "Young Artists Prepare for the Termly Exhibition",
     excerpt: "Work from every class will be displayed in the Creative Arts Studio at the end of term.",
@@ -1293,16 +1328,14 @@ const FAQ_DEFS: { category: string; question: string; answer: string }[] = [
   { category: "Admissions", question: "How do I apply?", answer: "Create a parent account, complete the online application form, upload the required documents, pay the application fee and submit. You will receive an application number to track your progress." },
   { category: "Admissions", question: "Is there an entrance assessment?", answer: "Yes, from Nursery 1 upwards. All applicants take a short, age-appropriate assessment: a gentle readiness activity in the nursery and early primary years, and written English and mathematics papers for Primary 4 and above. Creche and Pre-School places need only a settling visit." },
   { category: "Admissions", question: "What documents are required?", answer: "A birth certificate or declaration of age, a passport photograph, medical information and parent identification are required. A previous school report and transfer document are needed where applicable." },
-  { category: "Fees", question: "What are the school fees?", answer: "Fees range from ₦248,000 per term in Creche and Pre-School to ₦460,000 per term in JSS 1 to 3, covering tuition, learning resources, activities and technology. Transport and meals are optional extras." },
+  { category: "Fees", question: "What are the school fees?", answer: "Fees range from ₦248,000 per term in Creche and Pre-School to ₦460,000 per term in JSS 1 to 3, covering tuition, learning resources, activities and technology. Meals are an optional extra." },
   { category: "Fees", question: "Can fees be paid in instalments?", answer: "Yes. Please contact the school accountant before the start of term to agree a payment plan. Payment records and receipts are always available in the Parent Portal." },
-  { category: "Fees", question: "How do I get a receipt?", answer: "Receipts are generated automatically once a payment is verified and can be downloaded from the Fees section of the Parent Portal." },
+  { category: "Fees", question: "How do I get a receipt?", answer: "Receipts are issued by the school bursary once a payment is confirmed, and every payment recorded appears in the Parent Portal." },
   { category: "Classes", question: "How large are your classes?", answer: "Our average class size is 24 pupils, with a pupil-to-teacher ratio of 12:1. Every class also has a class teacher who knows each child personally." },
   { category: "Classes", question: "How are pupils placed in sections?", answer: "Pupils are placed to create balanced sections. Siblings and friendship groups are considered where it supports a child's settling in." },
   { category: "Uniform", question: "What is the school uniform?", answer: "Pupils wear the El-Bethel day uniform Monday to Thursday and the house sports kit on Fridays. Full details and suppliers are in the Uniform Guide document." },
-  { category: "Transport", question: "Do you provide school transport?", answer: "Yes. Four routes cover Ushafa, Gwarinpa, Wuse, Maitama, Utako, Lokogoma and Life Camp. Every bus has a trained attendant in addition to the driver." },
-  { category: "Transport", question: "Will I know when my child is picked up?", answer: "Parents receive an in-app notification when their child boards and alights the school bus." },
   { category: "Academics", question: "What curriculum do you follow?", answer: "We follow the Nigerian national curriculum, enriched with a child-centred, activity-based approach and a strong emphasis on reading, reasoning and digital literacy." },
-  { category: "Academics", question: "How is my child assessed?", answer: "Assessment is continuous. Classwork, assignments and tests account for 40 percent of the term score and the end-of-term examination accounts for 60 percent." },
+  { category: "Academics", question: "How is my child assessed?", answer: "Assessment is continuous. Classwork, assignments and tests make up the continuous assessment, and the end-of-term examination makes up the rest of the 100-mark subject score. The usual split is 40 percent CA and 60 percent exam, but each subject teacher sets the exact weighting for the term, and the report card shows what each score was marked out of." },
   { category: "Assignments", question: "How does my child submit assignments?", answer: "Pupils can type an answer or photograph completed work in their exercise book and upload it in the Pupil Portal. Files up to 5 MB in JPG, PNG, WEBP, PDF or DOCX are accepted." },
   { category: "Assignments", question: "What if my child misses a deadline?", answer: "Late submissions are still accepted and clearly marked. Teachers may request a resubmission where work is incomplete." },
   { category: "Parents", question: "How do I contact my child's teacher?", answer: "Use the Messages section of the Parent Portal to contact your child's class teacher or an authorised subject teacher. You can also book a parent-teacher meeting slot." },
@@ -1398,12 +1431,7 @@ borrowings.push(
   { id: "brw-david-2", bookId: "bk-5", studentId: DEMO_STUDENT_ID, borrowedAt: dayKey(addDays(DEMO_TODAY, -30)), dueDate: dayKey(addDays(DEMO_TODAY, -16)), returnedAt: dayKey(addDays(DEMO_TODAY, -18)), status: "returned" },
 );
 
-const transportRoutes: TransportRoute[] = [
-  { id: "bus-1", busNo: "EIA-01", route: "Ushafa → Utako → Wuse II", driver: "Mr. Sunday Achi", attendant: "Mrs. Rebecca Ude", capacity: 24, stops: [{ name: "Ushafa Lake Roundabout", pickupTime: "06:30", dropoffTime: "15:10" }, { name: "Utako Junction", pickupTime: "06:50", dropoffTime: "15:30" }, { name: "Wuse II Market", pickupTime: "07:05", dropoffTime: "15:45" }] },
-  { id: "bus-2", busNo: "EIA-02", route: "Gwarinpa → Life Camp", driver: "Mr. Peter Anosike", attendant: "Miss Halima Sule", capacity: 24, stops: [{ name: "Gwarinpa 3rd Avenue", pickupTime: "06:20", dropoffTime: "15:20" }, { name: "Life Camp Gate", pickupTime: "06:45", dropoffTime: "15:40" }] },
-  { id: "bus-3", busNo: "EIA-03", route: "Maitama → Katampe", driver: "Mr. John Ekpe", attendant: "Mrs. Ngozi Ali", capacity: 20, stops: [{ name: "Maitama Amana Plaza", pickupTime: "06:35", dropoffTime: "15:15" }, { name: "Katampe Extension", pickupTime: "06:55", dropoffTime: "15:35" }] },
-  { id: "bus-4", busNo: "EIA-04", route: "Lokogoma → Galadimawa", driver: "Mr. Ibrahim Sadiq", attendant: "Miss Joy Obiora", capacity: 20, stops: [{ name: "Lokogoma Junction", pickupTime: "06:15", dropoffTime: "15:25" }, { name: "Galadimawa Roundabout", pickupTime: "06:40", dropoffTime: "15:45" }] },
-];
+const transportRoutes: TransportRoute[] = [];
 
 const enquiries: Enquiry[] = Array.from({ length: 18 }, (_, i) => {
   const first = pick(chance(0.5) ? FEMALE_FIRST : MALE_FIRST);
@@ -1413,12 +1441,12 @@ const enquiries: Enquiry[] = Array.from({ length: 18 }, (_, i) => {
     name: `${first} ${last}`,
     email: `${first.toLowerCase()}.${last.toLowerCase()}@example.com`,
     phone: phone(),
-    category: pick(["admissions", "fees", "academics", "transport", "general"] as const),
+    category: pick(["admissions", "fees", "academics", "general"] as const),
     message: pick([
       "Good day. I would like to know whether there are still spaces in Primary 2 for this session.",
-      "Please could you send me the full fee schedule including transport for Gwarinpa?",
+      "Please could you send me the full fee schedule for Primary 4?",
       "My family is relocating to Abuja in November. Do you accept mid-term transfers?",
-      "I would like to book a school tour for myself and my husband next week.",
+      "Could you tell me which documents I need for a Primary 3 application?",
       "Does the school offer after-school care, and until what time?",
     ]),
     status: pick(["new", "assigned", "in_progress", "resolved"] as const),
@@ -1449,7 +1477,7 @@ const emergencyNotices: EmergencyNotice[] = [
   {
     id: "en-1",
     title: "Early Closure — Thursday",
-    body: "School will close at 1:00 PM on Thursday to allow staff to complete end-of-month safeguarding training. Transport will run to the earlier schedule and parents collecting children should arrive by 12:45 PM.",
+    body: "School will close at 1:00 PM on Thursday to allow staff to complete end-of-month safeguarding training. Parents collecting children should arrive by 12:45 PM.",
     priority: "high",
     audience: "all",
     startsAt: iso(addDays(DEMO_TODAY, -1)),
@@ -1473,30 +1501,15 @@ function addUser(u: Omit<User, "createdAt" | "active" | "avatarSeed"> & { avatar
   users.push({ ...u, avatarSeed: u.avatarSeed ?? u.name, active: true, createdAt: "2026-08-01T08:00:00.000Z" });
 }
 
-addUser({ id: "usr-admin", name: "Ngozi Adeleke", email: "admin@elbethel.edu.ng", password: "elbethel", roles: ["admin", "super_admin"] as Role[], phone: phone() });
-addUser({ id: "usr-head", name: "Dr. Amaka N. Okafor", email: "headteacher@elbethel.edu.ng", password: "elbethel", roles: ["headteacher", "admin"] as Role[], teacherId: "tch-001", phone: phone() });
-addUser({ id: "usr-teacher", name: "Miss Chiamaka Obi", email: "teacher@elbethel.edu.ng", password: "elbethel", roles: ["teacher"] as Role[], teacherId: "tch-007", phone: phone() });
-addUser({ id: "usr-maths", name: "Mr. Samuel Yusuf", email: "s.yusuf@elbethel.edu.ng", password: "elbethel", roles: ["teacher"] as Role[], teacherId: "tch-010", phone: phone() });
-addUser({ id: "usr-parent", name: "Mrs. Ada Chukwu", email: "parent@elbethel.edu.ng", password: "elbethel", roles: ["parent"] as Role[], parentId: DEMO_PARENT_ID, phone: phone() });
-addUser({ id: "usr-pupil", name: "David Chukwu", email: "pupil@elbethel.edu.ng", password: "elbethel", roles: ["pupil"] as Role[], studentId: DEMO_STUDENT_ID });
-addUser({ id: "usr-accountant", name: "Mr. Bola Ogunleye", email: "accounts@elbethel.edu.ng", password: "elbethel", roles: ["accountant"] as Role[], phone: phone() });
-addUser({ id: "usr-admissions", name: "Mrs. Halima Sani", email: "admissions@elbethel.edu.ng", password: "elbethel", roles: ["admissions_officer"] as Role[], phone: phone() });
-addUser({ id: "usr-librarian", name: "Mr. Uche Nnaji", email: "library@elbethel.edu.ng", password: "elbethel", roles: ["librarian"] as Role[], phone: phone() });
-addUser({ id: "usr-applicant", name: "Mrs. Fatima Bello", email: "applicant@example.com", password: "elbethel", roles: ["applicant"] as Role[], phone: phone() });
-
-// Every teacher and parent also has an account so authorization is real across the data set.
-for (const t of teachers) {
-  if (users.some((u) => u.teacherId === t.id)) continue;
-  addUser({ id: `usr-${t.id}`, name: `${t.title} ${t.firstName} ${t.lastName}`, email: t.email, password: "elbethel", roles: ["teacher"] as Role[], teacherId: t.id, avatarSeed: t.avatarSeed });
-}
-for (const p of parents) {
-  if (users.some((u) => u.parentId === p.id)) continue;
-  addUser({ id: `usr-${p.id}`, name: `${p.title} ${p.firstName} ${p.lastName}`, email: p.email, password: "elbethel", roles: ["parent"] as Role[], parentId: p.id, avatarSeed: p.avatarSeed });
-}
-for (const s of students) {
-  if (users.some((u) => u.studentId === s.id)) continue;
-  addUser({ id: `usr-${s.id}`, name: `${s.firstName} ${s.lastName}`, email: `${s.studentNo.toLowerCase()}@pupils.elbethel.edu.ng`, password: "elbethel", roles: ["pupil"] as Role[], studentId: s.id, avatarSeed: s.avatarSeed });
-}
+// Named demo accounts. They are imported without a Clerk login; an administrator
+// enables sign-in for any of them from the Users page.
+addUser({ id: "usr-admin", name: "Ngozi Adeleke", username: "ngozi_adeleke", email: "admin@elbethel.edu.ng", roles: ["super_admin"], phone: phone() });
+addUser({ id: "usr-head", name: "Dr. Amaka N. Okafor", username: "amaka_okafor", email: "headteacher@elbethel.edu.ng", roles: ["admin", "teacher"], teacherId: "tch-001", phone: phone() });
+addUser({ id: "usr-teacher", name: "Miss Chiamaka Obi", username: "chiamaka_obi", email: "teacher@elbethel.edu.ng", roles: ["teacher"], teacherId: "tch-013", phone: phone() });
+addUser({ id: "usr-maths", name: "Mr. Samuel Yusuf", username: "samuel_yusuf", email: "s.yusuf@elbethel.edu.ng", roles: ["teacher"], teacherId: "tch-019", phone: phone() });
+addUser({ id: "usr-parent", name: "Mrs. Ada Chukwu", username: "ada_chukwu", email: "parent@elbethel.edu.ng", roles: ["parent"], parentId: DEMO_PARENT_ID, phone: phone() });
+addUser({ id: "usr-pupil", name: "David Chukwu", username: "david_chukwu", email: "pupil@elbethel.edu.ng", roles: ["pupil"], studentId: DEMO_STUDENT_ID });
+addUser({ id: "usr-accountant", name: "Mr. Bola Ogunleye", username: "bola_ogunleye", email: "accounts@elbethel.edu.ng", roles: ["admin"], phone: phone() });
 
 const notifications: AppNotification[] = [];
 let notificationCounter = 0;
@@ -1532,8 +1545,6 @@ notify("usr-admin", "admission_update", "27 new applications this month", "Nine 
 notify("usr-admin", "fee_reminder", "Outstanding fees report ready", "Termly fee collection now stands at 68 percent.", "/portal/admin/fees", 2, true);
 notify("usr-admin", "announcement", "Audit log export completed", "Last month's administrative actions have been archived.", "/portal/admin/audit-logs", 5, true);
 
-notify("usr-applicant", "admission_update", "Assessment scheduled", "Your child's entrance assessment has been scheduled. Please check your applicant dashboard.", "/admissions/status", 1);
-notify("usr-applicant", "admission_update", "Application received", "We have received application ADM-2026-00401.", "/admissions/status", 6, true);
 
 const messageThreads: MessageThread[] = [
   {
@@ -1563,13 +1574,13 @@ const messageThreads: MessageThread[] = [
   },
   {
     id: "thr-3",
-    subject: "Transport route change request",
+    subject: "Change of address",
     participantIds: ["usr-parent", "usr-admin"],
     createdAt: iso(addDays(DEMO_TODAY, -14)),
     updatedAt: iso(addDays(DEMO_TODAY, -13)),
     messages: [
-      { id: "msg-6", senderId: "usr-parent", body: "Good morning. We are moving to Utako next month. Would it be possible to change the children to the Ushafa–Utako route?", sentAt: iso(addDays(DEMO_TODAY, -14)), readBy: ["usr-parent", "usr-admin"] },
-      { id: "msg-7", senderId: "usr-admin", body: "Good morning Mrs. Chukwu. Yes, EIA-01 has space. Please confirm your new address in writing and we will update the route from the first of next month.", sentAt: iso(addDays(DEMO_TODAY, -13)), readBy: ["usr-parent", "usr-admin"] },
+      { id: "msg-6", senderId: "usr-parent", body: "Good morning. We are moving to Utako next month. Please could you update our address on the children's records?", sentAt: iso(addDays(DEMO_TODAY, -14)), readBy: ["usr-parent", "usr-admin"] },
+      { id: "msg-7", senderId: "usr-admin", body: "Good morning Mrs. Chukwu. Certainly. Please confirm your new address in writing and we will update the records from the first of next month.", sentAt: iso(addDays(DEMO_TODAY, -13)), readBy: ["usr-parent", "usr-admin"] },
     ],
   },
 ];
@@ -1593,8 +1604,8 @@ for (const teacher of teachers.slice(0, 15)) {
 }
 
 const appointments: Appointment[] = [
-  { id: "apt-1", teacherId: "tch-007", parentId: DEMO_PARENT_ID, studentId: DEMO_STUDENT_ID, date: dayKey(addDays(DEMO_TODAY, 4)), time: "10:00", mode: "in_person", status: "confirmed", note: "Discuss David's progress in English and reading." },
-  { id: "apt-2", teacherId: "tch-010", parentId: DEMO_PARENT_ID, studentId: DEMO_STUDENT_ID, date: dayKey(addDays(DEMO_TODAY, 9)), time: "12:00", mode: "virtual", status: "requested", note: "Mathematics support plan." },
+  { id: "apt-1", teacherId: "tch-013", parentId: DEMO_PARENT_ID, studentId: DEMO_STUDENT_ID, date: dayKey(addDays(DEMO_TODAY, 4)), time: "10:00", mode: "in_person", status: "confirmed", note: "Discuss David's progress in English and reading." },
+  { id: "apt-2", teacherId: "tch-019", parentId: DEMO_PARENT_ID, studentId: DEMO_STUDENT_ID, date: dayKey(addDays(DEMO_TODAY, 9)), time: "12:00", mode: "virtual", status: "requested", note: "Mathematics support plan." },
 ];
 
 const auditLogs: AuditLog[] = [];

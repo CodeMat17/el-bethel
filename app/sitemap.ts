@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { SITE_URL } from "@/lib/school/config";
-import { getAllEvents, getPublishedNews, getVacancies } from "@/lib/school/data";
+import { getAllEvents, getPublishedNews } from "@/lib/school/site-data";
 
 const STATIC_ROUTES: { path: string; priority: number; changeFrequency: "daily" | "weekly" | "monthly" | "yearly" }[] = [
   { path: "/", priority: 1, changeFrequency: "weekly" },
@@ -36,20 +36,19 @@ const STATIC_ROUTES: { path: string; priority: number; changeFrequency: "daily" 
   { path: "/school-life/events", priority: 0.8, changeFrequency: "weekly" },
   { path: "/school-life/gallery", priority: 0.6, changeFrequency: "weekly" },
   { path: "/school-life/library", priority: 0.5, changeFrequency: "monthly" },
-  { path: "/school-life/transport", priority: 0.5, changeFrequency: "monthly" },
+  { path: "/alumni", priority: 0.5, changeFrequency: "weekly" },
+  { path: "/alumni/register", priority: 0.4, changeFrequency: "yearly" },
+  { path: "/shop", priority: 0.5, changeFrequency: "monthly" },
   { path: "/news", priority: 0.9, changeFrequency: "daily" },
   { path: "/calendar", priority: 0.7, changeFrequency: "monthly" },
   { path: "/documents", priority: 0.6, changeFrequency: "monthly" },
-  { path: "/careers", priority: 0.6, changeFrequency: "weekly" },
   { path: "/contact", priority: 0.8, changeFrequency: "monthly" },
-  { path: "/contact/tour", priority: 0.8, changeFrequency: "monthly" },
   { path: "/verify", priority: 0.4, changeFrequency: "yearly" },
   { path: "/privacy", priority: 0.4, changeFrequency: "yearly" },
   { path: "/terms", priority: 0.3, changeFrequency: "yearly" },
-  { path: "/accessibility", priority: 0.3, changeFrequency: "yearly" },
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   return [
     ...STATIC_ROUTES.map((route) => ({
@@ -58,23 +57,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: route.changeFrequency,
       priority: route.priority,
     })),
-    ...getPublishedNews().map((post) => ({
+    ...(await getPublishedNews()).map((post) => ({
       url: `${SITE_URL}/news/${post.slug}`,
       lastModified: new Date(post.publishedAt),
       changeFrequency: "monthly" as const,
       priority: 0.6,
     })),
-    ...getAllEvents().map((event) => ({
+    ...(await getAllEvents()).map((event) => ({
       url: `${SITE_URL}/school-life/events/${event.slug}`,
       lastModified: new Date(event.date),
       changeFrequency: "monthly" as const,
       priority: 0.5,
-    })),
-    ...getVacancies().map((vacancy) => ({
-      url: `${SITE_URL}/careers/${vacancy.slug}`,
-      lastModified: now,
-      changeFrequency: "weekly" as const,
-      priority: 0.4,
     })),
   ];
 }

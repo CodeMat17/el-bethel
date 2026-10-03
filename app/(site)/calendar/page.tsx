@@ -7,7 +7,7 @@ import { Reveal } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ACADEMIC_CALENDAR, SCHOOL } from "@/lib/school/config";
-import { getAllEvents } from "@/lib/school/data";
+import { getAllEvents } from "@/lib/school/site-data";
 import { formatDate, formatLongDate } from "@/lib/school/format";
 import { DEMO_TODAY } from "@/lib/school/seed";
 
@@ -25,10 +25,11 @@ const CATEGORY_TONE = {
   parents: "neutral",
   holiday: "warning",
   assessment: "danger",
+  alumni: "gold",
 } as const;
 
-export default function CalendarPage() {
-  const events = getAllEvents();
+export default async function CalendarPage() {
+  const events = await getAllEvents();
   const months = events.reduce<Record<string, typeof events>>((acc, event) => {
     const key = new Date(event.date).toLocaleDateString("en-GB", {
       month: "long",

@@ -8,20 +8,11 @@ import { PortalPageHeader } from "@/components/portal/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { api } from "@/convex/_generated/api";
 import { requireAdmin } from "@/lib/school/auth";
-import {
-  getActiveTerm,
-  getAdminMetrics,
-  getApplicationsByStatus,
-  getAttendanceTrend,
-  getEnrolmentByLevel,
-  getGradeDistribution,
-  getSubmissionRate,
-  getUpcomingEvents,
-} from "@/lib/school/data";
+import { query } from "@/lib/school/convex";
+import { getDirectory } from "@/lib/school/directory";
 import { APPLICATION_STATUS, compactMoney, formatDate, money } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
-import { DEMO_TODAY } from "@/lib/school/seed";
 import type { ApplicationStatus } from "@/lib/school/types";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -29,21 +20,25 @@ export const metadata: Metadata = { title: "Dashboard" };
 export default async function AdminDashboard() {
   await requireAdmin();
 
-  const metrics = getAdminMetrics();
-  const enrolment = getEnrolmentByLevel();
-  const applications = getApplicationsByStatus();
-  const trend = getAttendanceTrend(10);
-  const grades = getGradeDistribution("term-2025-3");
-  const submissions = getSubmissionRate();
-  const events = getUpcomingEvents().slice(0, 4);
-  const term = getActiveTerm();
-  const db = getDb();
-  const recentAudit = db.auditLogs.slice(0, 6);
+  const [metrics, attendance, academics, events, recentAudit, dir] = await Promise.all([
+    query(api.dashboard.metrics, {}),
+    query(api.attendance.schoolOverview, { days: 10 }),
+    query(api.dashboard.academics, {}),
+    query(api.content.events, { upcomingOnly: true, limit: 4 }),
+    query(api.dashboard.recentAudit, { limit: 6 }),
+    getDirectory(),
+  ]);
+  const enrolment = metrics.enrolment;
+  const applications = metrics.applicationsByStatus;
+  const trend = attendance.trend;
+  const grades = academics.grades;
+  const term = dir.activeTerm;
+  const expected = metrics.submissions.total;
 
   return (
     <>
       <PortalPageHeader
-        eyebrow={`${term.name} · ${formatDate(DEMO_TODAY)}`}
+        eyebrow={`${term?.name ?? "No current term set"} · ${formatDate(new Date())}`}
         title="School control centre"
         description="Enrolment, admissions, attendance, academics and finance at a glance."
         action={
@@ -69,10 +64,10 @@ export default async function AdminDashboard() {
         />
         <StatCard
           label="Today's attendance"
-          value={`${metrics.attendanceRate}%`}
-          hint="Present or late, school-wide"
+          value={`${attendance.day.rate}%`}
+          hint={`Present or late · ${formatDate(attendance.date)}`}
           icon="CalendarCheck"
-          tone={metrics.attendanceRate >= 95 ? "success" : "warning"}
+          tone={attendance.day.rate >= 95 ? "success" : "warning"}
           href="/portal/admin/attendance"
         />
         <StatCard label="Assignments" value={metrics.assignments} hint="Published this term" icon="ClipboardList" tone="neutral" href="/portal/admin/assignments" />
@@ -144,7 +139,7 @@ export default async function AdminDashboard() {
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Card className="gap-0 p-5 sm:p-6">
           <h2 className="font-heading text-base font-extrabold">Grade distribution</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Third Term, 2025/2026 — all subjects, whole school.</p>
+          <p className="mt-1 text-sm text-muted-foreground">{academics.term ? `${academics.term.name} — all subjects, whole school.` : "No results entered yet."}</p>
           <Separator className="my-5" />
           <ColumnChart
             data={grades.map((row) => ({ label: row.grade, value: row.count }))}
@@ -157,15 +152,14 @@ export default async function AdminDashboard() {
           <Separator className="my-5" />
           <div className="grid gap-4 sm:grid-cols-2">
             <HeroFigure
-              value={`${submissions.submissionRate}%`}
-              label="Submission rate"
-              progress={submissions.submissionRate}
-              detail={`${submissions.submitted} of ${submissions.total} expected submissions`}
+              value={String(expected)}
+              label="Submissions received"
+              detail={`${metrics.submissions.graded} marked · average ${metrics.submissions.averagePercent}%`}
             />
             <HeroFigure
-              value={String(submissions.pending)}
-              label="Awaiting grading"
-              detail={`${submissions.graded} graded · ${submissions.late} late · average score ${submissions.averageScore}`}
+              value={String(metrics.submissions.pending)}
+              label="Awaiting marking"
+              detail="Written answers waiting for a teacher"
             />
           </div>
           <Button variant="outline" size="lg" className="mt-6 w-full font-bold" render={<Link href="/portal/admin/assignments" />}>

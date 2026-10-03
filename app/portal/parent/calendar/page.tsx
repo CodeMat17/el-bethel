@@ -7,9 +7,9 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { requireParent } from "@/lib/school/auth";
 import { ACADEMIC_CALENDAR } from "@/lib/school/config";
-import { getAllEvents } from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { query } from "@/lib/school/convex";
 import { formatDate, formatLongDate } from "@/lib/school/format";
-import { DEMO_TODAY } from "@/lib/school/seed";
 
 export const metadata: Metadata = { title: "School calendar" };
 
@@ -20,17 +20,18 @@ const CATEGORY_TONE = {
   parents: "neutral",
   holiday: "warning",
   assessment: "danger",
+  alumni: "gold",
 } as const;
 
 export default async function ParentCalendarPage() {
   await requireParent();
-  const events = getAllEvents();
+  const events = await query(api.content.events, {});
   const upcoming = events.filter((e) => e.status === "upcoming");
 
   return (
     <>
       <PortalPageHeader
-        eyebrow={formatLongDate(DEMO_TODAY)}
+        eyebrow={formatLongDate(new Date())}
         title="School calendar"
         description="Term dates, breaks, examinations and every event in the school year."
       />
@@ -80,7 +81,7 @@ export default async function ParentCalendarPage() {
           <Separator className="my-4" />
           <ul className="space-y-2.5">
             {ACADEMIC_CALENDAR.map((block) => {
-              const current = DEMO_TODAY >= new Date(block.start) && DEMO_TODAY <= new Date(block.end);
+              const current = new Date() >= new Date(block.start) && new Date() <= new Date(block.end);
               return (
                 <li
                   key={block.name}

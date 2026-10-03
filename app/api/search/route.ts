@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { globalSearch } from "@/lib/school/data";
+import { globalSearch } from "@/lib/school/site-data";
 import { formatDate } from "@/lib/school/format";
 
 /** Public site search. Only ever returns published, public content. */
@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   const query = new URL(request.url).searchParams.get("q") ?? "";
   if (query.trim().length < 2) return NextResponse.json({ results: [] });
 
-  const found = globalSearch(query.slice(0, 80));
+  const found = await globalSearch(query.slice(0, 80));
   const results = [
     ...found.news.map((n) => ({
       group: "News",

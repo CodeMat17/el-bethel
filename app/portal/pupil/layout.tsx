@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 
 import { PortalShell } from "@/components/portal/portal-shell";
+import { api } from "@/convex/_generated/api";
 import { requirePupil } from "@/lib/school/auth";
-import { classDisplayName, getStudent, unreadCount } from "@/lib/school/data";
+import { query } from "@/lib/school/convex";
+import { getDirectory } from "@/lib/school/directory";
 import { PUPIL_NAV } from "@/lib/school/navigation";
 
 export const metadata: Metadata = {
@@ -14,26 +16,26 @@ const QUICK_NAV = [
   { label: "Home", href: "/portal/pupil", icon: "House" },
   { label: "Work", href: "/portal/pupil/assignments", icon: "ClipboardList" },
   { label: "Learn", href: "/portal/pupil/materials", icon: "FolderOpen" },
-  { label: "Quiz", href: "/portal/pupil/quizzes", icon: "Puzzle" },
+  { label: "Results", href: "/portal/pupil/results", icon: "Trophy" },
   { label: "Me", href: "/portal/pupil/profile", icon: "UserRound" },
 ];
 
 export default async function PupilLayout({ children }: LayoutProps<"/portal/pupil">) {
   const user = await requirePupil();
-  const student = user.studentId ? getStudent(user.studentId) : null;
+  const [shell, dir] = await Promise.all([query(api.dashboard.shell, {}), getDirectory()]);
 
   return (
     <PortalShell
       portalName="My School"
       portalHome="/portal/pupil"
       nav={PUPIL_NAV}
-      unread={unreadCount(user.id)}
+      unread={shell?.unread ?? 0}
       notificationsHref="/portal/pupil/notifications"
       quickNav={QUICK_NAV}
       user={{
         name: user.name,
-        email: user.email,
-        roleLabel: student ? classDisplayName(student.classId) : "Pupil",
+        email: user.username ? `@${user.username}` : undefined,
+        roleLabel: shell?.pupilClassId ? dir.className(shell.pupilClassId) : "Pupil",
         avatarSeed: user.avatarSeed,
       }}
     >

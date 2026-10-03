@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { CtaBand, PageHero } from "@/components/common";
 import { GalleryGrid } from "@/components/site/gallery-grid";
-import { getGallery } from "@/lib/school/data";
+import { getGallery } from "@/lib/school/site-data";
 
 export const metadata: Metadata = {
   title: "Gallery",
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/school-life/gallery" },
 };
 
-export default function GalleryPage() {
+export default async function GalleryPage() {
   return (
     <>
       <PageHero
@@ -27,14 +27,14 @@ export default function GalleryPage() {
 
       <section className="eb-section">
         <div className="eb-container">
-          <GalleryGrid items={getGallery()} />
+          <GalleryGrid items={await getGallery()} />
         </div>
       </section>
 
       <CtaBand
-        title="Want to see it in person?"
-        text="Photographs only go so far. Book a tour and see a normal school day, unrehearsed."
-        primary={{ label: "Book a school tour", href: "/contact/tour" }}
+        title="Want to know more?"
+        text="Photographs only go so far. Talk to our school office about admission, classes and school life."
+        primary={{ label: "Contact the school", href: "/contact" }}
         secondary={{ label: "Read the latest news", href: "/news" }}
       />
     </>

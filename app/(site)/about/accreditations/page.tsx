@@ -5,7 +5,7 @@ import { CtaBand, PageHero, SectionHeading } from "@/components/common";
 import { Reveal } from "@/components/motion";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { getAchievements } from "@/lib/school/data";
+import { getAchievements } from "@/lib/school/site-data";
 import { formatDate } from "@/lib/school/format";
 
 export const metadata: Metadata = {
@@ -31,8 +31,8 @@ const SCHOOL_AWARDS = [
   { year: "2022", title: "Excellence in Parent Engagement", body: "Recognised for our digital classroom and parent communication programme." },
 ];
 
-export default function AccreditationsPage() {
-  const achievements = getAchievements().slice(0, 6);
+export default async function AccreditationsPage() {
+  const achievements = (await getAchievements()).slice(0, 6);
 
   return (
     <>

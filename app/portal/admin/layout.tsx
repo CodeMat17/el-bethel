@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 
 import { PortalShell } from "@/components/portal/portal-shell";
 import { requireAdmin } from "@/lib/school/auth";
-import { unreadCount } from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { query } from "@/lib/school/convex";
 import { ROLE_LABELS } from "@/lib/school/config";
 import { ADMIN_NAV } from "@/lib/school/navigation";
 
@@ -21,13 +22,14 @@ const QUICK_NAV = [
 
 export default async function AdminLayout({ children }: LayoutProps<"/portal/admin">) {
   const user = await requireAdmin();
+  const shell = await query(api.dashboard.shell, {});
 
   return (
     <PortalShell
       portalName="Administration"
       portalHome="/portal/admin"
       nav={ADMIN_NAV}
-      unread={unreadCount(user.id)}
+      unread={shell?.unread ?? 0}
       notificationsHref="/portal/admin/notifications"
       quickNav={QUICK_NAV}
       user={{

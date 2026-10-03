@@ -19,24 +19,11 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { requireParent } from "@/lib/school/auth";
 import { DAY_NAMES } from "@/lib/school/config";
-import {
-  childrenForSession,
-  classDisplayName,
-  getActiveTerm,
-  getAttendanceForStudent,
-  getClass,
-  getInvoicesForStudent,
-  getNotifications,
-  getStudentAssignments,
-  getSubject,
-  getThreadsForUser,
-  getTodaySlots,
-  getUpcomingEvents,
-  resolveActiveChild,
-  studentName,
-  summariseAttendance,
-  teacherNameById,
-} from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { schoolDay, slotsForDay, studentName, summariseAttendance } from "@/lib/school/data";
+import { getMyChildren, resolveActiveChild } from "@/lib/school/parent";
+import { getDirectory } from "@/lib/school/directory";
+import { query } from "@/lib/school/convex";
 import {
   SUBMISSION_STATUS,
   avatarTone,
@@ -45,18 +32,18 @@ import {
   money,
   relativeTime,
 } from "@/lib/school/format";
-import { DEMO_TODAY } from "@/lib/school/seed";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function ParentDashboard({ searchParams }: PageProps<"/portal/parent">) {
   const user = await requireParent();
+  const dir = await getDirectory();
   const params = await searchParams;
   const requested = typeof params.child === "string" ? params.child : undefined;
 
-  const myChildren = childrenForSession(user);
-  const child = resolveActiveChild(user, requested);
+  const myChildren = await getMyChildren();
+  const child = await resolveActiveChild(requested);
 
   if (!child) {
     return (
@@ -73,31 +60,33 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/port
     );
   }
 
-  const assignments = getStudentAssignments(child.id);
-  const pending = assignments.filter((a) =>
-    ["not_started", "in_progress", "resubmission_required"].includes(a.submission?.status ?? "not_started"),
-  );
-  const recentlyGraded = assignments
-    .filter((a) => a.submission?.status === "graded")
+  const [assignments, attendanceRows, fees, timetable, events, notifications, inbox] = await Promise.all([
+    query(api.assignments.forStudent, { studentId: child.id }),
+    query(api.attendance.forStudent, { studentId: child.id, limit: 120 }),
+    query(api.fees.forStudent, { studentId: child.id }),
+    query(api.timetable.forClass, { classId: child.classId }),
+    query(api.content.events, { upcomingOnly: true, limit: 3 }),
+    query(api.notifications.mine, { limit: 5 }),
+    query(api.messages.myThreads, {}),
+  ]);
+  const pending = assignments.filter((a) => a.progress === "not_started");
+  const recentlyGraded = [...assignments]
+    .filter((a) => a.progress === "graded")
     .sort((a, b) => (b.submission?.gradedAt ?? "").localeCompare(a.submission?.gradedAt ?? ""))
     .slice(0, 4);
 
-  const attendance = summariseAttendance(getAttendanceForStudent(child.id));
-  const invoices = getInvoicesForStudent(child.id);
+  const attendance = summariseAttendance(attendanceRows);
+  const invoices = fees.invoices;
   const outstanding = invoices.reduce((sum, i) => sum + (i.total - i.amountPaid), 0);
-  const todaySlots = getTodaySlots(child.classId).filter((s) => s.subjectId);
-  const events = getUpcomingEvents().slice(0, 3);
-  const notifications = getNotifications(user.id).slice(0, 5);
-  const threads = getThreadsForUser(user.id).slice(0, 3);
-  const term = getActiveTerm();
-
-  const weekday = DEMO_TODAY.getUTCDay();
-  const dayLabel = DAY_NAMES[weekday === 0 || weekday === 6 ? 1 : weekday];
+  const todaySlots = slotsForDay(timetable).filter((s) => s.subjectId);
+  const threads = inbox.threads.slice(0, 3);
+  const term = dir.activeTerm;
+  const dayLabel = DAY_NAMES[schoolDay()];
 
   return (
     <>
       <PortalPageHeader
-        eyebrow={`${term.name} · ${formatDate(DEMO_TODAY)}`}
+        eyebrow={`${term?.name ?? "This term"} · ${formatDate(new Date())}`}
         title={`Good morning, ${user.name.replace(/^(Mrs|Mr|Miss|Dr)\.?\s/, "").split(" ")[0]}`}
         description={`Here is how ${child.firstName} is doing at school today.`}
         action={
@@ -106,7 +95,7 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/port
             options={myChildren.map((c) => ({
               id: c.id,
               name: studentName(c),
-              className: classDisplayName(c.classId),
+              className: dir.className(c.classId),
               avatarSeed: c.avatarSeed,
             }))}
           />
@@ -124,10 +113,10 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/port
           <div className="min-w-0 flex-1">
             <h2 className="font-heading text-xl font-extrabold">{studentName(child)}</h2>
             <p className="mt-1 text-sm text-navy-foreground/70">
-              {classDisplayName(child.classId)} · {child.studentNo} · {child.house} House
+              {dir.className(child.classId)} · {child.studentNo} · {child.house} House
             </p>
             <p className="mt-1 text-sm text-navy-foreground/70">
-              Class teacher: {teacherNameById(getClass(child.classId)?.classTeacherId)}
+              Class teacher: {dir.teacherName(dir.getClass(child.classId)?.classTeacherId)}
             </p>
           </div>
           <div className="flex gap-2">
@@ -164,7 +153,7 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/port
         <StatCard
           label="Outstanding fees"
           value={money(outstanding)}
-          hint={outstanding === 0 ? "Fully paid — thank you" : `${term.name} invoice`}
+          hint={outstanding === 0 ? "Fully paid — thank you" : `${term?.name ?? "Current"} invoice`}
           icon="Receipt"
           tone={outstanding === 0 ? "success" : "warning"}
           href={`/portal/parent/fees?child=${child.id}`}
@@ -203,10 +192,10 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/port
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-bold">
-                        {getSubject(slot.subjectId ?? "")?.name}
+                        {dir.subjectName(slot.subjectId ?? "")}
                       </span>
                       <span className="block truncate text-xs text-muted-foreground">
-                        {teacherNameById(slot.teacherId)}
+                        {dir.teacherName(slot.teacherId)}
                       </span>
                     </span>
                   </li>
@@ -234,9 +223,8 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/port
               </div>
             ) : (
               <ul className="space-y-2">
-                {pending.slice(0, 5).map(({ assignment, submission, subject }) => {
-                  const status = SUBMISSION_STATUS[submission?.status ?? "not_started"];
-                  const overdue = new Date(assignment.dueDate) < DEMO_TODAY;
+                {pending.slice(0, 5).map(({ assignment, progress }) => {
+                  const status = SUBMISSION_STATUS[progress];
                   return (
                     <li key={assignment.id}>
                       <Link href={`/portal/parent/assignments?child=${child.id}`} className="block">
@@ -244,11 +232,10 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/port
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-bold">{assignment.title}</p>
                             <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                              {subject?.name} · due {formatDate(assignment.dueDate)}
-                              {overdue ? " · overdue" : ""}
+                              {dir.subjectName(assignment.subjectId)} · due {formatDate(assignment.dueDate)}
                             </p>
                           </div>
-                          <StatusPill tone={overdue ? "danger" : status.tone}>{status.label}</StatusPill>
+                          <StatusPill tone={status.tone}>{status.label}</StatusPill>
                         </div>
                       </Link>
                     </li>
@@ -261,7 +248,7 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/port
           {/* Recent results */}
           <Card className="gap-0 p-5 sm:p-6">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="font-heading text-base font-extrabold">Recently graded</h2>
+              <h2 className="font-heading text-base font-extrabold">Recently marked</h2>
               <Button variant="link" size="sm" className="font-bold" render={<Link href={`/portal/parent/results?child=${child.id}`} />}>
                 Results <ArrowRightIcon />
               </Button>
@@ -269,11 +256,11 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/port
             <Separator className="my-4" />
             {recentlyGraded.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-foreground">
-                Nothing has been graded yet this term.
+                Nothing has been marked yet this term.
               </p>
             ) : (
               <ul className="space-y-3">
-                {recentlyGraded.map(({ assignment, submission, subject }) => {
+                {recentlyGraded.map(({ assignment, submission }) => {
                   const pct = submission?.score
                     ? Math.round((submission.score / assignment.maxScore) * 100)
                     : 0;
@@ -282,7 +269,7 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/port
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="truncate text-sm font-bold">{assignment.title}</p>
-                          <p className="mt-0.5 text-xs text-muted-foreground">{subject?.name}</p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">{dir.subjectName(assignment.subjectId)}</p>
                         </div>
                         <Badge className="shrink-0 font-bold">
                           {submission?.score}/{assignment.maxScore}
@@ -334,7 +321,7 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/port
                         <p className="text-sm font-bold">{n.title}</p>
                         <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{n.body}</p>
                         <p className="mt-1.5 text-[0.68rem] text-muted-foreground">
-                          {relativeTime(n.createdAt, DEMO_TODAY)}
+                          {relativeTime(n.createdAt)}
                         </p>
                       </div>
                     </Link>
@@ -369,7 +356,7 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/port
                           <p className="truncate text-sm font-bold">{thread.subject}</p>
                           <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{last?.body}</p>
                           <p className="mt-1.5 text-[0.68rem] text-muted-foreground">
-                            {relativeTime(thread.updatedAt, DEMO_TODAY)}
+                            {relativeTime(thread.updatedAt)}
                           </p>
                         </div>
                       </Link>

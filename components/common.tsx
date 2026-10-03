@@ -236,7 +236,7 @@ export function CtaBand({
   title = "Ready to join the El-Bethel family?",
   text = "Admission for the 2026/2027 session is open for every class — Creche, Pre-School, Nursery 1–3, Primary 1–6 and JSS 1–3. Spaces in some classes are limited.",
   primary = { label: "Apply for admission", href: "/admissions/apply" },
-  secondary = { label: "Book a school tour", href: "/contact/tour" },
+  secondary = { label: "Contact the school", href: "/contact" },
 }: {
   title?: string;
   text?: string;

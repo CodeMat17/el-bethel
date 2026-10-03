@@ -408,16 +408,6 @@ export const FACILITIES: Facility[] = [
     highlights: ["Balanced menus", "Allergy aware", "Termly menu published"],
   },
   {
-    id: "fac-13",
-    slug: "school-transport",
-    name: "School Bus & Transport",
-    icon: "Bus",
-    summary: "Vetted drivers, trained attendants and monitored routes.",
-    description:
-      "Our transport service covers key Abuja districts with vetted drivers, a trained bus attendant on every route and daily pickup and drop-off logs.",
-    highlights: ["Vetted drivers", "Bus attendants", "Route logs", "Parent notifications"],
-  },
-  {
     id: "fac-14",
     slug: "security",
     name: "Security",
@@ -493,18 +483,26 @@ export const FEE_STRUCTURE: {
 ];
 
 export const OPTIONAL_FEES: { category: FeeCategory; label: string; amount: number }[] = [
-  { category: "transport", label: "Transport (per term)", amount: 65000 },
   { category: "meals", label: "Meals (per term)", amount: 55000 },
   { category: "uniform", label: "Uniform set", amount: 28000 },
   { category: "books", label: "Books & stationery", amount: 32000 },
 ];
 
 export const ASSESSMENT_WEIGHTING: AssessmentWeighting[] = [
-  { component: "classwork", label: "Classwork", weight: 10, maxScore: 10 },
-  { component: "assignment", label: "Assignments", weight: 10, maxScore: 10 },
-  { component: "test", label: "Tests", weight: 20, maxScore: 20 },
+  { component: "ca", label: "Continuous assessment", weight: 40, maxScore: 40 },
   { component: "exam", label: "Examination", weight: 60, maxScore: 60 },
 ];
+
+/**
+ * Default share of the 100-mark total given to continuous assessment. Teachers
+ * choose the split per subject, class and term; the exam takes the rest.
+ */
+export const DEFAULT_CA_MAX = 40;
+
+/** A CA weighting is a whole number of marks between 0 and 100. */
+export function isValidCaMax(caMax: number) {
+  return Number.isInteger(caMax) && caMax >= 0 && caMax <= 100;
+}
 
 export const GRADE_BANDS = [
   { min: 80, grade: "A", remark: "Excellent" },
@@ -541,17 +539,15 @@ export const CONDUCT_TRAITS = [
 
 export const ROLE_LABELS: Record<Role, string> = {
   super_admin: "Super Administrator",
-  admin: "School Administrator",
-  headteacher: "Headteacher",
-  deputy_headteacher: "Deputy Headteacher",
+  admin: "Administrator",
   teacher: "Teacher",
-  accountant: "Accountant",
-  admissions_officer: "Admissions Officer",
-  librarian: "Librarian",
   parent: "Parent",
   pupil: "Pupil",
-  applicant: "Applicant",
+  transport: "Transport crew",
 };
+
+/** Usernames: lowercase letters, numbers and underscores, 4–32 characters. */
+export const USERNAME_PATTERN = /^[a-z0-9_]{4,32}$/;
 
 export const APPLICATION_DOCUMENT_REQUIREMENTS = [
   { key: "birth_certificate", label: "Birth certificate or declaration of age", required: true },

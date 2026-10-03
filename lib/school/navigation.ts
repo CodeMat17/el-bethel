@@ -73,11 +73,10 @@ export const PUBLIC_NAV: NavSection[] = [
       { label: "Clubs & Activities", href: "/school-life/clubs", description: "Sixteen clubs across STEM, arts and sport.", icon: "Puzzle" },
       { label: "Sports", href: "/school-life/sports", description: "Football, basketball, athletics and more.", icon: "Trophy" },
       { label: "Achievements", href: "/school-life/achievements", description: "Our Stars — pupil achievements.", icon: "Star" },
-      { label: "Facilities", href: "/school-life/facilities", description: "Fourteen spaces built for children.", icon: "Building2" },
+      { label: "Facilities", href: "/school-life/facilities", description: "Thirteen spaces built for children.", icon: "Building2" },
       { label: "Events", href: "/school-life/events", description: "What is coming up this term.", icon: "CalendarDays" },
       { label: "Gallery", href: "/school-life/gallery", description: "Moments from school life.", icon: "Images" },
       { label: "Library", href: "/school-life/library", description: "Our catalogue and reading programme.", icon: "BookOpenCheck" },
-      { label: "Transport", href: "/school-life/transport", description: "Routes, times and safety.", icon: "Bus" },
     ],
   },
   { label: "News", href: "/news" },
@@ -86,8 +85,8 @@ export const PUBLIC_NAV: NavSection[] = [
     items: [
       { label: "School Calendar", href: "/calendar", description: "Terms, breaks and key dates.", icon: "CalendarRange" },
       { label: "Documents", href: "/documents", description: "Handbook, prospectus and policies.", icon: "FileText" },
-      { label: "Book a School Tour", href: "/contact/tour", description: "Physical, virtual or a consultation.", icon: "MapPin" },
-      { label: "Careers", href: "/careers", description: "Join our teaching community.", icon: "Briefcase" },
+      { label: "Alumni", href: "/alumni", description: "Stay connected with El-Bethel.", icon: "HandHeart" },
+      { label: "School Shop", href: "/shop", description: "Uniforms, kits and books.", icon: "ShoppingBag" },
       { label: "Verify a Certificate", href: "/verify", description: "Check an El-Bethel certificate number.", icon: "BadgeCheck" },
       { label: "Contact Us", href: "/contact", description: "Talk to the school office.", icon: "Phone" },
     ],
@@ -125,10 +124,12 @@ export const PARENT_NAV: PortalNavGroup[] = [
     label: "Learning",
     items: [
       { label: "Assignments", href: "/portal/parent/assignments", icon: "ClipboardList" },
+      { label: "Progress & Insights", href: "/portal/parent/progress", icon: "TrendingUp" },
       { label: "Results", href: "/portal/parent/results", icon: "Trophy" },
       { label: "Attendance", href: "/portal/parent/attendance", icon: "CalendarCheck" },
       { label: "Timetable", href: "/portal/parent/timetable", icon: "Clock" },
       { label: "Calendar", href: "/portal/parent/calendar", icon: "CalendarDays" },
+      { label: "Library", href: "/portal/parent/library", icon: "Library" },
     ],
   },
   {
@@ -136,6 +137,7 @@ export const PARENT_NAV: PortalNavGroup[] = [
     items: [
       { label: "Fees", href: "/portal/parent/fees", icon: "Receipt" },
       { label: "Payments", href: "/portal/parent/payments", icon: "CreditCard" },
+      { label: "School Shop", href: "/portal/parent/shop", icon: "ShoppingBag" },
     ],
   },
   {
@@ -144,7 +146,6 @@ export const PARENT_NAV: PortalNavGroup[] = [
       { label: "Messages", href: "/portal/parent/messages", icon: "MessagesSquare" },
       { label: "Appointments", href: "/portal/parent/appointments", icon: "CalendarPlus" },
       { label: "Documents", href: "/portal/parent/documents", icon: "FileText" },
-      { label: "Transport", href: "/portal/parent/transport", icon: "Bus" },
       { label: "Profile", href: "/portal/parent/profile", icon: "UserRound" },
     ],
   },
@@ -164,6 +165,8 @@ export const PUPIL_NAV: PortalNavGroup[] = [
   {
     label: "My Progress",
     items: [
+      { label: "My Progress", href: "/portal/pupil/progress", icon: "TrendingUp" },
+      { label: "My Stars", href: "/portal/pupil/stars", icon: "Star" },
       { label: "My Results", href: "/portal/pupil/results", icon: "Trophy" },
       { label: "My Attendance", href: "/portal/pupil/attendance", icon: "CalendarCheck" },
       { label: "My Timetable", href: "/portal/pupil/timetable", icon: "Clock" },
@@ -190,6 +193,7 @@ export const TEACHER_NAV: PortalNavGroup[] = [
     items: [
       { label: "Attendance", href: "/portal/teacher/attendance", icon: "CalendarCheck" },
       { label: "Results", href: "/portal/teacher/results", icon: "Trophy" },
+      { label: "Class Insights", href: "/portal/teacher/insights", icon: "ChartLine" },
       { label: "Timetable", href: "/portal/teacher/timetable", icon: "Clock" },
     ],
   },
@@ -210,6 +214,7 @@ export const ADMIN_NAV: PortalNavGroup[] = [
     items: [
       { label: "Dashboard", href: "/portal/admin", icon: "LayoutDashboard" },
       { label: "Reports & Analytics", href: "/portal/admin/reports", icon: "ChartColumn" },
+      { label: "Notifications", href: "/portal/admin/notifications", icon: "Bell" },
       { label: "Audit Logs", href: "/portal/admin/audit-logs", icon: "ScrollText" },
     ],
   },
@@ -238,7 +243,6 @@ export const ADMIN_NAV: PortalNavGroup[] = [
     items: [
       { label: "Admissions", href: "/portal/admin/admissions", icon: "FileCheck" },
       { label: "Enquiries", href: "/portal/admin/enquiries", icon: "Inbox" },
-      { label: "Tour Bookings", href: "/portal/admin/tours", icon: "MapPin" },
       { label: "Fees & Invoices", href: "/portal/admin/fees", icon: "Receipt" },
       { label: "Payments", href: "/portal/admin/payments", icon: "CreditCard" },
     ],
@@ -250,8 +254,12 @@ export const ADMIN_NAV: PortalNavGroup[] = [
       { label: "Events", href: "/portal/admin/events", icon: "CalendarDays" },
       { label: "Gallery", href: "/portal/admin/gallery", icon: "Images" },
       { label: "Documents", href: "/portal/admin/documents", icon: "FileText" },
+      { label: "Our Stars", href: "/portal/admin/achievements", icon: "Star" },
+      { label: "Certificates", href: "/portal/admin/certificates", icon: "Award" },
       { label: "Library", href: "/portal/admin/library", icon: "BookOpenCheck" },
-      { label: "Transport", href: "/portal/admin/transport", icon: "Bus" },
+      { label: "Digital Library", href: "/portal/admin/library/digital", icon: "Headphones" },
+      { label: "School Shop", href: "/portal/admin/shop", icon: "ShoppingBag" },
+      { label: "Alumni", href: "/portal/admin/alumni", icon: "HandHeart" },
       { label: "Notices", href: "/portal/admin/notices", icon: "Megaphone" },
       { label: "Settings", href: "/portal/admin/settings", icon: "Settings" },
     ],

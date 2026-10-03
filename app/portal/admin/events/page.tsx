@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ExternalLinkIcon, PlusIcon } from "lucide-react";
+import { ExternalLinkIcon, TrashIcon } from "lucide-react";
+
+import { EventDialog } from "@/components/admin/content-dialogs";
+import { ConfirmAction } from "@/components/portal/confirm-action";
 
 import { StatCard, StatusPill } from "@/components/common";
 import { PortalPageHeader } from "@/components/portal/page-header";
@@ -17,9 +20,10 @@ import {
 } from "@/components/ui/table";
 import { requireAdmin } from "@/lib/school/auth";
 import { ACADEMIC_CALENDAR } from "@/lib/school/config";
-import { getAllEvents } from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { removeEvent } from "@/lib/school/actions/admin";
+import { query } from "@/lib/school/convex";
 import { formatDate } from "@/lib/school/format";
-import { DEMO_TODAY } from "@/lib/school/seed";
 
 export const metadata: Metadata = { title: "Events" };
 
@@ -30,11 +34,13 @@ const CATEGORY_TONE = {
   parents: "neutral",
   holiday: "warning",
   assessment: "danger",
+  alumni: "gold",
 } as const;
 
 export default async function AdminEventsPage() {
   await requireAdmin();
-  const events = getAllEvents();
+  const events = await query(api.content.events, {});
+  const now = new Date();
   const upcoming = events.filter((e) => e.status === "upcoming");
 
   return (
@@ -42,12 +48,7 @@ export default async function AdminEventsPage() {
       <PortalPageHeader
         title="Events"
         description="The school calendar as published to families, with registration requirements."
-        action={
-          <Button size="lg" className="font-bold" disabled>
-            <PlusIcon />
-            New event
-          </Button>
-        }
+        action={<EventDialog />}
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -67,7 +68,7 @@ export default async function AdminEventsPage() {
         <Separator className="my-5" />
         <div className="grid gap-3 sm:grid-cols-3">
           {ACADEMIC_CALENDAR.map((block) => {
-            const current = DEMO_TODAY >= new Date(block.start) && DEMO_TODAY <= new Date(block.end);
+            const current = now >= new Date(block.start) && now <= new Date(block.end);
             return (
               <div
                 key={block.name}
@@ -97,7 +98,7 @@ export default async function AdminEventsPage() {
               <TableHead>Category</TableHead>
               <TableHead className="text-right">Registration</TableHead>
               <TableHead className="text-right">Status</TableHead>
-              <TableHead className="text-right">Public page</TableHead>
+              <TableHead className="text-right" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -121,20 +122,29 @@ export default async function AdminEventsPage() {
                   {event.requiresRegistration ? "Required" : "—"}
                 </TableCell>
                 <TableCell className="text-right">
-                  <StatusPill tone={event.status === "upcoming" ? "success" : "neutral"}>
+                  <StatusPill tone={event.status === "upcoming" ? "success" : event.status === "cancelled" ? "danger" : "neutral"}>
                     {event.status}
                   </StatusPill>
                 </TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="font-bold"
-                    render={<Link href={`/school-life/events/${event.slug}`} />}
-                  >
-                    <ExternalLinkIcon />
-                    View
-                  </Button>
+                <TableCell>
+                  <div className="flex justify-end gap-1">
+                    <EventDialog event={event} />
+                    <Button variant="ghost" size="sm" className="font-bold" render={<Link href={`/school-life/events/${event.slug}`} />}>
+                      <ExternalLinkIcon />
+                      View
+                    </Button>
+                    <ConfirmAction
+                      action={removeEvent.bind(null, event.id)}
+                      icon={<TrashIcon />}
+                      variant="ghost"
+                      className="font-bold text-destructive"
+                      pendingText="Deleting…"
+                      destructive
+                      confirm={{ title: "Delete this event?", description: "It will be removed from the calendar.", confirmLabel: "Delete" }}
+                    >
+                      Delete
+                    </ConfirmAction>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

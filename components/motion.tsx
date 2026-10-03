@@ -6,6 +6,7 @@ import { motion, useInView, useMotionValue, useSpring } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 import { dimensionsFor, photoFor } from "@/lib/school/photos";
+import type { CloudMedia } from "@/lib/school/types";
 
 /** Fade-and-rise on first view. Honours prefers-reduced-motion via the CSS override. */
 export function Reveal({
@@ -90,6 +91,7 @@ export function ToneImage({
   kind,
   sizes = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw",
   priority,
+  media,
 }: {
   tone?: string;
   seed?: string;
@@ -99,7 +101,27 @@ export function ToneImage({
   kind?: "portrait";
   sizes?: string;
   priority?: boolean;
+  /** An uploaded Cloudinary photo or video; takes precedence over the built-in imagery. */
+  media?: CloudMedia;
 }) {
+  if (media?.resourceType === "video") {
+    return (
+      <video
+        src={media.url}
+        controls
+        preload="metadata"
+        aria-label={label}
+        className={cn("w-full bg-black object-cover", className)}
+      />
+    );
+  }
+  if (media) {
+    return (
+      <div className={cn("relative overflow-hidden bg-muted", className)}>
+        <Image src={media.url} alt={label ?? ""} fill sizes={sizes} priority={priority} className="object-cover" />
+      </div>
+    );
+  }
   const photo = photoFor(seed, kind);
   const dimensions = dimensionsFor(photo);
   let hash = 0;

@@ -16,7 +16,7 @@ import {
   LEVEL_SECTIONS,
   TEACHING_METHODS,
 } from "@/lib/school/config";
-import { getSubjects } from "@/lib/school/data";
+import { getSubjects } from "@/lib/school/site-data";
 
 export const metadata: Metadata = {
   title: "Academics",
@@ -32,8 +32,8 @@ const PILLARS = [
   { title: "Assessment & Reports", icon: "ClipboardCheck", href: "/academics/assessment", text: "Continuous assessment, published results and termly report cards." },
 ];
 
-export default function AcademicsPage() {
-  const subjects = getSubjects();
+export default async function AcademicsPage() {
+  const subjects = await getSubjects();
 
   return (
     <>
@@ -131,14 +131,14 @@ export default function AcademicsPage() {
             <SectionHeading
               eyebrow="Assessment"
               title="How a term score is built"
-              lede="Continuous assessment carries 40 percent of every subject score. The examination carries 60."
+              lede="Every subject score is out of 100, split between continuous assessment and the examination. The usual split is 40/60; each subject teacher sets the exact weighting for the term."
             />
             <div className="mt-8 space-y-4">
               {ASSESSMENT_WEIGHTING.map((w) => (
                 <div key={w.component}>
                   <div className="flex items-baseline justify-between text-sm font-bold">
                     <span>{w.label}</span>
-                    <span className="tabular-nums text-muted-foreground">{w.weight}%</span>
+                    <span className="tabular-nums text-muted-foreground">typically {w.weight}%</span>
                   </div>
                   <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
                     <div

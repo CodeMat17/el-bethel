@@ -18,7 +18,7 @@ const STAGES = [
   {
     stage: "Before you apply",
     items: [
-      { title: "Explore the school", text: "Read about our academics, facilities and fees. Book a physical or virtual tour if you would like to see us first." },
+      { title: "Explore the school", text: "Read about our academics, facilities and fees. Call or write to the admissions office with any questions." },
       { title: "Check availability", text: "Every class — Creche, Pre-School, Nursery 1–3, Primary 1–6 and JSS 1–3 — is currently accepting applications, though spaces in some are limited." },
     ],
   },
@@ -29,7 +29,7 @@ const STAGES = [
       { title: "Enter pupil information", text: "Name, date of birth, gender, nationality, previous school and home address." },
       { title: "Enter parent information", text: "Contact details, occupation and an emergency contact." },
       { title: "Upload documents", text: "Birth certificate or age declaration, passport photograph, medical information and guardian identification." },
-      { title: "Review and pay", text: "Check every detail, then pay the ₦15,000 application fee online." },
+      { title: "Review and pay", text: "Check every detail, then pay the ₦15,000 application fee at the school bursary or by bank transfer." },
       { title: "Submit", text: "You receive an application number immediately, in the format ADM-2026-00452." },
     ],
   },
@@ -47,7 +47,7 @@ const STAGES = [
     items: [
       { title: "Accept the offer", text: "Confirm acceptance and pay the registration fee to secure the place." },
       { title: "Enrolment", text: "A pupil record is created, a class is assigned and your Parent Portal is activated." },
-      { title: "Settling in", text: "Uniform, book list, transport arrangements and — for new Primary 1 pupils — two short settling-in visits." },
+      { title: "Settling in", text: "Uniform, book list and — for new Primary 1 pupils — two short settling-in visits." },
     ],
   },
 ];

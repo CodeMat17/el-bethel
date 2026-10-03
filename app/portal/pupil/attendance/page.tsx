@@ -7,18 +7,19 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { requirePupil } from "@/lib/school/auth";
-import { getAttendanceForStudent, getStudent, summariseAttendance } from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { query } from "@/lib/school/convex";
+import { summariseAttendance } from "@/lib/school/data";
 
 export const metadata: Metadata = { title: "My attendance" };
 
 export default async function PupilAttendancePage() {
   const user = await requirePupil();
-  const student = user.studentId ? getStudent(user.studentId) : null;
-  if (!student) {
+  if (!user.studentId) {
     return <EmptyState icon="Backpack" title="No pupil record" description="Please ask your class teacher." />;
   }
 
-  const records = getAttendanceForStudent(student.id);
+  const records = await query(api.attendance.forStudent, { studentId: user.studentId });
   const summary = summariseAttendance(records);
 
   return (

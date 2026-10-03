@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { SCHOOL_STATS, WHY_EL_BETHEL } from "@/lib/school/config";
-import { getTestimonials } from "@/lib/school/data";
+import { getTestimonials } from "@/lib/school/site-data";
 import { initials } from "@/lib/school/format";
 
 export const metadata: Metadata = {
@@ -27,8 +27,8 @@ const EVIDENCE: Record<string, string> = {
   "Holistic Development": "Sixteen clubs, four sports, a creative arts studio and a working school garden.",
 };
 
-export default function WhyElBethelPage() {
-  const testimonials = getTestimonials();
+export default async function WhyElBethelPage() {
+  const testimonials = await getTestimonials();
 
   return (
     <>

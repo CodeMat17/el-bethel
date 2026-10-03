@@ -14,8 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DAY_NAMES, GRADE_BANDS } from "@/lib/school/config";
-import { getSubject, teacherNameById } from "@/lib/school/data";
+import { DAY_NAMES, DEFAULT_CA_MAX, GRADE_BANDS } from "@/lib/school/config";
+import type { Directory } from "@/lib/school/directory";
 import { ATTENDANCE_STATUS, formatDate, gradeTone, money } from "@/lib/school/format";
 import type {
   AttendanceRecord,
@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 
 /* -------------------------------- timetable ------------------------------- */
 
-export function TimetableGrid({ slots }: { slots: TimetableSlot[] }) {
+export function TimetableGrid({ slots, dir }: { slots: TimetableSlot[]; dir: Directory }) {
   const periods = Array.from(new Set(slots.map((s) => s.period))).sort((a, b) => a - b);
   const byKey = new Map(slots.map((s) => [`${s.day}-${s.period}`, s]));
 
@@ -65,13 +65,12 @@ export function TimetableGrid({ slots }: { slots: TimetableSlot[] }) {
                       </td>
                     );
                   }
-                  const subject = slot.subjectId ? getSubject(slot.subjectId) : null;
                   return (
                     <td key={day} className="px-2 py-2">
                       <div className="rounded-lg border bg-background p-2.5">
-                        <p className="truncate text-xs font-bold">{subject?.name ?? "—"}</p>
+                        <p className="truncate text-xs font-bold">{dir.subjectName(slot.subjectId)}</p>
                         <p className="mt-0.5 truncate text-[0.68rem] text-muted-foreground">
-                          {teacherNameById(slot.teacherId)}
+                          {dir.teacherName(slot.teacherId)}
                         </p>
                       </div>
                     </td>
@@ -138,33 +137,42 @@ export function AttendanceLegend() {
 
 /* --------------------------------- results -------------------------------- */
 
-export function ResultsTable({ results }: { results: ResultEntry[] }) {
+export function ResultsTable({ results, dir }: { results: ResultEntry[]; dir: Directory }) {
   return (
     <div className="overflow-x-auto rounded-2xl border bg-card">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Subject</TableHead>
-            <TableHead className="text-right">CA (40)</TableHead>
-            <TableHead className="text-right">Exam (60)</TableHead>
+            <TableHead className="text-right">CA</TableHead>
+            <TableHead className="text-right">Exam</TableHead>
             <TableHead className="text-right">Total</TableHead>
             <TableHead className="text-right">Grade</TableHead>
             <TableHead>Remark</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {results.map((result) => (
+          {results.map((result) => {
+            const caMax = result.caMax ?? DEFAULT_CA_MAX;
+            return (
             <TableRow key={result.id}>
-              <TableCell className="font-bold">{getSubject(result.subjectId)?.name}</TableCell>
-              <TableCell className="text-right tabular-nums">{result.ca}</TableCell>
-              <TableCell className="text-right tabular-nums">{result.exam}</TableCell>
+              <TableCell className="font-bold">{dir.subjectName(result.subjectId)}</TableCell>
+              <TableCell className="text-right tabular-nums">
+                {result.ca}
+                <span className="text-xs text-muted-foreground"> / {caMax}</span>
+              </TableCell>
+              <TableCell className="text-right tabular-nums">
+                {result.exam}
+                <span className="text-xs text-muted-foreground"> / {100 - caMax}</span>
+              </TableCell>
               <TableCell className="text-right font-extrabold tabular-nums">{result.total}</TableCell>
               <TableCell className="text-right">
                 <StatusPill tone={gradeTone(result.grade)} dot={false}>{result.grade}</StatusPill>
               </TableCell>
               <TableCell className="text-muted-foreground">{result.remark}</TableCell>
             </TableRow>
-          ))}
+            );
+          })}
         </TableBody>
       </Table>
     </div>

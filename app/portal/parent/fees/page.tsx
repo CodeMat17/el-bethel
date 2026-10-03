@@ -10,40 +10,38 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { requireParent } from "@/lib/school/auth";
-import {
-  childrenForSession,
-  classDisplayName,
-  getInvoicesForStudent,
-  getPaymentsForStudent,
-  getTerm,
-  outstandingForStudents,
-  resolveActiveChild,
-  studentName,
-} from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { studentName } from "@/lib/school/data";
+import { getMyChildren, resolveActiveChild } from "@/lib/school/parent";
+import { getDirectory } from "@/lib/school/directory";
+import { query } from "@/lib/school/convex";
 import { formatDate, money } from "@/lib/school/format";
 
 export const metadata: Metadata = { title: "Fees" };
 
 export default async function ParentFeesPage({ searchParams }: PageProps<"/portal/parent/fees">) {
   const user = await requireParent();
+  const dir = await getDirectory();
   const params = await searchParams;
-  const child = resolveActiveChild(user, typeof params.child === "string" ? params.child : undefined);
-  const myChildren = childrenForSession(user);
+  const child = await resolveActiveChild(typeof params.child === "string" ? params.child : undefined);
+  const myChildren = await getMyChildren();
 
   if (!child) {
     return <EmptyState icon="Users" title="No children linked" description="Contact the school office." />;
   }
 
-  const invoices = getInvoicesForStudent(child.id);
-  const payments = getPaymentsForStudent(child.id);
+  const [{ invoices, payments }, summaries] = await Promise.all([
+    query(api.fees.forStudent, { studentId: child.id }),
+    query(api.dashboard.childSummaries, {}),
+  ]);
   const billed = invoices.reduce((s, i) => s + i.total, 0);
   const paid = invoices.reduce((s, i) => s + i.amountPaid, 0);
-  const familyOutstanding = outstandingForStudents(myChildren.map((c) => c.id));
+  const familyOutstanding = summaries.reduce((n, x) => n + x.balance, 0);
 
   return (
     <>
       <PortalPageHeader
-        eyebrow={`${studentName(child)} · ${classDisplayName(child.classId)}`}
+        eyebrow={`${studentName(child)} · ${dir.className(child.classId)}`}
         title="Fees"
         description="Invoices, balances and payment history for your child."
         action={
@@ -52,7 +50,7 @@ export default async function ParentFeesPage({ searchParams }: PageProps<"/porta
             options={myChildren.map((c) => ({
               id: c.id,
               name: studentName(c),
-              className: classDisplayName(c.classId),
+              className: dir.className(c.classId),
               avatarSeed: c.avatarSeed,
             }))}
           />
@@ -90,13 +88,14 @@ export default async function ParentFeesPage({ searchParams }: PageProps<"/porta
               <InvoiceCard
                 key={invoice.id}
                 invoice={invoice}
-                termName={getTerm(invoice.termId)?.name ?? "Current term"}
+                termName={dir.termName(invoice.termId)}
                 action={
                   invoice.total - invoice.amountPaid > 0 ? (
-                    <Button size="lg" className="w-full font-bold" render={<Link href={`/portal/parent/payments?invoice=${invoice.id}`} />}>
-                      <CreditCardIcon />
-                      Pay {money(invoice.total - invoice.amountPaid)}
-                    </Button>
+                    <p className="rounded-xl bg-muted/60 px-4 py-3 text-sm leading-relaxed">
+                      <CreditCardIcon className="mr-1.5 inline size-4 text-gold" />
+                      To pay {money(invoice.total - invoice.amountPaid)}, pay at the school bursary or by bank transfer
+                      quoting <span className="font-bold">{invoice.invoiceNo}</span>. The bursar records it here once confirmed.
+                    </p>
                   ) : (
                     <Button variant="outline" size="lg" className="w-full font-bold" render={<Link href="/portal/parent/payments" />}>
                       <DownloadIcon />

@@ -8,13 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { requirePupil } from "@/lib/school/auth";
-import {
-  classDisplayName,
-  getMaterialsForClass,
-  getStudent,
-  getSubject,
-  teacherNameById,
-} from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { query } from "@/lib/school/convex";
+import { getDirectory } from "@/lib/school/directory";
 import { fileSize, formatDate } from "@/lib/school/format";
 
 export const metadata: Metadata = { title: "Learning materials" };
@@ -32,17 +28,20 @@ const KIND_ICON: Record<string, string> = {
 
 export default async function PupilMaterialsPage() {
   const user = await requirePupil();
-  const student = user.studentId ? getStudent(user.studentId) : null;
+  const student = user.studentId ? await query(api.people.myStudent, {}) : null;
   if (!student) {
     return <EmptyState icon="Backpack" title="No pupil record" description="Please ask your class teacher." />;
   }
 
-  const materials = getMaterialsForClass(student.classId);
+  const [materials, dir] = await Promise.all([
+    query(api.learning.materialsForClass, { classId: student.classId }),
+    getDirectory(),
+  ]);
 
   return (
     <>
       <PortalPageHeader
-        eyebrow={classDisplayName(student.classId)}
+        eyebrow={dir.className(student.classId)}
         title="Learning materials"
         description="Notes, worksheets, slides and videos your teachers have shared with your class."
       />
@@ -70,25 +69,32 @@ export default async function PupilMaterialsPage() {
               </p>
 
               <p className="mt-4 text-xs text-muted-foreground">
-                {getSubject(material.subjectId)?.name} · {teacherNameById(material.teacherId)}
+                {dir.subjectName(material.subjectId)} · {dir.teacherName(material.teacherId)}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                {fileSize(material.sizeBytes)} · added {formatDate(material.uploadedAt)}
+                {material.sizeBytes ? `${fileSize(material.sizeBytes)} · ` : ""}added {formatDate(material.uploadedAt)}
               </p>
 
-              <Button variant="outline" size="lg" className="mt-4 w-full font-bold" disabled>
-                <DownloadIcon />
-                Open
-              </Button>
+              {material.url ? (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="mt-4 w-full font-bold"
+                  render={<a href={material.url} target="_blank" rel="noopener noreferrer" />}
+                >
+                  <DownloadIcon />
+                  Open
+                </Button>
+              ) : (
+                <p className="mt-4 rounded-lg bg-muted/60 px-3 py-2 text-center text-xs text-muted-foreground">
+                  Your teacher will share this in class.
+                </p>
+              )}
             </Card>
           ))}
         </div>
       )}
 
-      <p className="mt-6 text-xs text-muted-foreground">
-        Downloads are disabled in this demonstration environment. In a live deployment each file is
-        served from private storage through a short-lived signed link.
-      </p>
     </>
   );
 }

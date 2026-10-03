@@ -58,11 +58,13 @@ export function ApplicationDecisionDialog({
   applicationNo,
   pupilName,
   currentStatus,
+  feePaid,
 }: {
   applicationId: string;
   applicationNo: string;
   pupilName: string;
   currentStatus: string;
+  feePaid: boolean;
 }) {
   const [state, action] = useActionState<FormState, FormData>(updateApplicationStatus, INITIAL);
   const [requestedOpen, setRequestedOpen] = React.useState(false);
@@ -116,7 +118,7 @@ export function ApplicationDecisionDialog({
                 ))}
               </SelectContent>
             </Select>
-            <FieldDescription>The family is notified of every status change.</FieldDescription>
+            <FieldDescription>The family sees the new status when they look up their application.</FieldDescription>
           </Field>
 
           <Field>
@@ -129,6 +131,12 @@ export function ApplicationDecisionDialog({
               placeholder="Explain the decision or what is needed next."
             />
           </Field>
+
+          <label className="flex cursor-pointer items-center gap-3 rounded-xl border bg-card p-3 text-sm font-bold">
+            <input type="hidden" name="feePaid" value="off" />
+            <input type="checkbox" name="feePaid" defaultChecked={feePaid} className="size-4 accent-primary" />
+            Application fee received
+          </label>
 
           <SubmitButton />
 

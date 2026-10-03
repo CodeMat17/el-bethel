@@ -6,9 +6,10 @@ import { ArrowLeftIcon, ShieldCheckIcon } from "lucide-react";
 import { LoginForm } from "@/components/auth/login-form";
 import { Brand } from "@/components/site/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { demoLoginAction } from "@/lib/school/actions/auth";
+import { auth } from "@clerk/nextjs/server";
+
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { getSessionUser, homeForUser } from "@/lib/school/auth";
 import { SCHOOL } from "@/lib/school/config";
 
@@ -18,16 +19,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const DEMO_ACCOUNTS = [
-  { label: "Parent", name: "Mrs. Ada Chukwu", email: "parent@elbethel.edu.ng", detail: "Three children across Primary 1, Primary 3 and Primary 5", icon: "Users" },
-  { label: "Pupil", name: "David Chukwu", email: "pupil@elbethel.edu.ng", detail: "Primary 4A · EIA-2026-00482", icon: "Backpack" },
-  { label: "Teacher", name: "Miss Chiamaka Obi", email: "teacher@elbethel.edu.ng", detail: "Class teacher, Primary 4A", icon: "GraduationCap" },
-  { label: "Administrator", name: "Ngozi Adeleke", email: "admin@elbethel.edu.ng", detail: "Full school control centre", icon: "LayoutDashboard" },
-];
-
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const user = await getSessionUser();
   if (user) redirect(homeForUser(user));
+  // Signed in with Clerk, but no active school account is linked to this sign-in.
+  const { userId } = await auth();
   const params = await searchParams;
   const signedOut = params.signedOut === "1";
 
@@ -68,7 +64,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           </ul>
         </div>
         <p className="relative text-xs text-navy-foreground/50">
-          © {new Date().getFullYear()} {SCHOOL.name} · Demo environment
+          © {new Date().getFullYear()} {SCHOOL.name}
         </p>
       </div>
 
@@ -99,44 +95,29 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
               </div>
             ) : null}
 
-            <LoginForm />
-
-            <div className="mt-8">
-              <div className="flex items-center gap-3">
-                <span className="h-px flex-1 eb-hairline" />
-                <span className="text-[0.68rem] font-extrabold tracking-[0.16em] text-muted-foreground uppercase">
-                  Demo accounts
-                </span>
-                <span className="h-px flex-1 eb-hairline" />
+            {userId ? (
+              <div className="mt-6 space-y-4">
+                <div className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm leading-relaxed">
+                  <p className="font-extrabold">Your sign-in isn&apos;t linked to a school account</p>
+                  <p className="mt-1 text-muted-foreground">
+                    You are signed in, but this sign-in has not been set up for the portal, or the account has been
+                    disabled. Please contact the school office.
+                  </p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Reference: <code className="rounded bg-muted px-1.5 py-0.5 font-semibold">{userId}</code>
+                  </p>
+                </div>
+                <SignOutButton />
               </div>
-
-              <div className="mt-4 grid gap-2">
-                {DEMO_ACCOUNTS.map((account) => (
-                  <Card key={account.email} className="gap-0 p-0">
-                    <form action={demoLoginAction} className="flex items-center gap-3 p-3">
-                      <input type="hidden" name="email" value={account.email} />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-extrabold">
-                          {account.name}
-                          <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[0.65rem] font-bold text-muted-foreground">
-                            {account.label}
-                          </span>
-                        </p>
-                        <p className="truncate text-xs text-muted-foreground">{account.detail}</p>
-                      </div>
-                      <Button type="submit" size="sm" variant="outline" className="shrink-0 font-bold">
-                        Sign in
-                      </Button>
-                    </form>
-                  </Card>
-                ))}
-              </div>
-              <p className="mt-3 text-center text-xs text-muted-foreground">
-                Every demo account uses the password <code className="rounded bg-muted px-1.5 py-0.5 font-semibold">elbethel</code>.
-              </p>
-            </div>
+            ) : (
+              <LoginForm />
+            )}
 
             <p className="mt-8 text-center text-sm text-muted-foreground">
+              Accounts are created by the school. Forgotten your password? Ask the school office to reset it.
+            </p>
+
+            <p className="mt-4 text-center text-sm text-muted-foreground">
               Applying for admission?{" "}
               <Link href="/admissions/apply" className="font-bold text-primary underline-offset-4 hover:underline dark:text-gold">
                 Start an application

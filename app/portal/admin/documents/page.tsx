@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import { FileTextIcon, UploadIcon } from "lucide-react";
+import { FileTextIcon } from "lucide-react";
 
 import { StatCard, StatusPill } from "@/components/common";
 import { PortalPageHeader } from "@/components/portal/page-header";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -14,25 +13,20 @@ import {
 } from "@/components/ui/table";
 import { requireAdmin } from "@/lib/school/auth";
 import { fileSize, formatDate } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
+import { api } from "@/convex/_generated/api";
+import { query } from "@/lib/school/convex";
 
 export const metadata: Metadata = { title: "Documents" };
 
 export default async function AdminDocumentsPage() {
   await requireAdmin();
-  const documents = getDb().documents;
+  const documents = await query(api.content.adminDocuments, {});
 
   return (
     <>
       <PortalPageHeader
         title="School documents"
         description="Handbooks, policies and schedules, and exactly who each one is visible to."
-        action={
-          <Button size="lg" className="font-bold" disabled>
-            <UploadIcon />
-            Upload document
-          </Button>
-        }
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -88,8 +82,8 @@ export default async function AdminDocumentsPage() {
       </div>
 
       <p className="mt-6 text-xs text-muted-foreground">
-        Non-public documents are never served from a public folder. Each download is authorised on the
-        server and delivered through a short-lived signed URL.
+        This is the list of school documents and who can see each one. Document file storage is not set up yet —
+        share files with families directly until it is.
       </p>
     </>
   );

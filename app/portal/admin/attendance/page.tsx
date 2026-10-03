@@ -14,41 +14,38 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { requireAdmin } from "@/lib/school/auth";
-import {
-  classDisplayName,
-  getAttendanceTrend,
-  getClasses,
-  getStudentsByClass,
-  schoolAttendanceRateToday,
-  summariseAttendance,
-  teacherNameById,
-} from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { query } from "@/lib/school/convex";
+import { getDirectory } from "@/lib/school/directory";
 import { formatDate } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
 
 export const metadata: Metadata = { title: "Attendance" };
 
 export default async function AdminAttendancePage() {
   await requireAdmin();
 
-  const db = getDb();
-  const classes = getClasses();
-  const trend = getAttendanceTrend(12);
-  const todayRate = schoolAttendanceRateToday();
-  const overall = summariseAttendance(db.attendance);
+  const [overview, sizes, dir] = await Promise.all([
+    query(api.attendance.schoolOverview, { days: 12 }),
+    query(api.academics.classStats, {}),
+    getDirectory(),
+  ]);
+  const trend = overview.trend;
+  const todayRate = overview.day.rate;
+  const overall = overview.overall;
 
-  const byClass = classes
+  const byClass = dir.classes
     .map((cls) => {
-      const records = db.attendance.filter((a) => a.classId === cls.id);
-      const summary = summariseAttendance(records);
+      const summary = overview.byClass.find((r) => r.classId === cls.id);
       return {
         cls,
-        rate: summary.rate,
-        absent: summary.absent,
-        late: summary.late,
-        pupils: getStudentsByClass(cls.id).length,
+        rate: summary?.rate ?? 0,
+        absent: summary?.absent ?? 0,
+        late: summary?.late ?? 0,
+        recorded: Boolean(summary?.total),
+        pupils: sizes[cls.id] ?? 0,
       };
     })
+    .filter((row) => row.recorded)
     .sort((a, b) => a.rate - b.rate);
 
   const concern = byClass.filter((row) => row.rate < 92);
@@ -62,13 +59,13 @@ export default async function AdminAttendancePage() {
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Today"
+          label="Latest register"
           value={`${todayRate}%`}
-          hint="Present or late"
+          hint={`Present or late · ${formatDate(overview.date)}`}
           icon="CalendarCheck"
           tone={todayRate >= 95 ? "success" : "warning"}
         />
-        <StatCard label="Term average" value={`${overall.rate}%`} icon="TrendingUp" tone={overall.rate >= 95 ? "success" : "warning"} />
+        <StatCard label="Last three weeks" value={`${overall.rate}%`} icon="TrendingUp" tone={overall.rate >= 95 ? "success" : "warning"} />
         <StatCard label="Absences recorded" value={overall.absent} icon="CalendarX" tone={overall.absent > 0 ? "danger" : "success"} />
         <StatCard
           label="Classes below 92%"
@@ -119,7 +116,7 @@ export default async function AdminAttendancePage() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold">{row.cls.name}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {teacherNameById(row.cls.classTeacherId)}
+                      {dir.teacherName(row.cls.classTeacherId)}
                     </p>
                   </div>
                   <StatusPill tone={row.rate < 88 ? "danger" : "warning"}>{row.rate}%</StatusPill>
@@ -151,9 +148,9 @@ export default async function AdminAttendancePage() {
                 .sort((a, b) => a.cls.name.localeCompare(b.cls.name))
                 .map((row) => (
                   <TableRow key={row.cls.id}>
-                    <TableCell className="font-bold">{classDisplayName(row.cls.id)}</TableCell>
+                    <TableCell className="font-bold">{row.cls.name}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {teacherNameById(row.cls.classTeacherId)}
+                      {dir.teacherName(row.cls.classTeacherId)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{row.pupils}</TableCell>
                     <TableCell className="text-right tabular-nums">{row.late}</TableCell>

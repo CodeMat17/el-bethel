@@ -8,73 +8,62 @@ import { PortalPageHeader } from "@/components/portal/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { api } from "@/convex/_generated/api";
 import { requirePupil } from "@/lib/school/auth";
-import {
-  classDisplayName,
-  getClass,
-  getLevel,
-  getStudent,
-  getStudentAssignments,
-  getSubjects,
-  getTimetableForClass,
-  teacherNameById,
-} from "@/lib/school/data";
-import { getDb } from "@/lib/school/store";
+import { query } from "@/lib/school/convex";
+import { getDirectory } from "@/lib/school/directory";
 
 export const metadata: Metadata = { title: "My subjects" };
 
 const SUBJECT_ICON: Record<string, string> = {
-  "sub-eng": "BookOpen",
-  "sub-mth": "ChartColumn",
-  "sub-bsc": "FlaskConical",
-  "sub-sst": "Users",
-  "sub-civ": "ShieldCheck",
-  "sub-cmp": "Cpu",
-  "sub-qr": "Percent",
-  "sub-vr": "MessageCircle",
-  "sub-fre": "Landmark",
-  "sub-crs": "Heart",
-  "sub-irs": "Heart",
-  "sub-art": "Palette",
-  "sub-mus": "Activity",
-  "sub-phe": "Goal",
-  "sub-hec": "UtensilsCrossed",
-  "sub-agr": "Sprout",
-  "sub-lit": "BookMarked",
-  "sub-num": "Layers",
+  ENG: "BookOpen",
+  MTH: "ChartColumn",
+  BSC: "FlaskConical",
+  SST: "Users",
+  CIV: "ShieldCheck",
+  CMP: "Cpu",
+  QNR: "Percent",
+  VBR: "MessageCircle",
+  FRE: "Landmark",
+  CRS: "Heart",
+  IRS: "Heart",
+  ART: "Palette",
+  MUS: "Activity",
+  PHE: "Goal",
+  HEC: "UtensilsCrossed",
+  AGR: "Sprout",
+  LIT: "BookMarked",
+  NUM: "Layers",
 };
 
 export default async function PupilSubjectsPage() {
   const user = await requirePupil();
-  const student = user.studentId ? getStudent(user.studentId) : null;
+  const student = user.studentId ? await query(api.people.myStudent, {}) : null;
   if (!student) {
     return <EmptyState icon="Backpack" title="No pupil record" description="Please ask your class teacher." />;
   }
 
-  const cls = getClass(student.classId);
-  const level = cls ? getLevel(cls.levelId) : null;
-  const subjects = level ? getSubjects().filter((s) => s.levelIds.includes(level.id)) : [];
-  const assignments = getStudentAssignments(student.id);
-  const timetable = getTimetableForClass(student.classId);
-  const materials = getDb().materials.filter((m) => m.classId === student.classId);
+  const [assignments, timetable, materials, dir] = await Promise.all([
+    query(api.assignments.forStudent, { studentId: student.id }),
+    query(api.timetable.forClass, { classId: student.classId }),
+    query(api.learning.materialsForClass, { classId: student.classId }),
+    getDirectory(),
+  ]);
+  const subjects = dir.subjectsForClass(student.classId);
 
   return (
     <>
       <PortalPageHeader
-        eyebrow={classDisplayName(student.classId)}
+        eyebrow={dir.className(student.classId)}
         title="My subjects"
         description={`The ${subjects.length} subjects you study, and who teaches each one.`}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {subjects.map((subject) => {
-          const teacherId = timetable.find((s) => s.subjectId === subject.id)?.teacherId;
+          const teacherId = dir.teacherFor(student.classId, subject.id)?.id ?? timetable.find((s) => s.subjectId === subject.id)?.teacherId;
           const subjectAssignments = assignments.filter((a) => a.assignment.subjectId === subject.id);
-          const todo = subjectAssignments.filter((a) =>
-            ["not_started", "in_progress", "resubmission_required"].includes(
-              a.submission?.status ?? "not_started",
-            ),
-          ).length;
+          const todo = subjectAssignments.filter((a) => a.progress === "not_started").length;
           const subjectMaterials = materials.filter((m) => m.subjectId === subject.id).length;
           const lessonsPerWeek = timetable.filter((s) => s.subjectId === subject.id).length;
 
@@ -82,7 +71,7 @@ export default async function PupilSubjectsPage() {
             <Card key={subject.id} className="flex h-full flex-col gap-0 p-5">
               <div className="flex items-start justify-between gap-3">
                 <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-navy text-gold">
-                  <Icon name={SUBJECT_ICON[subject.id] ?? "BookOpen"} className="size-5" />
+                  <Icon name={SUBJECT_ICON[subject.code] ?? "BookOpen"} className="size-5" />
                 </span>
                 {todo > 0 ? (
                   <Badge className="font-bold">{todo} to do</Badge>
@@ -92,7 +81,7 @@ export default async function PupilSubjectsPage() {
               </div>
 
               <h2 className="mt-4 font-heading text-base font-extrabold">{subject.name}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">{teacherNameById(teacherId)}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{dir.teacherName(teacherId)}</p>
 
               <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
                 <div className="rounded-lg bg-muted/70 p-2">

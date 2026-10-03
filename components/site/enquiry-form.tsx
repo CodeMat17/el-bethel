@@ -26,7 +26,6 @@ const CATEGORIES = [
   { value: "admissions", label: "Admissions" },
   { value: "fees", label: "Fees" },
   { value: "academics", label: "Academics" },
-  { value: "transport", label: "Transport" },
   { value: "general", label: "General enquiry" },
 ];
 

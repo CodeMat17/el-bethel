@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { DownloadIcon, PrinterIcon } from "lucide-react";
 
 import { EmptyState, StatCard } from "@/components/common";
 import { ChildSwitcher } from "@/components/portal/child-switcher";
@@ -12,31 +11,28 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { requireParent } from "@/lib/school/auth";
-import {
-  childrenForSession,
-  classDisplayName,
-  getPublishedResultTerms,
-  getReportCard,
-  getSubject,
-  getResultsForStudent,
-  resolveActiveChild,
-  studentName,
-} from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { studentName } from "@/lib/school/data";
+import { getMyChildren, resolveActiveChild } from "@/lib/school/parent";
+import { getDirectory } from "@/lib/school/directory";
+import { query } from "@/lib/school/convex";
 import { formatDate, percent } from "@/lib/school/format";
 
 export const metadata: Metadata = { title: "Results" };
 
 export default async function ParentResultsPage({ searchParams }: PageProps<"/portal/parent/results">) {
   const user = await requireParent();
+  const dir = await getDirectory();
   const params = await searchParams;
-  const child = resolveActiveChild(user, typeof params.child === "string" ? params.child : undefined);
-  const myChildren = childrenForSession(user);
+  const child = await resolveActiveChild(typeof params.child === "string" ? params.child : undefined);
+  const myChildren = await getMyChildren();
 
   if (!child) {
     return <EmptyState icon="Users" title="No children linked" description="Contact the school office." />;
   }
 
-  const terms = getPublishedResultTerms(child.id);
+  const reports = await query(api.results.allForStudent, { studentId: child.id });
+  const terms = reports.map((r) => r.term);
 
   if (terms.length === 0) {
     return (
@@ -50,7 +46,7 @@ export default async function ParentResultsPage({ searchParams }: PageProps<"/po
               options={myChildren.map((c) => ({
                 id: c.id,
                 name: studentName(c),
-                className: classDisplayName(c.classId),
+                className: dir.className(c.classId),
                 avatarSeed: c.avatarSeed,
               }))}
             />
@@ -59,7 +55,7 @@ export default async function ParentResultsPage({ searchParams }: PageProps<"/po
         <EmptyState
           icon="Trophy"
           title="No results have been published yet"
-          description="Report cards are published in this portal on the result publication date at the end of each term."
+          description="Results appear here as soon as the class teacher publishes them at the end of each term."
         />
       </>
     );
@@ -68,16 +64,16 @@ export default async function ParentResultsPage({ searchParams }: PageProps<"/po
   return (
     <>
       <PortalPageHeader
-        eyebrow={`${studentName(child)} · ${classDisplayName(child.classId)}`}
-        title="Results & report cards"
-        description="Termly results, subject breakdowns, attendance, conduct and teacher comments."
+        eyebrow={`${studentName(child)} · ${dir.className(child.classId)}`}
+        title="Exam results"
+        description="A summary of each published term: subject scores, average, class position and teacher comments."
         action={
           <ChildSwitcher
             activeId={child.id}
             options={myChildren.map((c) => ({
               id: c.id,
               name: studentName(c),
-              className: classDisplayName(c.classId),
+              className: dir.className(c.classId),
               avatarSeed: c.avatarSeed,
             }))}
           />
@@ -88,14 +84,15 @@ export default async function ParentResultsPage({ searchParams }: PageProps<"/po
         <TabsList className="h-auto w-full overflow-x-auto sm:w-fit">
           {terms.map((term) => (
             <TabsTrigger key={term.id} value={term.id} className="text-xs font-bold whitespace-nowrap sm:text-sm">
-              {term.name} · {term.sessionId.replace("ses-", "")}
+              {term.name} · {dir.getSession(term.sessionId)?.name ?? ""}
             </TabsTrigger>
           ))}
         </TabsList>
 
         {terms.map((term) => {
-          const results = getResultsForStudent(child.id, term.id);
-          const report = getReportCard(child.id, term.id);
+          const entry = reports.find((r) => r.term.id === term.id);
+          const results = entry?.results ?? [];
+          const report = entry?.reportCard ?? null;
           const best = [...results].sort((a, b) => b.total - a.total)[0];
           const weakest = [...results].sort((a, b) => a.total - b.total)[0];
 
@@ -113,7 +110,7 @@ export default async function ParentResultsPage({ searchParams }: PageProps<"/po
                   <StatCard
                     label="Class position"
                     value={`${report.position} of ${report.classSize}`}
-                    hint={classDisplayName(report.classId)}
+                    hint={dir.className(report.classId)}
                     icon="Trophy"
                     tone="gold"
                   />
@@ -137,25 +134,14 @@ export default async function ParentResultsPage({ searchParams }: PageProps<"/po
               <Card className="gap-0 p-5 sm:p-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <h2 className="font-heading text-base font-extrabold">Subject breakdown</h2>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="font-bold" disabled>
-                      <PrinterIcon />
-                      Print
-                    </Button>
-                    <Button variant="outline" size="sm" className="font-bold" disabled>
-                      <DownloadIcon />
-                      Download PDF
-                    </Button>
-                  </div>
                 </div>
                 <Separator className="my-4" />
-                <ResultsTable results={results} />
+                <ResultsTable results={results} dir={dir} />
                 <div className="mt-5">
                   <GradeKey />
                 </div>
                 <p className="mt-4 text-xs text-muted-foreground">
-                  PDF generation is disabled in this demonstration environment. In a live deployment the
-                  report card renders server-side to a signed, single-use download link.
+                  This is a summary. The full printed report card is handed to your child at school.
                 </p>
               </Card>
 
@@ -169,7 +155,7 @@ export default async function ParentResultsPage({ searchParams }: PageProps<"/po
                         <p className="text-sm font-bold text-success">Strongest subject</p>
                         <p className="mt-1 text-sm">
                           <span className="font-extrabold">{best.total}%</span> in{" "}
-                          {getSubject(best.subjectId)?.name} — {best.remark}.
+                          {dir.subjectName(best.subjectId)} — {best.remark}.
                         </p>
                         <Progress value={best.total} className="mt-2" />
                       </div>
@@ -177,7 +163,7 @@ export default async function ParentResultsPage({ searchParams }: PageProps<"/po
                         <p className="text-sm font-bold text-warning">Needs the most attention</p>
                         <p className="mt-1 text-sm">
                           <span className="font-extrabold">{weakest.total}%</span> in{" "}
-                          {getSubject(weakest.subjectId)?.name} — {weakest.remark}.
+                          {dir.subjectName(weakest.subjectId)} — {weakest.remark}.
                         </p>
                         <Progress value={weakest.total} className="mt-2" />
                       </div>
@@ -190,9 +176,10 @@ export default async function ParentResultsPage({ searchParams }: PageProps<"/po
 
                 {report ? (
                   <Card className="gap-0 p-5 sm:p-6">
-                    <h2 className="font-heading text-base font-extrabold">Conduct and comments</h2>
+                    <h2 className="font-heading text-base font-extrabold">Comments</h2>
                     <Separator className="my-4" />
-                    <ul className="space-y-3">
+                    {report.conduct.length > 0 ? (
+                    <ul className="mb-5 space-y-3">
                       {report.conduct.map((trait) => (
                         <li key={trait.label}>
                           <div className="flex items-center justify-between gap-3 text-sm">
@@ -203,7 +190,7 @@ export default async function ParentResultsPage({ searchParams }: PageProps<"/po
                         </li>
                       ))}
                     </ul>
-                    <Separator className="my-5" />
+                    ) : null}
                     <div className="space-y-4 text-sm">
                       <div>
                         <p className="text-xs font-bold text-muted-foreground uppercase">Class teacher</p>

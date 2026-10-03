@@ -7,7 +7,7 @@ import { Icon } from "@/components/icon";
 import { Reveal, ToneImage } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { getAchievements, getUpcomingEvents } from "@/lib/school/data";
+import { getAchievements, getUpcomingEvents } from "@/lib/school/site-data";
 import { formatDate } from "@/lib/school/format";
 
 export const metadata: Metadata = {
@@ -33,9 +33,9 @@ const HOUSES = [
   { name: "Amber", tone: "gold", motto: "Warm and relentless" },
 ];
 
-export default function SportsPage() {
-  const sportEvents = getUpcomingEvents().filter((e) => e.category === "sports");
-  const sportAchievements = getAchievements().filter((a) => a.category === "Sports");
+export default async function SportsPage() {
+  const sportEvents = (await getUpcomingEvents()).filter((e) => e.category === "sports");
+  const sportAchievements = (await getAchievements()).filter((a) => a.category === "Sports");
 
   return (
     <>

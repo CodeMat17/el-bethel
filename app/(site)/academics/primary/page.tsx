@@ -6,7 +6,7 @@ import { Reveal, ToneImage } from "@/components/motion";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { PERIODS, levelsForStage } from "@/lib/school/config";
-import { getSubjects } from "@/lib/school/data";
+import { getSubjects } from "@/lib/school/site-data";
 
 export const metadata: Metadata = {
   title: "Primary School",
@@ -33,9 +33,9 @@ const YEARS = [
   { level: "Primary 6", focus: "Secondary-school readiness: study skills, revision technique and transition support." },
 ];
 
-export default function PrimaryPage() {
+export default async function PrimaryPage() {
   const levels = [...levelsForStage("lower_primary"), ...levelsForStage("upper_primary")];
-  const subjects = getSubjects().filter((s) => s.levelIds.includes("lvl-p4"));
+  const subjects = (await getSubjects()).filter((s) => s.levelIds.includes("lvl-p4"));
 
   return (
     <>

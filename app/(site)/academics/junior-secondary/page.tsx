@@ -6,7 +6,7 @@ import { Reveal, ToneImage } from "@/components/motion";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { PERIODS, levelsForStage } from "@/lib/school/config";
-import { getSubjects } from "@/lib/school/data";
+import { getSubjects } from "@/lib/school/site-data";
 
 export const metadata: Metadata = {
   title: "Junior Secondary School",
@@ -32,14 +32,14 @@ const YEARS = [
 
 const OUTCOMES = [
   "Every JSS 3 pupil is entered for the Basic Education Certificate Examination (BECE) and the FCT junior certificate.",
-  "Continuous assessment carries 40 percent of every subject score, exactly as it does across the school.",
+  "Continuous assessment counts towards every subject score, typically 40 percent, with each subject teacher setting the exact weighting, as across the school.",
   "Mock examinations run in the first and second terms of JSS 3, with results reviewed subject by subject with parents.",
   "Subject-choice counselling in the third term helps each family plan the senior secondary route that fits the pupil.",
 ];
 
-export default function JuniorSecondaryPage() {
+export default async function JuniorSecondaryPage() {
   const levels = levelsForStage("junior_secondary");
-  const subjects = getSubjects().filter((s) => s.levelIds.includes("lvl-j2"));
+  const subjects = (await getSubjects()).filter((s) => s.levelIds.includes("lvl-j2"));
 
   return (
     <>

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { SCHOOL, SITE_URL } from "@/lib/school/config";
-import { getAllEvents, getEventBySlug, getUpcomingEvents } from "@/lib/school/data";
+import { getAllEvents, getEventBySlug, getUpcomingEvents } from "@/lib/school/site-data";
 import { formatLongDate } from "@/lib/school/format";
 
 const CATEGORY_TONE = {
@@ -19,15 +19,16 @@ const CATEGORY_TONE = {
   parents: "neutral",
   holiday: "warning",
   assessment: "danger",
+  alumni: "gold",
 } as const;
 
-export function generateStaticParams() {
-  return getAllEvents().map((event) => ({ slug: event.slug }));
+export async function generateStaticParams() {
+  return (await getAllEvents()).map((event) => ({ slug: event.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/school-life/events/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const event = getEventBySlug(slug);
+  const event = await getEventBySlug(slug);
   if (!event) return { title: "Event not found" };
   return {
     title: event.title,
@@ -44,10 +45,10 @@ export async function generateMetadata({ params }: PageProps<"/school-life/event
 
 export default async function EventPage({ params }: PageProps<"/school-life/events/[slug]">) {
   const { slug } = await params;
-  const event = getEventBySlug(slug);
+  const event = await getEventBySlug(slug);
   if (!event) notFound();
 
-  const related = getUpcomingEvents().filter((e) => e.slug !== event.slug).slice(0, 3);
+  const related = (await getUpcomingEvents()).filter((e) => e.slug !== event.slug).slice(0, 3);
 
   const schema = {
     "@context": "https://schema.org",
@@ -72,7 +73,7 @@ export default async function EventPage({ params }: PageProps<"/school-life/even
 
       <article>
         <div className="relative">
-          <ToneImage tone="navy" seed={event.slug} label={event.title} className="h-56 w-full sm:h-72 lg:h-96" />
+          <ToneImage tone="navy" seed={event.slug} media={event.cover} label={event.title} className="h-56 w-full sm:h-72 lg:h-96" />
           <div className="absolute inset-0 bg-linear-to-t from-navy via-navy/60 to-transparent" />
           <div className="eb-container absolute inset-x-0 bottom-0 pb-8 sm:pb-12">
             <Button

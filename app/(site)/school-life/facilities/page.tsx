@@ -22,7 +22,7 @@ export default function FacilitiesPage() {
       <PageHero
         eyebrow="School life"
         title="Facilities"
-        lede="Fourteen spaces designed around small people — from a child-safe science laboratory to a soft-surface playground."
+        lede="Thirteen spaces designed around small people — from a child-safe science laboratory to a soft-surface playground."
         breadcrumb={[
           { label: "Home", href: "/" },
           { label: "School Life", href: "/school-life" },
@@ -83,9 +83,9 @@ export default function FacilitiesPage() {
       </section>
 
       <CtaBand
-        title="See the campus for yourself"
-        text="Tours run every week during term time and take about forty-five minutes, including time with a member of the leadership team."
-        primary={{ label: "Book a school tour", href: "/contact/tour" }}
+        title="Ready to join us?"
+        text="Admission for the 2026/2027 session is open for every class. Spaces in some classes are limited."
+        primary={{ label: "Apply for admission", href: "/admissions/apply" }}
         secondary={{ label: "View the gallery", href: "/school-life/gallery" }}
       />
     </>

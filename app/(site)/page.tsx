@@ -30,15 +30,7 @@ import {
   SCHOOL_STATS,
   WHY_EL_BETHEL,
 } from "@/lib/school/config";
-import {
-  getAchievements,
-  getClubs,
-  getFeaturedTeachers,
-  getGallery,
-  getPublishedNews,
-  getTestimonials,
-  getUpcomingEvents,
-} from "@/lib/school/data";
+import { getAchievements, getClubs, getFeaturedTeachers, getGallery, getPublishedNews, getTestimonials, getUpcomingEvents } from "@/lib/school/site-data";
 import { formatDate, initials } from "@/lib/school/format";
 
 export const metadata: Metadata = {
@@ -48,14 +40,14 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-export default function HomePage() {
-  const news = getPublishedNews().slice(0, 3);
-  const events = getUpcomingEvents().slice(0, 4);
-  const teachers = getFeaturedTeachers().slice(0, 6);
-  const testimonials = getTestimonials();
-  const clubs = getClubs().slice(0, 8);
-  const achievements = getAchievements().slice(0, 4);
-  const gallery = getGallery().slice(0, 8);
+export default async function HomePage() {
+  const news = (await getPublishedNews()).slice(0, 3);
+  const events = (await getUpcomingEvents()).slice(0, 4);
+  const teachers = (await getFeaturedTeachers()).slice(0, 6);
+  const testimonials = await getTestimonials();
+  const clubs = (await getClubs()).slice(0, 8);
+  const achievements = (await getAchievements()).slice(0, 4);
+  const gallery = (await getGallery()).slice(0, 8);
 
   return (
     <>
@@ -225,8 +217,8 @@ export default function HomePage() {
                 Our story
                 <ArrowRightIcon />
               </Button>
-              <Button size="lg" variant="outline" className="h-11 font-bold" render={<Link href="/contact/tour" />}>
-                Book a school tour
+              <Button size="lg" variant="outline" className="h-11 font-bold" render={<Link href="/admissions" />}>
+                Admissions
               </Button>
             </div>
           </Reveal>
@@ -301,13 +293,13 @@ export default function HomePage() {
             <Reveal delay={0.28}>
               <Card className="flex h-full flex-col justify-between gap-4 border-gold/30 bg-gold/10 p-6">
                 <div>
-                  <h3 className="font-heading text-lg font-extrabold">See it for yourself</h3>
+                  <h3 className="font-heading text-lg font-extrabold">Have a question?</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    Nothing beats walking the corridors and meeting the teachers. Tours run every week.
+                    Our school office answers enquiries within one working day, Monday to Friday.
                   </p>
                 </div>
-                <Button className="w-full font-bold" size="lg" render={<Link href="/contact/tour" />}>
-                  Book a tour
+                <Button className="w-full font-bold" size="lg" render={<Link href="/contact" />}>
+                  Contact us
                   <ArrowRightIcon />
                 </Button>
               </Card>
@@ -385,7 +377,7 @@ export default function HomePage() {
           <SectionHeading
             eyebrow="Facilities"
             title="Spaces designed around small people"
-            lede="Fourteen dedicated spaces, from a child-safe science laboratory to a soft-surface playground."
+            lede="Thirteen dedicated spaces, from a child-safe science laboratory to a soft-surface playground."
             action={
               <Button variant="outline" size="lg" className="font-bold" render={<Link href="/school-life/facilities" />}>
                 All facilities
@@ -552,7 +544,7 @@ export default function HomePage() {
                 <Reveal key={post.id} delay={i * 0.05}>
                   <Link href={`/news/${post.slug}`} className="group block h-full">
                     <Card className="h-full gap-0 overflow-hidden p-0 transition-all group-hover:-translate-y-1 group-hover:shadow-lg">
-                      <ToneImage tone={post.tone} seed={post.slug} label={post.title} className="aspect-16/10" />
+                      <ToneImage tone={post.tone} seed={post.slug} media={post.cover} label={post.title} className="aspect-16/10" />
                       <CardContent className="p-5">
                         <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
                           <Badge variant="secondary" className="font-bold">{post.category}</Badge>
@@ -627,6 +619,7 @@ export default function HomePage() {
                     <ToneImage
                       tone={item.tone}
                       seed={item.id}
+                      media={item.media}
                       label={item.title}
                       className="aspect-square transition-transform duration-500 group-hover:scale-105"
                     />
@@ -703,7 +696,7 @@ export default function HomePage() {
           {[
             { icon: "MapPin", title: "Visit us", lines: [SCHOOL.address], href: "/contact", cta: "Get directions" },
             { icon: "Phone", title: "Talk to us", lines: [SCHOOL.phone, SCHOOL.email], href: "/contact", cta: "Send an enquiry" },
-            { icon: "CalendarDays", title: "Office hours", lines: ["Monday – Friday", "7:30 AM – 4:00 PM"], href: "/contact/tour", cta: "Book a visit" },
+            { icon: "CalendarDays", title: "Office hours", lines: ["Monday – Friday", "7:30 AM – 4:00 PM"], href: "/contact", cta: "Contact the office" },
           ].map((block, i) => (
             <Reveal key={block.title} delay={i * 0.06}>
               <Card className="h-full gap-0 p-6">

@@ -6,7 +6,8 @@ import { Reveal } from "@/components/motion";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { getClubs, teacherNameById } from "@/lib/school/data";
+import { getClubs } from "@/lib/school/site-data";
+import { getDirectory } from "@/lib/school/directory";
 
 export const metadata: Metadata = {
   title: "Clubs & Activities",
@@ -31,8 +32,9 @@ const CATEGORY_TONE: Record<string, string> = {
   service: "bg-muted text-muted-foreground ring-border",
 };
 
-export default function ClubsPage() {
-  const clubs = getClubs();
+export default async function ClubsPage() {
+  const dir = await getDirectory();
+  const clubs = await getClubs();
   const grouped = Object.entries(
     clubs.reduce<Record<string, typeof clubs>>((acc, club) => {
       (acc[club.category] ??= []).push(club);
@@ -86,7 +88,7 @@ export default function ClubsPage() {
                       <dl className="space-y-2 text-xs">
                         <div className="flex items-center justify-between gap-3">
                           <dt className="text-muted-foreground">Coordinator</dt>
-                          <dd className="truncate font-bold">{teacherNameById(club.coordinatorId)}</dd>
+                          <dd className="truncate font-bold">{dir.teacherName(club.coordinatorId)}</dd>
                         </div>
                         <div className="flex items-center justify-between gap-3">
                           <dt className="text-muted-foreground">Meets</dt>

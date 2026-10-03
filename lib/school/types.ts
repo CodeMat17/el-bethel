@@ -1,30 +1,38 @@
 // Core domain model for the El-Bethel International Academy digital school platform.
 // Strict types only — the `any` type is never used anywhere in this module.
+//
+// These are the shapes the app renders. Convex is the source of truth: its
+// functions return documents in exactly these shapes (with `id` = the Convex
+// document id), so a page never sees `_id` / `_creationTime`.
+
+import type { Id } from "../../convex/_generated/dataModel";
 
 export type ID = string;
 
-export type Role =
-  | "super_admin"
-  | "admin"
-  | "headteacher"
-  | "deputy_headteacher"
-  | "teacher"
-  | "accountant"
-  | "admissions_officer"
-  | "librarian"
-  | "parent"
-  | "pupil"
-  | "applicant";
+export type Role = "super_admin" | "admin" | "teacher" | "parent" | "pupil" | "transport";
 
-export type Portal = "admin" | "teacher" | "parent" | "pupil" | "admissions";
+export type Portal = "admin" | "teacher" | "parent" | "pupil" | "transport";
+
+/** A photo or video stored on Cloudinary. */
+export interface CloudMedia {
+  publicId: string;
+  url: string;
+  resourceType: "image" | "video";
+  width?: number;
+  height?: number;
+  format?: string;
+  bytes?: number;
+}
 
 export interface User {
   id: ID;
   name: string;
-  email: string;
+  /** Sign-in name. Every account has one; pupils sign in with it. */
+  username?: string;
+  email?: string;
   phone?: string;
-  /** Demo-only credential. A real deployment delegates this to Clerk / an auth provider. */
-  password: string;
+  /** Set once the account exists in Clerk and can sign in. */
+  clerkUserId?: string;
   roles: Role[];
   avatarSeed: string;
   active: boolean;
@@ -57,7 +65,7 @@ export interface SchoolClass {
   /** e.g. "Primary 4A" */
   name: string;
   section: string;
-  classTeacherId: ID;
+  classTeacherId?: ID;
   capacity: number;
   room: string;
 }
@@ -85,13 +93,24 @@ export interface Teacher {
   qualifications: string[];
   experienceYears: number;
   bio: string;
+  /** Derived from teaching assignments. */
   subjectIds: ID[];
+  /** Classes this teacher teaches or is class teacher of. Derived. */
   classIds: ID[];
   isClassTeacher: boolean;
   active: boolean;
   joinedAt: string;
   avatarSeed: string;
+  photo?: CloudMedia;
   featured: boolean;
+}
+
+/** One row of "who teaches what where". */
+export interface TeachingAssignment {
+  id: ID;
+  classId: ID;
+  subjectId: ID;
+  teacherId: ID;
 }
 
 export type Gender = "Male" | "Female";
@@ -108,10 +127,12 @@ export interface Student {
   nationality: string;
   address: string;
   classId: ID;
+  /** Derived from guardianships. */
   parentIds: ID[];
   status: "active" | "graduated" | "transferred" | "archived";
   enrolledAt: string;
   avatarSeed: string;
+  photo?: CloudMedia;
   house: "Emerald" | "Sapphire" | "Ruby" | "Amber";
   bloodGroup: string;
   medicalNotes?: string;
@@ -130,6 +151,7 @@ export interface Parent {
   address: string;
   emergencyContactName: string;
   emergencyContactPhone: string;
+  /** Derived from guardianships. */
   studentIds: ID[];
   avatarSeed: string;
 }
@@ -157,14 +179,26 @@ export interface Term {
   active: boolean;
 }
 
-export type SubmissionType = "text" | "image" | "pdf" | "docx" | "multiple";
+/* ------------------------------- assignments ------------------------------ */
 
-export interface Attachment {
+/**
+ * The answer format the teacher chose for a question:
+ * "text" — typed answer (marked by the teacher);
+ * "single" — radio buttons; "multiple" — checkboxes.
+ */
+export type QuestionType = "text" | "single" | "multiple";
+
+export interface Question {
   id: ID;
-  name: string;
-  mime: string;
-  sizeBytes: number;
-  url: string;
+  type: QuestionType;
+  prompt: string;
+  options: string[];
+  /**
+   * Indices of the correct options. Present for staff; stripped from what a
+   * pupil receives until their work has been marked and the due date passed.
+   */
+  correct: number[];
+  points: number;
 }
 
 export interface Assignment {
@@ -177,41 +211,45 @@ export interface Assignment {
   subjectId: ID;
   teacherId: ID;
   termId: ID;
+  questions: Question[];
   publishedAt: string;
   startDate: string;
   dueDate: string;
   maxScore: number;
-  submissionTypes: SubmissionType[];
-  allowResubmission: boolean;
-  attachments: Attachment[];
   status: "draft" | "published" | "closed" | "archived";
+  createdAt: string;
 }
 
-export type SubmissionStatus =
-  | "not_started"
-  | "in_progress"
-  | "submitted"
-  | "late"
-  | "grading"
-  | "graded"
-  | "returned"
-  | "resubmission_required";
+export interface QuestionAnswer {
+  questionId: ID;
+  text?: string;
+  selected?: number[];
+  /** Marks awarded; undefined until marked. */
+  awarded?: number;
+  autoMarked?: boolean;
+}
+
+/** Stored states of a submission. */
+export type SubmissionStatus = "submitted" | "graded";
+
+/** What the UI shows for a pupil's assignment, including states with no submission. */
+export type AssignmentProgress = "not_started" | "missed" | "submitted" | "graded";
 
 export interface Submission {
   id: ID;
   assignmentId: ID;
   studentId: ID;
   status: SubmissionStatus;
-  textAnswer?: string;
-  files: Attachment[];
-  submittedAt?: string;
-  version: number;
+  answers: QuestionAnswer[];
+  submittedAt: string;
   score?: number;
   grade?: string;
   feedback?: string;
   gradedAt?: string;
   gradedBy?: ID;
 }
+
+/* ------------------------------- attendance ------------------------------- */
 
 export type AttendanceStatus = "present" | "absent" | "late" | "excused";
 
@@ -222,35 +260,29 @@ export interface AttendanceRecord {
   date: string;
   status: AttendanceStatus;
   note?: string;
-  recordedBy: ID;
+  recordedBy?: ID;
 }
 
-export type AssessmentComponent =
-  | "classwork"
-  | "homework"
-  | "assignment"
-  | "test"
-  | "project"
-  | "practical"
-  | "midterm"
-  | "exam";
+/* --------------------------------- results -------------------------------- */
 
 export interface AssessmentWeighting {
-  component: AssessmentComponent;
+  component: "ca" | "exam";
   label: string;
   weight: number;
   maxScore: number;
 }
 
+/** A pupil's summarised score in one subject for one term. */
 export interface ResultEntry {
   id: ID;
   studentId: ID;
   subjectId: ID;
   classId: ID;
   termId: ID;
-  scores: Partial<Record<AssessmentComponent, number>>;
   ca: number;
   exam: number;
+  /** Marks the CA was out of; the exam is out of 100 minus this. Missing = DEFAULT_CA_MAX. */
+  caMax?: number;
   total: number;
   grade: string;
   remark: string;
@@ -274,6 +306,8 @@ export interface ReportCard {
   promotionStatus: "promoted" | "pending" | "repeat";
   publishedAt?: string;
 }
+
+/* ---------------------------------- fees ---------------------------------- */
 
 export type FeeCategory =
   | "tuition"
@@ -322,6 +356,8 @@ export interface Payment {
   verifiedAt?: string;
   receiptNo: string;
 }
+
+/* ------------------------------- admissions ------------------------------- */
 
 export type ApplicationStatus =
   | "draft"
@@ -399,6 +435,8 @@ export interface Application {
   ownerEmail: string;
 }
 
+/* ----------------------------- website content ---------------------------- */
+
 export interface NewsPost {
   id: ID;
   slug: string;
@@ -414,6 +452,7 @@ export interface NewsPost {
   seoTitle: string;
   seoDescription: string;
   featured: boolean;
+  cover?: CloudMedia;
 }
 
 export interface SchoolEvent {
@@ -426,9 +465,10 @@ export interface SchoolEvent {
   startTime: string;
   endTime: string;
   venue: string;
-  category: "academic" | "sports" | "cultural" | "parents" | "holiday" | "assessment";
+  category: "academic" | "sports" | "cultural" | "parents" | "holiday" | "assessment" | "alumni";
   requiresRegistration: boolean;
   status: "upcoming" | "past" | "cancelled";
+  cover?: CloudMedia;
 }
 
 export interface GalleryItem {
@@ -439,6 +479,7 @@ export interface GalleryItem {
   takenAt: string;
   consentCleared: boolean;
   tone: string;
+  media?: CloudMedia;
 }
 
 export type NotificationType =
@@ -453,7 +494,18 @@ export type NotificationType =
   | "announcement"
   | "event_reminder"
   | "message"
-  | "appointment";
+  | "appointment"
+  | "quiz_published"
+  | "quiz_marked"
+  | "library_due"
+  | "library_overdue"
+  | "certificate_issued"
+  | "achievement"
+  | "transport_update"
+  | "bus_trip"
+  | "parent_insight"
+  | "store_order"
+  | "library_reservation";
 
 export interface AppNotification {
   id: ID;
@@ -513,6 +565,7 @@ export interface LearningMaterial {
   teacherId: ID;
   kind: "note" | "pdf" | "worksheet" | "video" | "audio" | "slides" | "link" | "image";
   url: string;
+  media?: CloudMedia;
   sizeBytes: number;
   uploadedAt: string;
   downloads: number;
@@ -520,11 +573,14 @@ export interface LearningMaterial {
 
 export interface QuizQuestion {
   id: ID;
-  type: "multiple_choice" | "true_false" | "short_answer" | "picture";
+  type: "multiple_choice" | "true_false" | "short_answer" | "picture" | "matching";
   prompt: string;
   options: string[];
+  /** The right option; for short answers, accepted answers separated by "|" (empty = marked by hand). */
   answer: string;
   points: number;
+  imageUrl?: string;
+  pairs?: { left: string; right: string }[];
 }
 
 export interface Quiz {
@@ -559,12 +615,12 @@ export interface QuizAttempt {
 export interface TimetableSlot {
   id: ID;
   classId: ID;
-  day: 1 | 2 | 3 | 4 | 5;
+  day: number;
   period: number;
   startTime: string;
   endTime: string;
-  subjectId: ID | null;
-  teacherId: ID | null;
+  subjectId?: ID;
+  teacherId?: ID;
   label?: string;
 }
 
@@ -573,7 +629,7 @@ export interface Club {
   slug: string;
   name: string;
   description: string;
-  coordinatorId: ID;
+  coordinatorId?: ID;
   meetingDay: string;
   meetingTime: string;
   memberCount: number;
@@ -584,19 +640,12 @@ export interface Achievement {
   id: ID;
   studentInitials: string;
   classLabel: string;
-  category:
-    | "Academic Excellence"
-    | "Sports"
-    | "Music"
-    | "Arts"
-    | "Competitions"
-    | "STEM"
-    | "Reading"
-    | "Leadership"
-    | "Community Service";
+  category: string;
   title: string;
   description: string;
   date: string;
+  studentId?: ID;
+  published?: boolean;
 }
 
 export interface Facility {
@@ -640,7 +689,7 @@ export interface TourBooking {
 
 export interface AuditLog {
   id: ID;
-  actorId: ID;
+  actorId?: ID;
   actorName: string;
   action: string;
   entity: string;
@@ -690,7 +739,9 @@ export interface TransportRoute {
   route: string;
   driver: string;
   attendant: string;
-  stops: { name: string; pickupTime: string; dropoffTime: string }[];
+  driverPhone?: string;
+  attendantPhone?: string;
+  stops: { name: string; pickupTime: string; dropoffTime: string; lat?: number; lng?: number }[];
   capacity: number;
 }
 
@@ -741,15 +792,22 @@ export interface Certificate {
   award: string;
   sessionName: string;
   issuedAt: string;
+  category?: string;
+  citation?: string;
+  achievementId?: ID;
+  revokedAt?: string;
+  revokedReason?: string;
 }
 
+/** The signed-in user, as resolved by Convex from the Clerk session. */
 export interface SessionUser {
-  id: ID;
+  id: Id<"users">;
   name: string;
-  email: string;
+  email?: string;
+  username?: string;
   roles: Role[];
   avatarSeed: string;
-  teacherId?: ID;
-  parentId?: ID;
-  studentId?: ID;
+  teacherId?: Id<"teachers">;
+  parentId?: Id<"parents">;
+  studentId?: Id<"students">;
 }

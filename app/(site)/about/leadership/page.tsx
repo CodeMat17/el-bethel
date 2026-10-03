@@ -4,7 +4,7 @@ import { CtaBand, PageHero, SectionHeading } from "@/components/common";
 import { Reveal, ToneImage } from "@/components/motion";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { getTeachers } from "@/lib/school/data";
+import { getTeachers } from "@/lib/school/site-data";
 
 export const metadata: Metadata = {
   title: "Leadership",
@@ -19,11 +19,10 @@ const NON_TEACHING = [
   { name: "Mrs. Halima Sani", role: "Admissions Officer", remit: "Applications, assessments, interviews and enrolment." },
   { name: "Mr. Uche Nnaji", role: "Librarian", remit: "Catalogue, borrowing, reading programme and study support." },
   { name: "Mrs. Rita Eneh", role: "School Nurse", remit: "Medical centre, health records, screening and first aid." },
-  { name: "Mr. Sunday Achi", role: "Head of Transport", remit: "Routes, drivers, attendants and pickup safety." },
 ];
 
-export default function LeadershipPage() {
-  const leaders = getTeachers().filter((t) => t.department === "Leadership");
+export default async function LeadershipPage() {
+  const leaders = (await getTeachers()).filter((t) => t.department === "Leadership");
 
   return (
     <>
@@ -78,7 +77,7 @@ export default function LeadershipPage() {
           <SectionHeading
             eyebrow="Operations"
             title="The team that keeps the school running"
-            lede="Teaching depends on everything around it working — admissions, finance, health, transport and the library."
+            lede="Teaching depends on everything around it working — admissions, finance, health and the library."
           />
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {NON_TEACHING.map((person, i) => (

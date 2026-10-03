@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { addAvailability, type TeachingState } from "@/lib/school/actions/teaching";
+import { addAvailability, type SimpleState as TeachingState } from "@/lib/school/actions/portal";
 
 const INITIAL: TeachingState = { ok: false };
 

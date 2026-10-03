@@ -1,170 +1,130 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 
 import { StatCard, StatusPill } from "@/components/common";
-import { BarChart, ColumnChart } from "@/components/portal/charts";
+import { ColumnChart } from "@/components/portal/charts";
 import { PortalPageHeader } from "@/components/portal/page-header";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import { requireAdmin } from "@/lib/school/auth";
-import { CLASS_LEVELS } from "@/lib/school/config";
-import { classDisplayName, getGradeDistribution, getSubject } from "@/lib/school/data";
+import { query } from "@/lib/school/convex";
+import { param } from "@/lib/school/data";
+import { getDirectory } from "@/lib/school/directory";
 import { formatDate } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Results" };
 
-export default async function AdminResultsPage() {
+export default async function AdminResultsPage({ searchParams }: PageProps<"/portal/admin/results">) {
   await requireAdmin();
-  const db = getDb();
+  const params = await searchParams;
+  const dir = await getDirectory();
+  const terms = [...dir.terms].sort((a, b) => b.startDate.localeCompare(a.startDate));
+  const term = terms.find((t) => t.id === param(params.term)) ?? dir.activeTerm ?? terms[0];
+  const overview = term ? await query(api.results.overview, { termId: term.id as Id<"terms"> }) : null;
 
-  const publishedTerms = db.terms
-    .filter((term) => db.reportCards.some((r) => r.termId === term.id))
-    .sort((a, b) => b.startDate.localeCompare(a.startDate));
+  const rows = (overview?.classes ?? []).filter((c) => dir.getClass(c.classId));
+  const published = rows.filter((r) => r.published).length;
+  const withScores = rows.filter((r) => r.entries > 0).length;
 
   return (
     <>
       <PortalPageHeader
-        title="Results & report cards"
-        description="Grade distribution, subject performance and report card publication by term."
+        title="Exam results"
+        description="Every class's term results. Subject teachers enter scores; the class teacher or an administrator publishes them."
       />
 
-      {publishedTerms.length === 0 ? (
-        <Card className="gap-0 p-8 text-center">
-          <p className="font-heading text-lg font-extrabold">No results published yet</p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Teachers enter scores through their portal; report cards are generated on the result
-            publication date.
-          </p>
+      <Card className="mb-6 gap-0 p-4">
+        <p className="text-xs font-bold text-muted-foreground uppercase">Term</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {terms.map((t) => (
+            <Button
+              key={t.id}
+              size="sm"
+              variant={t.id === term?.id ? "default" : "outline"}
+              className={cn("font-bold", t.id === term?.id && "pointer-events-none")}
+              render={<Link href={`/portal/admin/results?term=${t.id}`} />}
+            >
+              {t.name} · {dir.getSession(t.sessionId)?.name}
+            </Button>
+          ))}
+        </div>
+      </Card>
+
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label="Classes" value={rows.length} icon="School" tone="neutral" />
+        <StatCard label="With scores entered" value={withScores} icon="PenSquare" tone="info" />
+        <StatCard label="Published" value={published} icon="CircleCheck" tone="success" />
+        <StatCard label="Not yet published" value={withScores - published} icon="Clock" tone={withScores - published > 0 ? "warning" : "success"} />
+      </div>
+
+      {overview && overview.grades.some((g) => g.count > 0) ? (
+        <Card className="mb-6 gap-0 p-5 sm:p-6">
+          <h2 className="font-heading text-base font-extrabold">Grade distribution</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{term?.name}, all subjects, whole school.</p>
+          <Separator className="my-5" />
+          <ColumnChart data={overview.grades.map((g) => ({ label: g.grade, value: g.count }))} caption="Number of subject results in each grade band." />
         </Card>
-      ) : (
-        <Tabs defaultValue={publishedTerms[0].id}>
-          <TabsList className="h-auto w-full overflow-x-auto sm:w-fit">
-            {publishedTerms.map((term) => (
-              <TabsTrigger key={term.id} value={term.id} className="text-xs font-bold whitespace-nowrap sm:text-sm">
-                {term.name} · {term.sessionId.replace("ses-", "")}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+      ) : null}
 
-          {publishedTerms.map((term) => {
-            const results = db.results.filter((r) => r.termId === term.id);
-            const reports = db.reportCards.filter((r) => r.termId === term.id);
-            const grades = getGradeDistribution(term.id);
-            const average = results.length
-              ? Math.round((results.reduce((s, r) => s + r.total, 0) / results.length) * 10) / 10
-              : 0;
-            const passRate = results.length
-              ? Math.round((results.filter((r) => r.total >= 50).length / results.length) * 100)
-              : 0;
-
-            const bySubject = Array.from(new Set(results.map((r) => r.subjectId)))
-              .map((subjectId) => {
-                const rows = results.filter((r) => r.subjectId === subjectId);
-                const avg = rows.length ? rows.reduce((s, r) => s + r.total, 0) / rows.length : 0;
-                return {
-                  label: getSubject(subjectId)?.name ?? subjectId,
-                  value: Math.round(avg),
-                };
-              })
-              .sort((a, b) => b.value - a.value);
-
-            const byLevel = CLASS_LEVELS.map((level) => {
-              const classIds = db.classes.filter((c) => c.levelId === level.id).map((c) => c.id);
-              const rows = results.filter((r) => classIds.includes(r.classId));
-              const avg = rows.length ? rows.reduce((s, r) => s + r.total, 0) / rows.length : 0;
-              return { label: level.name, value: Math.round(avg) };
-            }).filter((row) => row.value > 0);
-
-            const topClasses = db.classes
-              .map((cls) => {
-                const rows = reports.filter((r) => r.classId === cls.id);
-                const avg = rows.length ? rows.reduce((s, r) => s + r.average, 0) / rows.length : 0;
-                return { cls, average: Math.round(avg * 10) / 10, pupils: rows.length };
-              })
-              .filter((row) => row.pupils > 0)
-              .sort((a, b) => b.average - a.average);
-
-            return (
-              <TabsContent key={term.id} value={term.id} className="mt-6 space-y-6">
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  <StatCard label="Subject results" value={results.length} icon="ClipboardCheck" tone="info" />
-                  <StatCard label="Report cards" value={reports.length} icon="Trophy" tone="gold" />
-                  <StatCard label="School average" value={`${average}%`} icon="ChartColumn" tone={average >= 70 ? "success" : "warning"} />
-                  <StatCard label="Pass rate" value={`${passRate}%`} hint="50% and above" icon="TrendingUp" tone={passRate >= 80 ? "success" : "warning"} />
-                </div>
-
-                <div className="grid gap-6 lg:grid-cols-2">
-                  <Card className="gap-0 p-5 sm:p-6">
-                    <h2 className="font-heading text-base font-extrabold">Grade distribution</h2>
-                    <Separator className="my-5" />
-                    <ColumnChart
-                      data={grades.map((row) => ({ label: row.grade, value: row.count }))}
-                      caption="Number of subject results in each grade band."
-                    />
-                  </Card>
-
-                  <Card className="gap-0 p-5 sm:p-6">
-                    <h2 className="font-heading text-base font-extrabold">Average score by class level</h2>
-                    <Separator className="my-5" />
-                    <BarChart data={byLevel} unit="%" />
-                  </Card>
-                </div>
-
-                <Card className="gap-0 p-5 sm:p-6">
-                  <h2 className="font-heading text-base font-extrabold">Average score by subject</h2>
-                  <Separator className="my-5" />
-                  <BarChart data={bySubject} unit="%" />
-                </Card>
-
-                <Card className="gap-0 p-5 sm:p-6">
-                  <h2 className="font-heading text-base font-extrabold">Class performance</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Published {formatDate(term.resultPublishDate)}.
-                  </p>
-                  <Separator className="my-5" />
-                  <div className="overflow-x-auto rounded-xl border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Class</TableHead>
-                          <TableHead className="text-right">Report cards</TableHead>
-                          <TableHead className="text-right">Class average</TableHead>
-                          <TableHead className="text-right">Standing</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {topClasses.map((row) => (
-                          <TableRow key={row.cls.id}>
-                            <TableCell className="font-bold">{classDisplayName(row.cls.id)}</TableCell>
-                            <TableCell className="text-right tabular-nums">{row.pupils}</TableCell>
-                            <TableCell className="text-right font-bold tabular-nums">{row.average}%</TableCell>
-                            <TableCell className="text-right">
-                              <StatusPill
-                                tone={row.average >= 75 ? "success" : row.average >= 60 ? "gold" : "warning"}
-                              >
-                                {row.average >= 75 ? "Strong" : row.average >= 60 ? "Steady" : "Needs support"}
-                              </StatusPill>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+      <div className="overflow-x-auto rounded-2xl border bg-card">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Class</TableHead>
+              <TableHead className="text-right">Pupils</TableHead>
+              <TableHead className="text-right">Subjects entered</TableHead>
+              <TableHead className="text-right">Average</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow key={row.classId}>
+                <TableCell className="font-bold">{dir.className(row.classId)}</TableCell>
+                <TableCell className="text-right tabular-nums">{row.pupils}</TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {row.subjects}/{dir.subjectsForClass(row.classId).length}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">{row.entries ? `${row.average}%` : "—"}</TableCell>
+                <TableCell>
+                  {row.published ? (
+                    <StatusPill tone="success">Published {row.publishedAt ? formatDate(row.publishedAt) : ""}</StatusPill>
+                  ) : row.entries ? (
+                    <StatusPill tone="warning">Not published</StatusPill>
+                  ) : (
+                    <StatusPill tone="neutral">No scores</StatusPill>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <div className="flex justify-end gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="font-bold"
+                      render={<Link href={`/portal/teacher/results?class=${row.classId}&term=${term?.id}&view=scores`} />}
+                    >
+                      Scores
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="font-bold"
+                      render={<Link href={`/portal/teacher/results?class=${row.classId}&term=${term?.id}&view=publish`} />}
+                    >
+                      {row.published ? "Review" : "Publish"}
+                    </Button>
                   </div>
-                </Card>
-              </TabsContent>
-            );
-          })}
-        </Tabs>
-      )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </>
   );
 }

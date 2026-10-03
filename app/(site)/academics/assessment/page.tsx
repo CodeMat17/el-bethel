@@ -16,7 +16,7 @@ import { ASSESSMENT_WEIGHTING, CONDUCT_TRAITS, GRADE_BANDS } from "@/lib/school/
 export const metadata: Metadata = {
   title: "Assessment & Reports",
   description:
-    "How El-Bethel International Academy assesses pupils: continuous assessment at 40 percent, examinations at 60 percent, and termly report cards.",
+    "How El-Bethel International Academy assesses pupils: continuous assessment and examinations (typically 40/60, set by each subject teacher), and termly report cards.",
   alternates: { canonical: "/academics/assessment" },
 };
 
@@ -52,7 +52,7 @@ export default function AssessmentPage() {
             <SectionHeading
               eyebrow="Weighting"
               title="How a subject score is built"
-              lede="These weightings are configurable by the school administrator and apply across every subject."
+              lede="Every subject score is out of 100. This is the usual split; each subject teacher sets the exact CA and exam weighting for the term."
             />
             <div className="mt-8 space-y-5">
               {ASSESSMENT_WEIGHTING.map((w) => (
@@ -60,7 +60,7 @@ export default function AssessmentPage() {
                   <div className="flex items-baseline justify-between text-sm font-bold">
                     <span>{w.label}</span>
                     <span className="tabular-nums text-muted-foreground">
-                      {w.weight}% · max {w.maxScore}
+                      typically {w.weight}%
                     </span>
                   </div>
                   <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-muted">
@@ -71,9 +71,9 @@ export default function AssessmentPage() {
             </div>
             <Card className="mt-8 gap-0 border-gold/25 bg-gold/8 p-5">
               <p className="text-sm leading-relaxed">
-                <span className="font-extrabold">Continuous assessment carries 40 percent.</span>{" "}
+                <span className="font-extrabold">Continuous assessment typically carries 40 percent.</span>{" "}
                 Classwork, assignments and tests are recorded throughout the term, so a child who works
-                steadily is rewarded for it.
+                steadily is rewarded for it. Report cards show what each score was marked out of.
               </p>
             </Card>
           </div>
@@ -112,7 +112,7 @@ export default function AssessmentPage() {
           <SectionHeading
             eyebrow="Sample result"
             title="What a term result looks like"
-            lede="A worked example. Real results are visible only to a pupil's own family in the Parent and Pupil Portals."
+            lede="A worked example using a 40/60 split. Real results are visible only to a pupil's own family in the Parent and Pupil Portals."
           />
           <Reveal>
             <div className="mt-10 overflow-x-auto rounded-2xl border bg-card">

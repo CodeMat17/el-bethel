@@ -47,8 +47,6 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
       { label: "News & Updates", href: "/news" },
       { label: "School Calendar", href: "/calendar" },
       { label: "Documents", href: "/documents" },
-      { label: "Careers", href: "/careers" },
-      { label: "Book a Tour", href: "/contact/tour" },
       { label: "Contact Us", href: "/contact" },
     ],
   },
@@ -161,7 +159,6 @@ export function SiteFooter() {
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
             <Link href="/privacy" className="hover:text-navy-foreground">Privacy & Child Protection</Link>
             <Link href="/terms" className="hover:text-navy-foreground">Terms of Use</Link>
-            <Link href="/accessibility" className="hover:text-navy-foreground">Accessibility</Link>
             <Link href="/sitemap.xml" className="hover:text-navy-foreground">Sitemap</Link>
           </div>
         </div>

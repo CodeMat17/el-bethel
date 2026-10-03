@@ -10,24 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { api } from "@/convex/_generated/api";
 import { requirePupil } from "@/lib/school/auth";
 import { DAY_NAMES } from "@/lib/school/config";
-import {
-  classDisplayName,
-  getAttendanceForStudent,
-  getClass,
-  getNotifications,
-  getStudent,
-  getStudentAssignments,
-  getSubject,
-  getTodaySlots,
-  getUpcomingEvents,
-  studentName,
-  summariseAttendance,
-  teacherNameById,
-} from "@/lib/school/data";
+import { query } from "@/lib/school/convex";
+import { getDirectory } from "@/lib/school/directory";
+import { schoolDay, slotsForDay, studentName, summariseAttendance } from "@/lib/school/data";
 import { SUBMISSION_STATUS, formatDate } from "@/lib/school/format";
-import { DEMO_TODAY } from "@/lib/school/seed";
 
 export const metadata: Metadata = { title: "My School" };
 
@@ -42,32 +31,34 @@ const TILES = [
 
 export default async function PupilHome() {
   const user = await requirePupil();
-  const student = user.studentId ? getStudent(user.studentId) : null;
+  const student = user.studentId ? await query(api.people.myStudent, {}) : null;
 
   if (!student) {
     return <EmptyState icon="Backpack" title="No pupil record found" description="Please contact your class teacher." />;
   }
 
-  const assignments = getStudentAssignments(student.id);
-  const todo = assignments.filter((a) =>
-    ["not_started", "in_progress", "resubmission_required"].includes(a.submission?.status ?? "not_started"),
-  );
-  const graded = assignments.filter((a) => a.submission?.status === "graded");
-  const attendance = summariseAttendance(getAttendanceForStudent(student.id));
-  const slots = getTodaySlots(student.classId).filter((s) => s.subjectId);
-  const notifications = getNotifications(user.id).filter((n) => !n.read).slice(0, 3);
-  const events = getUpcomingEvents().slice(0, 2);
-  const cls = getClass(student.classId);
-
-  const weekday = DEMO_TODAY.getUTCDay();
-  const dayLabel = DAY_NAMES[weekday === 0 || weekday === 6 ? 1 : weekday];
+  const [assignments, attendanceRows, timetable, notifications, events, dir] = await Promise.all([
+    query(api.assignments.forStudent, { studentId: student.id }),
+    query(api.attendance.forStudent, { studentId: student.id, limit: 120 }),
+    query(api.timetable.forClass, { classId: student.classId }),
+    query(api.notifications.mine, { unreadOnly: true, limit: 3 }),
+    query(api.content.events, { upcomingOnly: true, limit: 2 }),
+    getDirectory(),
+  ]);
+  const todo = assignments.filter((a) => a.progress === "not_started");
+  const graded = assignments.filter((a) => a.progress === "graded");
+  const attendance = summariseAttendance(attendanceRows);
+  const slots = slotsForDay(timetable).filter((s) => s.subjectId);
+  const cls = dir.getClass(student.classId);
+  const now = new Date();
+  const dayLabel = DAY_NAMES[schoolDay(now)];
 
   return (
     <>
       <PortalPageHeader
-        eyebrow={`${dayLabel} · ${formatDate(DEMO_TODAY)}`}
+        eyebrow={`${dayLabel} · ${formatDate(now)}`}
         title={`Hello, ${student.firstName}!`}
-        description={`You are in ${classDisplayName(student.classId)} with ${teacherNameById(cls?.classTeacherId)}.`}
+        description={`You are in ${dir.className(student.classId)} with ${dir.teacherName(cls?.classTeacherId)}.`}
       />
 
       {/* Big friendly summary */}
@@ -123,14 +114,13 @@ export default async function PupilHome() {
                 <PartyPopperIcon className="mx-auto size-10 text-gold" />
                 <p className="mt-4 font-heading text-lg font-extrabold">You&apos;re all caught up!</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  No assignments have been posted yet. Well done.
+                  There is nothing to do right now. Well done.
                 </p>
               </div>
             ) : (
               <ul className="space-y-3">
-                {todo.slice(0, 4).map(({ assignment, submission, subject }) => {
-                  const status = SUBMISSION_STATUS[submission?.status ?? "not_started"];
-                  const overdue = new Date(assignment.dueDate) < DEMO_TODAY;
+                {todo.slice(0, 4).map(({ assignment, progress }) => {
+                  const status = SUBMISSION_STATUS[progress];
                   return (
                     <li key={assignment.id}>
                       <Link href={`/portal/pupil/assignments/${assignment.id}`} className="block">
@@ -141,12 +131,10 @@ export default async function PupilHome() {
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-base font-extrabold">{assignment.title}</p>
                             <p className="mt-0.5 truncate text-sm text-muted-foreground">
-                              {subject?.name} · due {formatDate(assignment.dueDate)}
+                              {dir.subjectName(assignment.subjectId)} · due {formatDate(assignment.dueDate)}
                             </p>
                           </div>
-                          <StatusPill tone={overdue ? "danger" : status.tone}>
-                            {overdue ? "Late" : status.label}
-                          </StatusPill>
+                          <StatusPill tone={status.tone}>{status.label}</StatusPill>
                         </div>
                       </Link>
                     </li>
@@ -170,10 +158,10 @@ export default async function PupilHome() {
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-bold">
-                        {getSubject(slot.subjectId ?? "")?.name}
+                        {dir.subjectName(slot.subjectId)}
                       </span>
                       <span className="block truncate text-xs text-muted-foreground">
-                        {teacherNameById(slot.teacherId)}
+                        {dir.teacherName(slot.teacherId)}
                       </span>
                     </span>
                   </li>
@@ -196,12 +184,12 @@ export default async function PupilHome() {
                 {graded
                   .sort((a, b) => (b.submission?.score ?? 0) - (a.submission?.score ?? 0))
                   .slice(0, 3)
-                  .map(({ assignment, submission, subject }) => {
+                  .map(({ assignment, submission }) => {
                     const pct = Math.round(((submission?.score ?? 0) / assignment.maxScore) * 100);
                     return (
                       <li key={assignment.id} className="rounded-xl border bg-card p-3.5">
                         <div className="flex items-center justify-between gap-3">
-                          <p className="truncate text-sm font-bold">{subject?.name}</p>
+                          <p className="truncate text-sm font-bold">{dir.subjectName(assignment.subjectId)}</p>
                           <Badge className="shrink-0 font-bold">
                             {submission?.score}/{assignment.maxScore}
                           </Badge>

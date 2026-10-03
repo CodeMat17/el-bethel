@@ -9,23 +9,26 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { api } from "@/convex/_generated/api";
 import { requireTeacher } from "@/lib/school/auth";
-import {
-  classDisplayName,
-  getAssignmentStats,
-  getAssignmentsForTeacher,
-  getSubject,
-} from "@/lib/school/data";
-import { formatDate } from "@/lib/school/format";
-import { DEMO_TODAY } from "@/lib/school/seed";
+import { query } from "@/lib/school/convex";
+import { getDirectory, type Directory } from "@/lib/school/directory";
+import { formatDateTime } from "@/lib/school/format";
 import type { Assignment } from "@/lib/school/types";
+
+interface Stats {
+  students: number;
+  submitted: number;
+  notSubmitted: number;
+  graded: number;
+  pendingGrading: number;
+}
 
 export const metadata: Metadata = { title: "Assignments" };
 
-function AssignmentRow({ assignment }: { assignment: Assignment }) {
-  const stats = getAssignmentStats(assignment.id);
+function AssignmentRow({ assignment, stats, dir }: { assignment: Assignment; stats: Stats; dir: Directory }) {
   const pct = stats.students ? Math.round((stats.submitted / stats.students) * 100) : 0;
-  const closed = new Date(assignment.dueDate) < DEMO_TODAY;
+  const closed = new Date(assignment.dueDate) < new Date();
 
   return (
     <Link href={`/portal/teacher/assignments/${assignment.id}`} className="block">
@@ -33,13 +36,13 @@ function AssignmentRow({ assignment }: { assignment: Assignment }) {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary" className="font-bold">{getSubject(assignment.subjectId)?.name}</Badge>
-              <Badge variant="outline" className="font-bold">{classDisplayName(assignment.classId)}</Badge>
-              {assignment.status === "draft" ? <StatusPill tone="neutral">Draft</StatusPill> : null}
+              <Badge variant="secondary" className="font-bold">{dir.subjectName(assignment.subjectId)}</Badge>
+              <Badge variant="outline" className="font-bold">{dir.className(assignment.classId)}</Badge>
+              {assignment.status !== "published" ? <StatusPill tone="neutral">{assignment.status}</StatusPill> : null}
             </div>
             <h3 className="mt-2 font-heading text-base font-extrabold">{assignment.title}</h3>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              {assignment.topic} · due {formatDate(assignment.dueDate)}
+              {assignment.topic} · {assignment.questions.length} questions · due {formatDateTime(assignment.dueDate)}
               {closed ? " · deadline passed" : ""}
             </p>
           </div>
@@ -58,7 +61,7 @@ function AssignmentRow({ assignment }: { assignment: Assignment }) {
           {[
             ["Pupils", stats.students],
             ["Submitted", stats.submitted],
-            ["Graded", stats.graded],
+            ["Marked", stats.graded],
             ["Not submitted", stats.notSubmitted],
           ].map(([label, value]) => (
             <div key={String(label)} className="rounded-lg bg-muted/70 p-2 text-center">
@@ -78,11 +81,12 @@ export default async function TeacherAssignmentsPage() {
     return <EmptyState icon="GraduationCap" title="No teaching record" description="Contact the school administrator." />;
   }
 
-  const all = getAssignmentsForTeacher(user.teacherId);
-  const open = all.filter((a) => a.status === "published" && new Date(a.dueDate) >= DEMO_TODAY);
-  const closed = all.filter((a) => a.status === "published" && new Date(a.dueDate) < DEMO_TODAY);
-  const drafts = all.filter((a) => a.status === "draft");
-  const needsMarking = all.filter((a) => getAssignmentStats(a.id).pendingGrading > 0);
+  const [all, dir] = await Promise.all([query(api.assignments.forTeacher, {}), getDirectory()]);
+  const now = new Date();
+  const open = all.filter((a) => a.assignment.status === "published" && new Date(a.assignment.dueDate) >= now);
+  const closed = all.filter((a) => a.assignment.status !== "draft" && (a.assignment.status !== "published" || new Date(a.assignment.dueDate) < now));
+  const drafts = all.filter((a) => a.assignment.status === "draft");
+  const needsMarking = all.filter((a) => a.stats.pendingGrading > 0);
 
   const tabs = [
     { value: "open", label: `Open (${open.length})`, items: open, empty: "No assignments are currently open." },
@@ -95,7 +99,7 @@ export default async function TeacherAssignmentsPage() {
     <>
       <PortalPageHeader
         title="Assignments"
-        description="Everything you have set, with submission and grading progress for each class."
+        description="Everything you have set, with submission and marking progress for each class."
         action={
           <Button size="lg" className="font-bold" render={<Link href="/portal/teacher/assignments/create" />}>
             <PlusIcon />
@@ -130,8 +134,8 @@ export default async function TeacherAssignmentsPage() {
               <EmptyState icon="ClipboardList" title="Nothing here" description={tab.empty} />
             ) : (
               <div className="grid gap-4">
-                {tab.items.map((assignment) => (
-                  <AssignmentRow key={assignment.id} assignment={assignment} />
+                {tab.items.map((item) => (
+                  <AssignmentRow key={item.assignment.id} assignment={item.assignment} stats={item.stats} dir={dir} />
                 ))}
               </div>
             )}

@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
 import { BellIcon, LogOutIcon, MenuIcon } from "lucide-react";
 
 import { Icon } from "@/components/icon";
@@ -26,14 +27,15 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { logoutAction } from "@/lib/school/actions/auth";
+import { Spinner } from "@/components/ui/spinner";
+import { touchLastLogin } from "@/lib/school/actions/portal";
 import type { PortalNavGroup } from "@/lib/school/navigation";
 import { avatarTone, initials } from "@/lib/school/format";
 import { cn } from "@/lib/utils";
 
 export interface PortalUser {
   name: string;
-  email: string;
+  email?: string;
   roleLabel: string;
   avatarSeed: string;
 }
@@ -60,7 +62,18 @@ export function PortalShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const clerk = useClerk();
   const [open, setOpen] = React.useState(false);
+  const [signingOut, setSigningOut] = React.useState(false);
+
+  React.useEffect(() => {
+    void touchLastLogin();
+  }, []);
+
+  const signOut = React.useCallback(() => {
+    setSigningOut(true);
+    void clerk.signOut({ redirectUrl: "/login?signedOut=1" });
+  }, [clerk]);
 
   const isActive = (href: string) =>
     href === portalHome ? pathname === href : pathname.startsWith(href);
@@ -109,17 +122,17 @@ export function PortalShell({
           <p className="truncate text-xs text-sidebar-foreground/55">{user.roleLabel}</p>
         </div>
       </div>
-      <form action={logoutAction}>
-        <Button
-          type="submit"
-          variant="ghost"
-          size="lg"
-          className="mt-1 h-10 w-full justify-start font-bold text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-        >
-          <LogOutIcon />
-          Sign out
-        </Button>
-      </form>
+      <Button
+        type="button"
+        variant="ghost"
+        size="lg"
+        disabled={signingOut}
+        onClick={signOut}
+        className="mt-1 h-10 w-full justify-start font-bold text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+      >
+        {signingOut ? <Spinner /> : <LogOutIcon />}
+        {signingOut ? "Signing out…" : "Sign out"}
+      </Button>
     </div>
   );
 
@@ -209,20 +222,16 @@ export function PortalShell({
                 <DropdownMenuContent align="end" className="w-60">
                   <DropdownMenuLabel>
                     <p className="truncate text-sm font-bold">{user.name}</p>
-                    <p className="truncate text-xs font-normal text-muted-foreground">{user.email}</p>
+                    <p className="truncate text-xs font-normal text-muted-foreground">{user.email ?? user.roleLabel}</p>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem render={<Link href="/" />}>Public website</DropdownMenuItem>
                   <DropdownMenuItem render={<Link href={notificationsHref} />}>Notifications</DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <form action={logoutAction} className="p-1">
-                    <button
-                      type="submit"
-                      className="flex min-h-9 w-full items-center rounded-md px-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
-                    >
-                      Sign out
-                    </button>
-                  </form>
+                  <DropdownMenuItem disabled={signingOut} onClick={signOut}>
+                    {signingOut ? <Spinner /> : null}
+                    {signingOut ? "Signing out…" : "Sign out"}
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

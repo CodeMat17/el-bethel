@@ -7,9 +7,9 @@ import { Reveal } from "@/components/motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { getPublicDocuments } from "@/lib/school/data";
+import { getPublicDocuments } from "@/lib/school/site-data";
 import { fileSize, formatDate } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
+import { getPublicCatalogue, verifyCertificate } from "@/lib/school/site-data";
 
 export const metadata: Metadata = {
   title: "School Documents",
@@ -18,9 +18,9 @@ export const metadata: Metadata = {
   alternates: { canonical: "/documents" },
 };
 
-export default function DocumentsPage() {
-  const publicDocs = getPublicDocuments();
-  const restricted = getDb().documents.filter((d) => d.visibility !== "public");
+export default async function DocumentsPage() {
+  const publicDocs = await getPublicDocuments();
+  const restricted = (await getPublicCatalogue()).restrictedDocuments;
 
   return (
     <>

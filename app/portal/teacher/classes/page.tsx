@@ -8,15 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { api } from "@/convex/_generated/api";
 import { requireTeacher } from "@/lib/school/auth";
-import {
-  classesForTeacher,
-  getAssignmentsForClass,
-  getLevel,
-  getStudentsByClass,
-  getSubjects,
-  teacherNameById,
-} from "@/lib/school/data";
+import { query } from "@/lib/school/convex";
+import { getDirectory } from "@/lib/school/directory";
 
 export const metadata: Metadata = { title: "My classes" };
 
@@ -26,7 +21,8 @@ export default async function TeacherClassesPage() {
     return <EmptyState icon="GraduationCap" title="No teaching record" description="Contact the school administrator." />;
   }
 
-  const classes = classesForTeacher(user.teacherId);
+  const [summaries, dir] = await Promise.all([query(api.classroom.summaries, {}), getDirectory()]);
+  const classes = dir.classes.filter((c) => summaries.some((x) => x.classId === c.id));
 
   return (
     <>
@@ -44,10 +40,8 @@ export default async function TeacherClassesPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {classes.map((cls) => {
-            const roster = getStudentsByClass(cls.id);
-            const level = getLevel(cls.levelId);
-            const subjects = getSubjects().filter((s) => level && s.levelIds.includes(level.id));
-            const assignments = getAssignmentsForClass(cls.id);
+            const summary = summaries.find((x) => x.classId === cls.id);
+            const subjects = cls.classTeacherId === user.teacherId ? dir.subjectsForClass(cls.id) : dir.subjectsForTeacherInClass(user.teacherId, cls.id);
             const isClassTeacher = cls.classTeacherId === user.teacherId;
 
             return (
@@ -65,24 +59,24 @@ export default async function TeacherClassesPage() {
                 <dl className="grid grid-cols-3 gap-2 text-center">
                   <div className="rounded-lg bg-muted/70 p-2.5">
                     <dt className="text-[0.6rem] font-bold text-muted-foreground uppercase">Pupils</dt>
-                    <dd className="mt-0.5 font-heading text-base font-extrabold">{roster.length}</dd>
+                    <dd className="mt-0.5 font-heading text-base font-extrabold">{summary?.pupils ?? 0}</dd>
                   </div>
                   <div className="rounded-lg bg-muted/70 p-2.5">
-                    <dt className="text-[0.6rem] font-bold text-muted-foreground uppercase">Subjects</dt>
+                    <dt className="text-[0.6rem] font-bold text-muted-foreground uppercase">My subjects</dt>
                     <dd className="mt-0.5 font-heading text-base font-extrabold">{subjects.length}</dd>
                   </div>
                   <div className="rounded-lg bg-muted/70 p-2.5">
                     <dt className="text-[0.6rem] font-bold text-muted-foreground uppercase">Work set</dt>
-                    <dd className="mt-0.5 font-heading text-base font-extrabold">{assignments.length}</dd>
+                    <dd className="mt-0.5 font-heading text-base font-extrabold">{summary?.assignments ?? 0}</dd>
                   </div>
                 </dl>
 
                 <p className="mt-4 text-xs text-muted-foreground">
-                  Class teacher: {teacherNameById(cls.classTeacherId)}
+                  Class teacher: {dir.teacherName(cls.classTeacherId)}
                 </p>
 
                 <div className="mt-3 flex flex-wrap gap-1.5">
-                  <Badge variant="secondary" className="font-bold">{level?.name}</Badge>
+                  <Badge variant="secondary" className="font-bold">{dir.levelName(cls.levelId)}</Badge>
                   <Badge variant="secondary" className="font-bold">Section {cls.section}</Badge>
                 </div>
 

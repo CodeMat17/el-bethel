@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 
 import { PortalShell } from "@/components/portal/portal-shell";
 import { requireParent } from "@/lib/school/auth";
-import { childrenForSession, unreadCount } from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { query } from "@/lib/school/convex";
 import { PARENT_NAV } from "@/lib/school/navigation";
 
 export const metadata: Metadata = {
@@ -20,20 +21,21 @@ const QUICK_NAV = [
 
 export default async function ParentLayout({ children }: LayoutProps<"/portal/parent">) {
   const user = await requireParent();
-  const myChildren = childrenForSession(user);
+  const shell = await query(api.dashboard.shell, {});
+  const count = shell?.children ?? 0;
 
   return (
     <PortalShell
       portalName="Parent Portal"
       portalHome="/portal/parent"
       nav={PARENT_NAV}
-      unread={unreadCount(user.id)}
+      unread={shell?.unread ?? 0}
       notificationsHref="/portal/parent/notifications"
       quickNav={QUICK_NAV}
       user={{
         name: user.name,
         email: user.email,
-        roleLabel: `${myChildren.length} ${myChildren.length === 1 ? "child" : "children"} enrolled`,
+        roleLabel: `${count} ${count === 1 ? "child" : "children"} enrolled`,
         avatarSeed: user.avatarSeed,
       }}
     >

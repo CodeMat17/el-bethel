@@ -16,7 +16,7 @@ export default function TermsPage() {
       eyebrow="Policies"
       title="Terms of Use"
       lede="The rules for using this website and the parent, pupil, teacher and administration portals."
-      updated="20 August 2026"
+      updated="2 October 2026"
       href="/terms"
       sections={[
         {
@@ -57,7 +57,8 @@ export default function TermsPage() {
         {
           heading: "Payments",
           paragraphs: [
-            "Payments made through this platform are processed by third-party payment providers. A payment is treated as received only once it has been verified with the provider on our servers.",
+            "This platform does not accept online payments. Application fees, school fees and other charges are paid at the school bursary or by bank transfer to the school account, quoting the relevant application or invoice number.",
+            "A payment is treated as received only once the school bursary has confirmed it. Payment records and receipts shown in the portals reflect payments the bursary has recorded.",
             "Application fees are non-refundable. Termly fee refunds are governed by the fee policy issued by the school office.",
           ],
         },

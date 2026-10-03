@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { SCHOOL } from "@/lib/school/config";
 import { formatDate } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
+import { verifyCertificate } from "@/lib/school/site-data";
 
 export const metadata: Metadata = {
   title: "Verify a Certificate",
@@ -22,7 +22,7 @@ export default async function VerifyPage({ searchParams }: PageProps<"/verify">)
   const certificateNo = typeof params.no === "string" ? params.no.trim() : "";
 
   const certificate = certificateNo
-    ? getDb().certificates.find((c) => c.certificateNo.toLowerCase() === certificateNo.toLowerCase()) ?? null
+    ? await verifyCertificate(certificateNo)
     : null;
 
   return (
@@ -57,7 +57,21 @@ export default async function VerifyPage({ searchParams }: PageProps<"/verify">)
               </Button>
             </form>
 
-            {certificateNo && certificate ? (
+            {certificateNo && certificate?.revoked ? (
+              <div role="alert" className="mt-8 flex items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 p-6">
+                <CircleAlertIcon className="mt-0.5 size-6 shrink-0 text-destructive" />
+                <div>
+                  <p className="font-heading text-base font-extrabold text-destructive">This certificate is no longer valid</p>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    Certificate <span className="font-mono font-bold">{certificate.certificateNo}</span> was issued by {SCHOOL.name} but
+                    was withdrawn{certificate.revokedAt ? ` on ${formatDate(certificate.revokedAt)}` : ""}. Please contact the school office
+                    for more information.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            {certificateNo && certificate && !certificate.revoked ? (
               <div className="mt-8 rounded-2xl border border-success/40 bg-success/10 p-6">
                 <div className="flex items-center gap-3">
                   <BadgeCheckIcon className="size-8 shrink-0 text-success" />
@@ -79,6 +93,10 @@ export default async function VerifyPage({ searchParams }: PageProps<"/verify">)
                     <dd className="mt-0.5 text-sm font-semibold">{certificate.award}</dd>
                   </div>
                   <div>
+                    <dt className="text-xs font-bold text-muted-foreground uppercase">Awarded to</dt>
+                    <dd className="mt-0.5 text-sm font-semibold">Pupil with initials {certificate.initials}</dd>
+                  </div>
+                  <div>
                     <dt className="text-xs font-bold text-muted-foreground uppercase">Session</dt>
                     <dd className="mt-0.5 text-sm font-semibold">{certificate.sessionName}</dd>
                   </div>
@@ -88,8 +106,8 @@ export default async function VerifyPage({ searchParams }: PageProps<"/verify">)
                   </div>
                 </dl>
                 <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
-                  For the protection of the child, no pupil name or other personal information is shown
-                  on this public verification page.
+                  For the protection of the child, only initials are shown on this public page. Compare them
+                  with the name printed on the certificate.
                 </p>
               </div>
             ) : null}

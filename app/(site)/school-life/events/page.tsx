@@ -6,7 +6,7 @@ import { CtaBand, EmptyState, PageHero, SectionHeading, StatusPill } from "@/com
 import { Reveal, ToneImage } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { getAllEvents } from "@/lib/school/data";
+import { getAllEvents } from "@/lib/school/site-data";
 import { formatDate } from "@/lib/school/format";
 
 export const metadata: Metadata = {
@@ -23,12 +23,13 @@ const CATEGORY_TONE = {
   parents: "neutral",
   holiday: "warning",
   assessment: "danger",
+  alumni: "gold",
 } as const;
 
 const TONES = ["navy", "gold", "info", "success", "plum"];
 
-export default function EventsPage() {
-  const all = getAllEvents();
+export default async function EventsPage() {
+  const all = await getAllEvents();
   const upcoming = all.filter((e) => e.status === "upcoming");
   const past = all.filter((e) => e.status === "past").reverse();
 
@@ -72,7 +73,7 @@ export default function EventsPage() {
                   <Link href={`/school-life/events/${event.slug}`} className="group block h-full">
                     <Card className="h-full gap-0 overflow-hidden p-0 transition-all group-hover:-translate-y-1 group-hover:shadow-lg">
                       <div className="relative">
-                        <ToneImage tone={TONES[i % TONES.length]} seed={event.slug} label={event.title} className="aspect-16/9" />
+                        <ToneImage tone={TONES[i % TONES.length]} seed={event.slug} media={event.cover} label={event.title} className="aspect-16/9" />
                         <div className="absolute top-3 left-3 grid size-14 place-items-center rounded-xl bg-background/92 backdrop-blur">
                           <span className="font-heading text-lg leading-none font-extrabold">
                             {new Date(event.date).getUTCDate()}

@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
-import { DownloadIcon } from "lucide-react";
 
 import { EmptyState, StatCard, StatusPill } from "@/components/common";
 import { ChildSwitcher } from "@/components/portal/child-switcher";
 import { PortalPageHeader } from "@/components/portal/page-header";
-import { PayInvoiceDialog } from "@/components/portal/pay-invoice-dialog";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -17,46 +14,43 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { requireParent } from "@/lib/school/auth";
-import {
-  childrenForSession,
-  classDisplayName,
-  getInvoicesForStudent,
-  getPaymentsForStudent,
-  resolveActiveChild,
-  studentName,
-} from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { studentName } from "@/lib/school/data";
+import { getMyChildren, resolveActiveChild } from "@/lib/school/parent";
+import { getDirectory } from "@/lib/school/directory";
+import { query } from "@/lib/school/convex";
 import { formatDateTime, money } from "@/lib/school/format";
 
 export const metadata: Metadata = { title: "Payments" };
 
 export default async function ParentPaymentsPage({ searchParams }: PageProps<"/portal/parent/payments">) {
   const user = await requireParent();
+  const dir = await getDirectory();
   const params = await searchParams;
-  const child = resolveActiveChild(user, typeof params.child === "string" ? params.child : undefined);
-  const myChildren = childrenForSession(user);
+  const child = await resolveActiveChild(typeof params.child === "string" ? params.child : undefined);
+  const myChildren = await getMyChildren();
 
   if (!child) {
     return <EmptyState icon="Users" title="No children linked" description="Contact the school office." />;
   }
 
-  const payments = getPaymentsForStudent(child.id);
-  const invoices = getInvoicesForStudent(child.id);
+  const { payments, invoices } = await query(api.fees.forStudent, { studentId: child.id });
   const openInvoices = invoices.filter((i) => i.total - i.amountPaid > 0);
   const totalPaid = payments.reduce((s, p) => s + (p.status === "successful" ? p.amount : 0), 0);
 
   return (
     <>
       <PortalPageHeader
-        eyebrow={`${studentName(child)} · ${classDisplayName(child.classId)}`}
+        eyebrow={`${studentName(child)} · ${dir.className(child.classId)}`}
         title="Payments & receipts"
-        description="Every payment recorded against your child's account, with downloadable receipts."
+        description="Every payment recorded against your child's account by the school bursary."
         action={
           <ChildSwitcher
             activeId={child.id}
             options={myChildren.map((c) => ({
               id: c.id,
               name: studentName(c),
-              className: classDisplayName(c.classId),
+              className: dir.className(c.classId),
               avatarSeed: c.avatarSeed,
             }))}
           />
@@ -92,14 +86,10 @@ export default async function ParentPaymentsPage({ searchParams }: PageProps<"/p
                     {invoice.amountPaid > 0 ? "Part paid" : "Unpaid"}
                   </StatusPill>
                 </div>
-                <div className="mt-4">
-                  <PayInvoiceDialog
-                    invoiceId={invoice.id}
-                    invoiceNo={invoice.invoiceNo}
-                    balance={invoice.total - invoice.amountPaid}
-                    studentName={studentName(child)}
-                  />
-                </div>
+                <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                  Pay at the school bursary or by bank transfer quoting {invoice.invoiceNo}. Payments appear here once the
+                  bursar confirms them.
+                </p>
               </div>
             ))}
           </div>
@@ -126,7 +116,6 @@ export default async function ParentPaymentsPage({ searchParams }: PageProps<"/p
                   <TableHead>Reference</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead className="text-right">Status</TableHead>
-                  <TableHead className="text-right">Receipt</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -144,12 +133,6 @@ export default async function ParentPaymentsPage({ searchParams }: PageProps<"/p
                         {payment.status}
                       </StatusPill>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" className="font-bold" disabled>
-                        <DownloadIcon />
-                        PDF
-                      </Button>
-                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -157,8 +140,7 @@ export default async function ParentPaymentsPage({ searchParams }: PageProps<"/p
           </div>
         )}
         <p className="mt-4 text-xs text-muted-foreground">
-          Receipt PDFs are disabled in this demonstration environment. In production each receipt is
-          generated server-side and delivered through a signed, single-use link.
+          Printed receipts are available from the school bursary.
         </p>
       </Card>
     </>

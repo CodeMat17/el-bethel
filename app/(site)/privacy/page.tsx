@@ -75,7 +75,7 @@ export default function PrivacyPage() {
             "Sessions are signed server-side; roles are read from the database on every request, never trusted from the browser.",
             "Uploaded files are validated for type and size on the server and stored privately.",
             "Private documents are served through short-lived, signed URLs — never from a public folder.",
-            "Payments are verified server-side with the payment provider; a client-side callback alone never marks an invoice paid.",
+            "No card or bank details are collected online. Payments are made at the bursary or by bank transfer and are recorded only by authorised finance staff.",
             "Administrative actions are recorded in an append-only audit log.",
           ],
         },

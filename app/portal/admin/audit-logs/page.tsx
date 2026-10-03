@@ -8,9 +8,10 @@ import { Pager } from "@/components/portal/pager";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { requireAdmin } from "@/lib/school/auth";
-import { paginate } from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { query } from "@/lib/school/convex";
+import { pageParam, param } from "@/lib/school/data";
 import { formatDateTime } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
 
 export const metadata: Metadata = { title: "Audit logs" };
 
@@ -18,21 +19,13 @@ export default async function AdminAuditLogsPage({ searchParams }: PageProps<"/p
   await requireAdmin();
   const params = await searchParams;
 
-  const q = (typeof params.q === "string" ? params.q : "").trim().toLowerCase();
-  const entity = typeof params.entity === "string" ? params.entity : "all";
-  const page = Number(typeof params.page === "string" ? params.page : "1") || 1;
+  const q = param(params.q).trim();
+  const entity = param(params.entity, "all");
+  const page = pageParam(params.page);
 
-  const db = getDb();
-  const entities = Array.from(new Set(db.auditLogs.map((l) => l.entity))).sort();
-
-  const filtered = db.auditLogs.filter((log) => {
-    if (entity !== "all" && log.entity !== entity) return false;
-    if (!q) return true;
-    return `${log.action} ${log.actorName} ${log.entity} ${log.entityId}`.toLowerCase().includes(q);
-  });
-
-  const result = paginate(filtered, page, 15);
-  const actors = new Set(db.auditLogs.map((l) => l.actorId)).size;
+  const result = await query(api.office.auditLogs, { search: q, entity, page, pageSize: 15 });
+  const entities = result.entities;
+  const actors = result.actors;
 
   return (
     <>
@@ -42,7 +35,7 @@ export default async function AdminAuditLogsPage({ searchParams }: PageProps<"/p
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Entries recorded" value={db.auditLogs.length} icon="ScrollText" tone="info" />
+        <StatCard label="Entries recorded" value={result.all} icon="ScrollText" tone="info" />
         <StatCard label="Distinct actors" value={actors} icon="UserCheck" tone="neutral" />
         <StatCard label="Entity types" value={entities.length} icon="Layers" tone="neutral" />
         <StatCard label="Matching filter" value={result.total} icon="Search" tone="gold" />
@@ -52,8 +45,8 @@ export default async function AdminAuditLogsPage({ searchParams }: PageProps<"/p
         <p className="flex items-start gap-3 text-sm leading-relaxed">
           <LockIcon className="mt-0.5 size-5 shrink-0 text-info" />
           <span>
-            Audit entries cannot be edited or deleted by an ordinary administrator. Each records the
-            actor, the action, the entity, the value before and after, and the device it came from.
+            Audit entries are written by the server and can't be edited or deleted from the portal. Each records the
+            actor, the action, the record it affected, and the value before and after.
           </span>
         </p>
       </Card>

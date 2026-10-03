@@ -16,65 +16,47 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { requireAdmin } from "@/lib/school/auth";
-import { classDisplayName, getStudent, paginate, studentName } from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { query } from "@/lib/school/convex";
+import { pageParam, param } from "@/lib/school/data";
 import { compactMoney, formatDateTime, money } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
 
 export const metadata: Metadata = { title: "Payments" };
 
 const PROVIDER_LABEL: Record<string, string> = {
-  paystack: "Paystack",
-  flutterwave: "Flutterwave",
   bank_transfer: "Bank transfer",
-  cash: "Cash",
+  cash: "Cash / POS",
 };
 
 export default async function AdminPaymentsPage({ searchParams }: PageProps<"/portal/admin/payments">) {
   await requireAdmin();
   const params = await searchParams;
 
-  const q = (typeof params.q === "string" ? params.q : "").trim().toLowerCase();
-  const provider = typeof params.provider === "string" ? params.provider : "all";
-  const page = Number(typeof params.page === "string" ? params.page : "1") || 1;
+  const q = param(params.q).trim();
+  const provider = param(params.provider, "all");
+  const page = pageParam(params.page);
 
-  const db = getDb();
-  const filtered = db.payments
-    .filter((payment) => {
-      if (provider !== "all" && payment.provider !== provider) return false;
-      if (!q) return true;
-      const student = getStudent(payment.studentId);
-      return (
-        payment.reference.toLowerCase().includes(q) ||
-        payment.receiptNo.toLowerCase().includes(q) ||
-        (student ? studentName(student).toLowerCase().includes(q) : false)
-      );
-    })
-    .sort((a, b) => b.paidAt.localeCompare(a.paidAt));
-
-  const result = paginate(filtered, page, 12);
-  const total = db.payments.reduce((sum, p) => sum + (p.status === "successful" ? p.amount : 0), 0);
-
-  const byProvider = Object.keys(PROVIDER_LABEL).map((key) => ({
-    label: PROVIDER_LABEL[key],
-    value: Math.round(
-      db.payments.filter((p) => p.provider === key).reduce((sum, p) => sum + p.amount, 0) / 1000,
-    ),
-    hint: money(db.payments.filter((p) => p.provider === key).reduce((sum, p) => sum + p.amount, 0)),
+  const result = await query(api.fees.listPayments, { search: q, provider, page, pageSize: 12 });
+  const total = result.totals.amount;
+  const byProvider = result.totals.byProvider.filter((row) => row.provider in PROVIDER_LABEL || row.amount > 0).map((row) => ({
+    label: PROVIDER_LABEL[row.provider] ?? row.provider,
+    value: Math.round(row.amount / 1000),
+    hint: money(row.amount),
   }));
 
   return (
     <>
       <PortalPageHeader
         title="Payments"
-        description="Every verified fee payment, its provider, reference and receipt number."
+        description="Every fee payment recorded by the bursary, with its method, reference and receipt number."
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Total received" value={compactMoney(total)} icon="Banknote" tone="success" />
-        <StatCard label="Payments recorded" value={db.payments.length} icon="CreditCard" tone="info" />
+        <StatCard label="Payments recorded" value={result.totals.count} icon="CreditCard" tone="info" />
         <StatCard
           label="Verified"
-          value={db.payments.filter((p) => p.verifiedAt).length}
+          value={result.totals.verified}
           icon="ShieldCheck"
           tone="success"
         />
@@ -116,7 +98,6 @@ export default async function AdminPaymentsPage({ searchParams }: PageProps<"/po
                 <TableRow>
                   <TableHead>Receipt</TableHead>
                   <TableHead>Pupil</TableHead>
-                  <TableHead>Class</TableHead>
                   <TableHead>Method</TableHead>
                   <TableHead>Reference</TableHead>
                   <TableHead>Paid</TableHead>
@@ -126,16 +107,12 @@ export default async function AdminPaymentsPage({ searchParams }: PageProps<"/po
               </TableHeader>
               <TableBody>
                 {result.items.map((payment) => {
-                  const student = getStudent(payment.studentId);
                   return (
                     <TableRow key={payment.id}>
                       <TableCell className="font-mono text-xs font-bold">{payment.receiptNo}</TableCell>
-                      <TableCell className="font-bold">{student ? studentName(student) : "—"}</TableCell>
+                      <TableCell className="font-bold">{payment.studentName}</TableCell>
                       <TableCell className="text-muted-foreground">
-                        {student ? classDisplayName(student.classId) : "—"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {PROVIDER_LABEL[payment.provider]}
+                        {PROVIDER_LABEL[payment.provider] ?? payment.provider}
                       </TableCell>
                       <TableCell className="font-mono text-xs text-muted-foreground">{payment.reference}</TableCell>
                       <TableCell className="whitespace-nowrap text-muted-foreground">
@@ -167,10 +144,9 @@ export default async function AdminPaymentsPage({ searchParams }: PageProps<"/po
 
       <Card className="mt-6 gap-0 border-info/30 bg-info/10 p-5">
         <p className="text-sm leading-relaxed">
-          <span className="font-extrabold">Verification · </span>
-          A payment is only marked successful after a server-side verification call to the provider. A
-          client-side callback is never trusted on its own, and every payment carries a verification
-          timestamp.
+          <span className="font-extrabold">Offline payments · </span>
+          The school does not take payments online. Families pay at the bursary or by bank transfer, and a
+          payment only appears here once a member of the finance team records it against an invoice.
         </p>
       </Card>
     </>

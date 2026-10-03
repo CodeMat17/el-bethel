@@ -6,7 +6,7 @@ import { Reveal } from "@/components/motion";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { getAchievements } from "@/lib/school/data";
+import { getAchievements } from "@/lib/school/site-data";
 import { formatDate } from "@/lib/school/format";
 
 export const metadata: Metadata = {
@@ -16,8 +16,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/school-life/achievements" },
 };
 
-export default function AchievementsPage() {
-  const achievements = getAchievements();
+export default async function AchievementsPage() {
+  const achievements = await getAchievements();
   const categories = Array.from(new Set(achievements.map((a) => a.category)));
 
   return (

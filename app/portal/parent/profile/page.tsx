@@ -9,7 +9,11 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { requireParent } from "@/lib/school/auth";
 import { ROLE_LABELS } from "@/lib/school/config";
-import { childrenForSession, classDisplayName, getParent, studentName } from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { studentName } from "@/lib/school/data";
+import { getMyChildren } from "@/lib/school/parent";
+import { getDirectory } from "@/lib/school/directory";
+import { query } from "@/lib/school/convex";
 import { avatarTone, initials } from "@/lib/school/format";
 import { cn } from "@/lib/utils";
 
@@ -24,8 +28,9 @@ const PREFERENCES = [
 
 export default async function ParentProfilePage() {
   const user = await requireParent();
-  const parent = user.parentId ? getParent(user.parentId) : null;
-  const myChildren = childrenForSession(user);
+  const dir = await getDirectory();
+  const parent = user.parentId ? await query(api.people.myParent, {}) : null;
+  const myChildren = await getMyChildren();
 
   return (
     <>
@@ -111,7 +116,7 @@ export default async function ParentProfilePage() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold">{studentName(child)}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {classDisplayName(child.classId)} · {child.studentNo}
+                      {dir.className(child.classId)} · {child.studentNo}
                     </p>
                   </div>
                 </li>

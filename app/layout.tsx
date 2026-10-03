@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Nunito } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 
 import { Providers } from "@/components/providers";
 import { SCHOOL, SITE_URL } from "@/lib/school/config";
@@ -67,7 +68,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en-NG" data-scroll-behavior="smooth" suppressHydrationWarning className={`${nunito.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
-        <Providers>{children}</Providers>
+        <ClerkProvider signInUrl="/login" signInFallbackRedirectUrl="/portal">
+          <Providers>{children}</Providers>
+        </ClerkProvider>
       </body>
     </html>
   );

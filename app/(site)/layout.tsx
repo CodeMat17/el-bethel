@@ -2,12 +2,12 @@ import { EmergencyBanner } from "@/components/site/emergency-banner";
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
 import { homeForUser, getSessionUser } from "@/lib/school/auth";
-import { getActiveNotice } from "@/lib/school/data";
+import { getActiveNotice } from "@/lib/school/site-data";
 import { SCHOOL, SITE_URL, MISSION } from "@/lib/school/config";
 
 export default async function SiteLayout({ children }: LayoutProps<"/">) {
   const user = await getSessionUser();
-  const notice = getActiveNotice();
+  const notice = await getActiveNotice();
 
   const schema = {
     "@context": "https://schema.org",

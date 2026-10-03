@@ -6,7 +6,7 @@ import { Reveal, ToneImage } from "@/components/motion";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { levelsForStage } from "@/lib/school/config";
-import { getSubjects } from "@/lib/school/data";
+import { getSubjects } from "@/lib/school/site-data";
 
 export const metadata: Metadata = {
   title: "Creche, Pre-School & Nursery",
@@ -39,9 +39,9 @@ const CARE_NOTES = [
   "Children are released only to the adults named on the pickup list, with photo verification at the gate.",
 ];
 
-export default function EarlyYearsPage() {
+export default async function EarlyYearsPage() {
   const levels = [...levelsForStage("early_years"), ...levelsForStage("nursery")];
-  const subjects = getSubjects().filter((s) => s.levelIds.includes("lvl-n2"));
+  const subjects = (await getSubjects()).filter((s) => s.levelIds.includes("lvl-n2"));
 
   return (
     <>

@@ -3,11 +3,10 @@ import { CheckCheckIcon } from "lucide-react";
 
 import { EmptyState } from "@/components/common";
 import { Icon } from "@/components/icon";
-import { Button } from "@/components/ui/button";
+import { PendingButton, PendingLinkButton } from "@/components/portal/pending-button";
 import { Card } from "@/components/ui/card";
 import { markAllNotificationsRead, markNotificationRead } from "@/lib/school/actions/portal";
 import { relativeTime } from "@/lib/school/format";
-import { DEMO_TODAY } from "@/lib/school/seed";
 import type { AppNotification, NotificationType } from "@/lib/school/types";
 import { cn } from "@/lib/utils";
 
@@ -24,9 +23,22 @@ const TYPE_ICON: Record<NotificationType, string> = {
   event_reminder: "CalendarDays",
   message: "MessagesSquare",
   appointment: "CalendarPlus",
+  quiz_published: "Puzzle",
+  quiz_marked: "Puzzle",
+  library_due: "BookOpen",
+  library_overdue: "BookOpen",
+  certificate_issued: "Award",
+  achievement: "Star",
+  transport_update: "Bus",
+  bus_trip: "MapPin",
+  parent_insight: "TrendingUp",
+  store_order: "Receipt",
+  library_reservation: "BookOpenCheck",
 };
 
-export function NotificationList({ notifications }: { notifications: AppNotification[] }) {
+type NotificationItem = Omit<AppNotification, "type"> & { type: string };
+
+export function NotificationList({ notifications }: { notifications: NotificationItem[] }) {
   const unread = notifications.filter((n) => !n.read).length;
 
   if (notifications.length === 0) {
@@ -47,10 +59,9 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
             {unread} unread notification{unread === 1 ? "" : "s"}
           </p>
           <form action={markAllNotificationsRead}>
-            <Button type="submit" variant="outline" size="sm" className="font-bold">
-              <CheckCheckIcon />
+            <PendingButton variant="outline" size="sm" className="font-bold" icon={<CheckCheckIcon />} pendingText="Marking…">
               Mark all as read
-            </Button>
+            </PendingButton>
           </form>
         </div>
       ) : null}
@@ -71,14 +82,14 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
                     n.read ? "bg-muted text-muted-foreground" : "bg-gold/20 text-gold-foreground dark:text-gold",
                   )}
                 >
-                  <Icon name={TYPE_ICON[n.type]} className="size-4" />
+                  <Icon name={TYPE_ICON[n.type as NotificationType] ?? "Bell"} className="size-4" />
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-extrabold">{n.title}</p>
                   <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">{n.body}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-3">
                     <span className="text-xs text-muted-foreground">
-                      {relativeTime(n.createdAt, DEMO_TODAY)}
+                      {relativeTime(n.createdAt)}
                     </span>
                     {n.href ? (
                       <Link
@@ -91,12 +102,12 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
                     {!n.read ? (
                       <form action={markNotificationRead}>
                         <input type="hidden" name="id" value={n.id} />
-                        <button
-                          type="submit"
+                        <PendingLinkButton
+                          pendingText="Saving…"
                           className="text-xs font-bold text-muted-foreground underline-offset-4 hover:underline"
                         >
                           Mark as read
-                        </button>
+                        </PendingLinkButton>
                       </form>
                     ) : null}
                   </div>

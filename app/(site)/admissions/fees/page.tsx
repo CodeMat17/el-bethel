@@ -140,7 +140,7 @@ export default function FeesPage() {
         <div className="eb-container grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { title: "When fees are due", text: "Termly invoices are issued two weeks before resumption and are due by the end of the second week of term." },
-            { title: "Payment methods", text: "Card, bank transfer or USSD through Paystack or Flutterwave. Receipts are generated automatically once a payment is verified." },
+            { title: "Payment methods", text: "Pay at the school bursary or by bank transfer, quoting your invoice number. There is no online payment. Receipts are issued once the bursar confirms a payment." },
             { title: "Instalment plans", text: "Available on request. Contact the school accountant before the start of term to agree a schedule." },
             { title: "Sibling consideration", text: "Families with three or more children enrolled receive a discount on the third and subsequent child. Contact the office for details." },
           ].map((item, i) => (

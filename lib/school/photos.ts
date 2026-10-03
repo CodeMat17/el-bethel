@@ -1,12 +1,20 @@
 /**
- * Photography for the public site.
+ * Photography for the public site, served from Cloudinary.
  *
- * Images are hotlinked from Pexels (free to use, no attribution required). Keys are the
- * `seed` values already passed to `<ToneImage />`, so swapping in the school's own
- * photography later is a matter of changing a URL here — no page edits.
+ * Keys are the `seed` values already passed to `<ToneImage />`. The maps below record
+ * where each photo originally came from (Pexels, free to use, or /public/images);
+ * `node scripts/upload-photos.mjs` copies them to Cloudinary under the public id from
+ * `photoPublicId`, and the site only ever loads the Cloudinary copy. To swap in new
+ * photography, change the source here and run the script again — no page edits.
  */
 
-/** Pexels CDN URL for a photo id. next/image handles the final resizing. */
+export const CLOUDINARY_CLOUD_NAME = "obuovfvi";
+
+/** Delivery URL for an uploaded image; next/image handles the final resizing. */
+const cloudinaryUrl = (publicId: string) =>
+  `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/f_auto,q_auto/${publicId}`;
+
+/** Pexels CDN URL for a photo id (the original source of a stock photo). */
 const px = (id: number) =>
   `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=1600`;
 
@@ -15,7 +23,7 @@ const px = (id: number) =>
  * school's own photography can be laid out at its natural aspect ratio instead of
  * being cropped into a fixed-ratio box.
  */
-export const LOCAL_DIMENSIONS: Record<string, { width: number; height: number }> = {
+const LOCAL_DIMENSIONS: Record<string, { width: number; height: number }> = {
   "/images/kid-1.jpg": { width: 524, height: 993 },
   "/images/kid-2.jpg": { width: 528, height: 989 },
   "/images/kid-3.jpg": { width: 520, height: 985 },
@@ -26,8 +34,8 @@ export const LOCAL_DIMENSIONS: Record<string, { width: number; height: number }>
   "/images/head-teacher.webp": { width: 405, height: 424 },
 };
 
-/** seed -> photo. Seeds come from page literals, slugs, ids and titles. */
-const PHOTOS: Record<string, string> = {
+/** seed -> original photo. Seeds come from page literals, slugs, ids and titles. */
+export const PHOTO_SOURCES: Record<string, string> = {
   // Home page
   "hero-a": "/images/kid-1.jpg",
   "hero-b": "/images/kid-2.jpg",
@@ -75,7 +83,6 @@ const PHOTOS: Record<string, string> = {
   "safeguarding-refresher-training": px(8423069),
   "french-club-cultural-morning": px(30050943),
   "digital-report-cards-launch": px(10638075),
-  "school-transport-routes-2026": px(18435546),
   "art-exhibition-preview": px(37713592),
   "nutrition-and-lunch-menu": px(8466918),
 
@@ -139,12 +146,27 @@ const PHOTOS: Record<string, string> = {
 };
 
 /** Staff portraits. Names in the demo data are generated, so a seed picks one by hash. */
-const PORTRAITS = [
+export const PORTRAIT_SOURCES = [
   px(5905743), px(5905744), px(5905746), px(5905753), px(5905757),
   px(13565831), px(8423062), px(8423069), px(8423388), px(14441568),
   px(6209566), px(8617935), px(8617936), px(6683448), px(8617766),
   px(5306461),
 ];
+
+/** Cloudinary public id for a photo seed ("Lower Primary" -> "elbethel/site/lower-primary"). */
+export function photoPublicId(seed: string): string {
+  return `elbethel/site/${seed.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+}
+
+/** Cloudinary public id for the nth staff portrait. */
+export const portraitPublicId = (index: number) => `elbethel/people/portrait-${index + 1}`;
+
+/** Intrinsic size of the school's own photography, keyed by its Cloudinary URL. */
+const DIMENSIONS = new Map(
+  Object.entries(PHOTO_SOURCES)
+    .filter(([, source]) => LOCAL_DIMENSIONS[source])
+    .map(([seed, source]) => [cloudinaryUrl(photoPublicId(seed)), LOCAL_DIMENSIONS[source]]),
+);
 
 function hash(seed: string) {
   let h = 0;
@@ -158,11 +180,11 @@ function hash(seed: string) {
  */
 export function photoFor(seed: string | undefined, kind?: "portrait"): string | undefined {
   if (!seed) return undefined;
-  if (kind === "portrait") return PORTRAITS[hash(seed) % PORTRAITS.length];
-  return PHOTOS[seed];
+  if (kind === "portrait") return cloudinaryUrl(portraitPublicId(hash(seed) % PORTRAIT_SOURCES.length));
+  return seed in PHOTO_SOURCES ? cloudinaryUrl(photoPublicId(seed)) : undefined;
 }
 
-/** Intrinsic size for a local photo, or `undefined` for the hotlinked stock library. */
+/** Intrinsic size for the school's own photography, or `undefined` for the stock library. */
 export function dimensionsFor(photo: string | undefined) {
-  return photo ? LOCAL_DIMENSIONS[photo] : undefined;
+  return photo ? DIMENSIONS.get(photo) : undefined;
 }

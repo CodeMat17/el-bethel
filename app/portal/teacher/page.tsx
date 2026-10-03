@@ -8,27 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { api } from "@/convex/_generated/api";
 import { requireTeacher } from "@/lib/school/auth";
 import { DAY_NAMES } from "@/lib/school/config";
-import {
-  classDisplayName,
-  classesForTeacher,
-  getActiveTerm,
-  getAssignment,
-  getAssignmentStats,
-  getAssignmentsForTeacher,
-  getNotifications,
-  getStudent,
-  getStudentsByClass,
-  getSubject,
-  getTeacherTodaySlots,
-  getThreadsForUser,
-  getUpcomingEvents,
-  pendingGradingForTeacher,
-  studentName,
-} from "@/lib/school/data";
+import { query } from "@/lib/school/convex";
+import { schoolDay, slotsForDay, studentName } from "@/lib/school/data";
+import { getDirectory } from "@/lib/school/directory";
 import { formatDate, relativeTime } from "@/lib/school/format";
-import { DEMO_TODAY } from "@/lib/school/seed";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -44,23 +30,29 @@ export default async function TeacherDashboard() {
     );
   }
 
-  const classes = classesForTeacher(user.teacherId);
-  const assignments = getAssignmentsForTeacher(user.teacherId);
-  const pendingGrading = pendingGradingForTeacher(user.teacherId);
-  const todaySlots = getTeacherTodaySlots(user.teacherId);
-  const notifications = getNotifications(user.id).slice(0, 4);
-  const threads = getThreadsForUser(user.id).slice(0, 3);
-  const events = getUpcomingEvents().slice(0, 3);
-  const term = getActiveTerm();
-  const pupilCount = classes.reduce((sum, c) => sum + getStudentsByClass(c.id).length, 0);
-
-  const weekday = DEMO_TODAY.getUTCDay();
-  const dayLabel = DAY_NAMES[weekday === 0 || weekday === 6 ? 1 : weekday];
+  const [mine, pendingGrading, timetable, notifications, inbox, events, sizes, dir] = await Promise.all([
+    query(api.assignments.forTeacher, {}),
+    query(api.assignments.pendingForTeacher, {}),
+    query(api.timetable.forTeacher, {}),
+    query(api.notifications.mine, { limit: 4 }),
+    query(api.messages.myThreads, {}),
+    query(api.content.events, { upcomingOnly: true, limit: 3 }),
+    query(api.people.classSizes, {}),
+    getDirectory(),
+  ]);
+  const classes = dir.classesForTeacher(user.teacherId);
+  const assignments = mine.map((m) => m.assignment);
+  const todaySlots = slotsForDay(timetable);
+  const threads = inbox.threads.slice(0, 3);
+  const term = dir.activeTerm;
+  const pupilCount = classes.reduce((sum, c) => sum + (sizes[c.id] ?? 0), 0);
+  const now = new Date();
+  const dayLabel = DAY_NAMES[schoolDay(now)];
 
   return (
     <>
       <PortalPageHeader
-        eyebrow={`${term.name} · ${formatDate(DEMO_TODAY)}`}
+        eyebrow={`${term?.name ?? "Current term"} · ${formatDate(now)}`}
         title={`Good morning, ${user.name.replace(/^(Mrs|Mr|Miss|Dr|Mme)\.?\s/, "").split(" ")[0]}`}
         description="Your classes, your marking queue and today's teaching schedule."
         action={
@@ -108,10 +100,10 @@ export default async function TeacherDashboard() {
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-bold">
-                        {getSubject(slot.subjectId ?? "")?.name}
+                        {dir.subjectName(slot.subjectId)}
                       </span>
                       <span className="block truncate text-xs text-muted-foreground">
-                        {classDisplayName(slot.classId)}
+                        {dir.className(slot.classId)}
                       </span>
                     </span>
                     <Button variant="outline" size="sm" className="shrink-0 font-bold" render={<Link href={`/portal/teacher/classes/${slot.classId}`} />}>
@@ -136,15 +128,12 @@ export default async function TeacherDashboard() {
                 <PenSquareIcon className="mx-auto size-8 text-muted-foreground/50" />
                 <p className="mt-3 text-sm font-semibold">Nothing to mark.</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Every submission has been graded and returned.
+                  Every submission has been marked.
                 </p>
               </div>
             ) : (
               <ul className="space-y-2">
-                {pendingGrading.slice(0, 6).map((submission) => {
-                  const assignment = getAssignment(submission.assignmentId);
-                  const student = getStudent(submission.studentId);
-                  if (!assignment || !student) return null;
+                {pendingGrading.slice(0, 6).map(({ submission, assignment, student }) => {
                   return (
                     <li key={submission.id}>
                       <Link href={`/portal/teacher/assignments/${assignment.id}`} className="block">
@@ -152,12 +141,10 @@ export default async function TeacherDashboard() {
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-bold">{studentName(student)}</p>
                             <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                              {assignment.title} · {classDisplayName(assignment.classId)}
+                              {assignment.title} · {dir.className(assignment.classId)}
                             </p>
                           </div>
-                          <StatusPill tone={submission.status === "late" ? "warning" : "info"}>
-                            {submission.status === "late" ? "Late" : "Submitted"}
-                          </StatusPill>
+                          <StatusPill tone="info">Awaiting marking</StatusPill>
                         </div>
                       </Link>
                     </li>
@@ -176,8 +163,7 @@ export default async function TeacherDashboard() {
             </div>
             <Separator className="my-4" />
             <ul className="space-y-3">
-              {assignments.slice(0, 4).map((assignment) => {
-                const stats = getAssignmentStats(assignment.id);
+              {mine.slice(0, 4).map(({ assignment, stats }) => {
                 const pct = stats.students ? Math.round((stats.submitted / stats.students) * 100) : 0;
                 return (
                   <li key={assignment.id} className="rounded-xl border bg-card p-4">
@@ -185,7 +171,7 @@ export default async function TeacherDashboard() {
                       <div className="min-w-0">
                         <p className="truncate text-sm font-extrabold">{assignment.title}</p>
                         <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                          {classDisplayName(assignment.classId)} · {getSubject(assignment.subjectId)?.name}
+                          {dir.className(assignment.classId)} · {dir.subjectName(assignment.subjectId)}
                         </p>
                       </div>
                       <span className="shrink-0 text-xs font-bold text-muted-foreground">
@@ -194,7 +180,7 @@ export default async function TeacherDashboard() {
                     </div>
                     <Progress value={pct} className="mt-3" />
                     <p className="mt-2 text-xs text-muted-foreground">
-                      {stats.graded} graded · {stats.pendingGrading} awaiting · {stats.notSubmitted} not submitted
+                      {stats.graded} marked · {stats.pendingGrading} awaiting · {stats.notSubmitted} not submitted
                     </p>
                   </li>
                 );
@@ -237,7 +223,7 @@ export default async function TeacherDashboard() {
                     <div className="flex items-center justify-between gap-3 rounded-xl border bg-card p-3 transition-colors hover:border-gold/40">
                       <span className="truncate text-sm font-bold">{cls.name}</span>
                       <span className="shrink-0 text-xs text-muted-foreground">
-                        {getStudentsByClass(cls.id).length} pupils
+                        {sizes[cls.id] ?? 0} pupils
                       </span>
                     </div>
                   </Link>
@@ -255,7 +241,7 @@ export default async function TeacherDashboard() {
                   <p className="text-sm font-bold">{n.title}</p>
                   <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{n.body}</p>
                   <p className="mt-1.5 text-[0.68rem] text-muted-foreground">
-                    {relativeTime(n.createdAt, DEMO_TODAY)}
+                    {relativeTime(n.createdAt)}
                   </p>
                 </li>
               ))}
@@ -272,7 +258,7 @@ export default async function TeacherDashboard() {
                     <div className="rounded-xl border bg-card p-3 transition-colors hover:border-gold/40">
                       <p className="truncate text-sm font-bold">{thread.subject}</p>
                       <p className="mt-0.5 text-xs text-muted-foreground">
-                        {relativeTime(thread.updatedAt, DEMO_TODAY)}
+                        {relativeTime(thread.updatedAt)}
                       </p>
                     </div>
                   </Link>

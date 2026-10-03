@@ -1,24 +1,22 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 
+import { TeacherDialog } from "@/components/admin/people-dialogs";
 import { EmptyState, StatCard, StatusPill } from "@/components/common";
 import { AdminFilters } from "@/components/portal/admin-filters";
 import { PortalPageHeader } from "@/components/portal/page-header";
 import { Pager } from "@/components/portal/pager";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { api } from "@/convex/_generated/api";
 import { requireAdmin } from "@/lib/school/auth";
-import { getSubject, getTeachers, paginate, teacherName } from "@/lib/school/data";
-import { avatarTone, formatDate, initials } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
+import { query } from "@/lib/school/convex";
+import { pageParam, param, teacherName } from "@/lib/school/data";
+import { getDirectory } from "@/lib/school/directory";
+import { avatarTone, initials } from "@/lib/school/format";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Teachers" };
@@ -26,150 +24,102 @@ export const metadata: Metadata = { title: "Teachers" };
 export default async function AdminTeachersPage({ searchParams }: PageProps<"/portal/admin/teachers">) {
   await requireAdmin();
   const params = await searchParams;
-
-  const q = (typeof params.q === "string" ? params.q : "").trim().toLowerCase();
-  const department = typeof params.department === "string" ? params.department : "all";
-  const page = Number(typeof params.page === "string" ? params.page : "1") || 1;
-
-  const teachers = getTeachers();
-  const departments = Array.from(new Set(teachers.map((t) => t.department))).sort();
-
-  const filtered = teachers
-    .filter((teacher) => {
-      if (department !== "all" && teacher.department !== department) return false;
-      if (!q) return true;
-      return (
-        `${teacher.firstName} ${teacher.lastName} ${teacher.position} ${teacher.staffNo}`
-          .toLowerCase()
-          .includes(q)
-      );
-    })
-    .sort((a, b) => a.lastName.localeCompare(b.lastName));
-
-  const result = paginate(filtered, page, 12);
-  const classTeachers = teachers.filter((t) => t.isClassTeacher).length;
-  const lessons = getDb().timetable.filter((s) => s.teacherId).length;
+  const q = param(params.q);
+  const department = param(params.department, "all");
+  const page = pageParam(params.page);
+  const [result, dir] = await Promise.all([
+    query(api.people.listTeachers, { search: q, department, page, pageSize: 12 }),
+    getDirectory(),
+  ]);
 
   return (
     <>
       <PortalPageHeader
         title="Teachers & staff"
-        description="Teaching staff, their departments, subjects, classes and workload."
+        description="Staff records. Assign classes and subjects on the Classes page; open a teacher to create their sign-in."
+        action={<TeacherDialog departments={result.departments} />}
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Active teachers" value={teachers.filter((t) => t.active).length} icon="GraduationCap" tone="info" />
-        <StatCard label="Class teachers" value={classTeachers} icon="School" tone="gold" />
-        <StatCard label="Departments" value={departments.length} icon="Layers" tone="neutral" />
-        <StatCard label="Timetabled lessons" value={lessons} icon="Clock" tone="neutral" />
+        <StatCard label="Active staff" value={result.counts.active} icon="GraduationCap" tone="info" />
+        <StatCard label="On record" value={result.counts.all} icon="Users" tone="neutral" />
+        <StatCard label="Class teachers" value={dir.teachers.filter((t) => t.isClassTeacher).length} icon="School" tone="gold" />
+        <StatCard label="Departments" value={result.departments.length} icon="Layers" tone="neutral" />
       </div>
 
       <Card className="gap-0 p-4 sm:p-5">
         <AdminFilters
-          searchPlaceholder="Search by name, role or staff number"
-          filters={[
-            {
-              key: "department",
-              label: "Departments",
-              options: departments.map((d) => ({ value: d, label: d })),
-            },
-          ]}
+          searchPlaceholder="Search by name, staff number, position or email"
+          filters={[{ key: "department", label: "Departments", options: result.departments.map((d) => ({ value: d, label: d })) }]}
         />
       </Card>
 
       {result.items.length === 0 ? (
-        <EmptyState
-          className="mt-6"
-          icon="Search"
-          title="No staff match your search"
-          description="Try a different name, role or department."
-        />
+        <EmptyState className="mt-6" icon="Search" title="No staff match your search" description="Try a different name or department." />
       ) : (
         <>
-          <ul className="mt-6 space-y-3 lg:hidden">
-            {result.items.map((teacher) => (
-              <li key={teacher.id}>
-                <Card className="gap-0 p-4">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="size-11 shrink-0">
-                      <AvatarFallback className={cn("text-xs font-bold", avatarTone(teacher.avatarSeed))}>
-                        {initials(teacher.firstName, teacher.lastName)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-extrabold">{teacherName(teacher)}</p>
-                      <p className="truncate text-xs text-muted-foreground">{teacher.position}</p>
-                    </div>
-                    <StatusPill tone={teacher.active ? "success" : "neutral"}>
-                      {teacher.active ? "Active" : "Inactive"}
-                    </StatusPill>
-                  </div>
-                </Card>
-              </li>
-            ))}
-          </ul>
-
-          <div className="mt-6 hidden overflow-x-auto rounded-2xl border bg-card lg:block">
+          <div className="mt-6 overflow-x-auto rounded-2xl border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Staff</TableHead>
-                  <TableHead>Staff number</TableHead>
-                  <TableHead>Position</TableHead>
+                  <TableHead>Staff member</TableHead>
                   <TableHead>Department</TableHead>
-                  <TableHead>Subjects</TableHead>
-                  <TableHead className="text-right">Classes</TableHead>
-                  <TableHead className="text-right">Joined</TableHead>
+                  <TableHead>Teaches</TableHead>
+                  <TableHead>Sign-in</TableHead>
+                  <TableHead className="text-right" />
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {result.items.map((teacher) => (
-                  <TableRow key={teacher.id}>
+                {result.items.map((t) => (
+                  <TableRow key={t.id}>
                     <TableCell>
-                      <span className="flex items-center gap-3">
-                        <Avatar className="size-8 shrink-0">
-                          <AvatarFallback className={cn("text-[0.65rem] font-bold", avatarTone(teacher.avatarSeed))}>
-                            {initials(teacher.firstName, teacher.lastName)}
+                      <Link href={`/portal/admin/teachers/${t.id}`} className="flex items-center gap-3 hover:underline">
+                        <Avatar className="size-9 shrink-0">
+                          {t.photo ? <AvatarImage src={t.photo.url} alt="" /> : null}
+                          <AvatarFallback className={cn("text-[0.65rem] font-bold", avatarTone(t.avatarSeed))}>
+                            {initials(t.firstName, t.lastName)}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="font-bold">{teacherName(teacher)}</span>
-                      </span>
+                        <span>
+                          <span className="block font-bold">{teacherName(t)}</span>
+                          <span className="block text-xs text-muted-foreground">
+                            {t.position} · {t.staffNo}
+                          </span>
+                        </span>
+                      </Link>
                     </TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">{teacher.staffNo}</TableCell>
-                    <TableCell className="text-muted-foreground">{teacher.position}</TableCell>
-                    <TableCell className="text-muted-foreground">{teacher.department}</TableCell>
+                    <TableCell className="text-muted-foreground">{t.department}</TableCell>
                     <TableCell>
-                      <span className="flex flex-wrap gap-1">
-                        {teacher.subjectIds.slice(0, 3).map((sid) => (
-                          <Badge key={sid} variant="secondary" className="font-bold">
-                            {getSubject(sid)?.name}
+                      <span className="flex max-w-80 flex-wrap gap-1">
+                        {t.classIds.slice(0, 4).map((cid) => (
+                          <Badge key={cid} variant="secondary" className="font-bold">
+                            {dir.className(cid)}
                           </Badge>
                         ))}
-                        {teacher.subjectIds.length > 3 ? (
-                          <Badge variant="outline" className="font-bold">
-                            +{teacher.subjectIds.length - 3}
-                          </Badge>
-                        ) : null}
+                        {t.classIds.length > 4 ? <Badge variant="outline">+{t.classIds.length - 4}</Badge> : null}
+                        {t.classIds.length === 0 ? <span className="text-xs text-muted-foreground">No classes</span> : null}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">{teacher.classIds.length}</TableCell>
-                    <TableCell className="text-right whitespace-nowrap text-muted-foreground">
-                      {formatDate(teacher.joinedAt)}
+                    <TableCell>
+                      {!t.active ? (
+                        <StatusPill tone="neutral">Left</StatusPill>
+                      ) : t.account?.hasLogin ? (
+                        <span className="font-mono text-xs">@{t.account.username}</span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">None</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button size="sm" variant="outline" className="font-bold" render={<Link href={`/portal/admin/teachers/${t.id}`} />}>
+                        Open
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </div>
-
-          <Pager
-            page={result.page}
-            pageCount={result.pageCount}
-            total={result.total}
-            pageSize={result.pageSize}
-            basePath="/portal/admin/teachers"
-            params={{ q, department }}
-          />
+          <Pager page={result.page} pageCount={result.pageCount} total={result.total} pageSize={result.pageSize} basePath="/portal/admin/teachers" params={{ q, department }} />
         </>
       )}
     </>

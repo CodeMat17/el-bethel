@@ -98,8 +98,8 @@ Every boundary is enforced on the server, on every request:
 - `canAccessStudent` and `canAccessClass` guard *records*: a parent reaches only their own
   children, a pupil only themselves, a teacher only classes they teach.
 - Uploads are validated on the server for MIME type and size (5 MB), never on the client alone.
-- Payments are only marked successful after a server-side verification step; a client callback is
-  never trusted.
+- There is no online payment. Fees are paid at the bursary or by bank transfer, and a payment exists
+  only once finance staff record it against an invoice.
 - Administrative writes append to an audit log that ordinary administrators cannot edit.
 - `/portal/*` is `noindex` in both `robots.txt` and a response header.
 
@@ -135,11 +135,25 @@ Clearly marked in the UI where it appears:
 
 - File downloads (report cards, receipts, documents) — a live deployment streams these from
   private storage through short-lived signed URLs.
-- Payment provider checkout — the flow, verification step and receipt generation are implemented;
-  only the network call to Paystack/Flutterwave is simulated.
-- Email, SMS and push delivery — notifications are written to the in-app notification centre.
 - Content authoring screens for news, events and gallery are read-only in this build; the data
   model behind them supports draft / scheduled / published / archived.
+
+## Email and scheduled jobs
+
+Every notice appears in the portal. Some kinds are also emailed to parents and staff (never pupils)
+through [Resend](https://resend.com): the list is in `lib/school/email-notifications.ts`. Set these in
+the Convex dashboard (Settings → Environment Variables); until they are set, notices stay in the portal only:
+
+| Variable | Purpose |
+|---|---|
+| `RESEND_API_KEY` | API key from Resend |
+| `RESEND_FROM` | Sender on a domain verified in Resend, e.g. `El-Bethel International Academy <notifications@elbethel.edu.ng>` |
+| `SITE_URL` | Optional — where links in emails point (defaults to the live site) |
+
+Every email is logged on **Admin → Notifications**, which also has a "send me a test" button.
+
+`convex/crons.ts` runs two daily jobs: library due/overdue reminders, and the house-points
+recalculation used by pupil stars.
 
 ## Demo clock
 

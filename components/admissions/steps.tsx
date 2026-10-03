@@ -18,7 +18,6 @@ import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -92,16 +91,10 @@ export function AccountStep({ levels }: { levels: { id: string; name: string }[]
       <Field data-invalid={Boolean(state.fieldErrors?.email) || undefined}>
         <FieldLabel htmlFor="email">Email address</FieldLabel>
         <Input id="email" name="email" type="email" inputMode="email" autoComplete="email" required className="h-11" />
-        <FieldDescription>We will send your application number and every update to this address.</FieldDescription>
+        <FieldDescription>You will need this email, with your application number, to check your application status.</FieldDescription>
         {state.fieldErrors?.email ? <FieldError>{state.fieldErrors.email}</FieldError> : null}
       </Field>
 
-      <Field data-invalid={Boolean(state.fieldErrors?.password) || undefined}>
-        <FieldLabel htmlFor="password">Create a password</FieldLabel>
-        <Input id="password" name="password" type="password" autoComplete="new-password" required minLength={8} className="h-11" />
-        <FieldDescription>At least 8 characters. You will use this to resume your application.</FieldDescription>
-        {state.fieldErrors?.password ? <FieldError>{state.fieldErrors.password}</FieldError> : null}
-      </Field>
 
       <Field data-invalid={Boolean(state.fieldErrors?.intendedLevelId) || undefined}>
         <FieldLabel htmlFor="intendedLevelId">Class you are applying for</FieldLabel>
@@ -119,7 +112,11 @@ export function AccountStep({ levels }: { levels: { id: string; name: string }[]
         {state.fieldErrors?.intendedLevelId ? <FieldError>{state.fieldErrors.intendedLevelId}</FieldError> : null}
       </Field>
 
-      <Submit label="Create account and continue" pendingLabel="Creating your account…" />
+      <p className="text-xs leading-relaxed text-muted-foreground">
+        Your progress is saved in this browser, so please finish the application on this device.
+      </p>
+
+      <Submit label="Start my application" pendingLabel="Starting…" />
     </form>
   );
 }
@@ -466,35 +463,16 @@ export function PaymentStep({ amount }: { amount: number }) {
         </p>
       </Card>
 
-      <fieldset>
-        <legend className="text-sm font-extrabold">Choose a payment method</legend>
-        <RadioGroup name="provider" defaultValue="paystack" className="mt-3 grid gap-3">
-          {[
-            { value: "paystack", label: "Paystack", detail: "Card, bank transfer or USSD" },
-            { value: "flutterwave", label: "Flutterwave", detail: "Card, bank transfer or mobile money" },
-            { value: "bank_transfer", label: "Direct bank transfer", detail: "Pay to the school account and upload proof" },
-          ].map((option) => (
-            <label
-              key={option.value}
-              className="flex cursor-pointer items-center gap-3 rounded-xl border bg-card p-4 transition-colors has-data-checked:border-gold has-data-checked:bg-gold/8"
-            >
-              <RadioGroupItem value={option.value} />
-              <span>
-                <span className="block text-sm font-extrabold">{option.label}</span>
-                <span className="block text-xs text-muted-foreground">{option.detail}</span>
-              </span>
-            </label>
-          ))}
-        </RadioGroup>
-      </fieldset>
+      <div className="rounded-xl bg-muted/70 p-4 text-sm leading-relaxed">
+        <p className="font-bold">How to pay</p>
+        <p className="mt-1 text-muted-foreground">
+          Pay the application fee at the school bursary, or by bank transfer using the account details from the school
+          office, quoting your application number. The admissions office confirms your payment — you can submit your
+          application now and pay before the assessment.
+        </p>
+      </div>
 
-      <p className="rounded-xl bg-muted/70 p-4 text-xs leading-relaxed text-muted-foreground">
-        <span className="font-bold text-foreground">Demo environment.</span> No real payment is taken. In
-        a live deployment the transaction is initialised with the provider and verified server-side
-        before the application is marked as paid — never on a client callback alone.
-      </p>
-
-      <Submit label="Pay application fee" pendingLabel="Processing payment…" />
+      <Submit label="Continue" pendingLabel="Continuing…" />
     </form>
   );
 }

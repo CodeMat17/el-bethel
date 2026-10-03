@@ -6,16 +6,13 @@ import { AttendanceRegister, type RegisterPupil } from "@/components/portal/atte
 import { PortalPageHeader } from "@/components/portal/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { requireTeacher } from "@/lib/school/auth";
-import {
-  classesForTeacher,
-  getClassAttendanceForDate,
-  getStudentsByClass,
-  studentName,
-  summariseAttendance,
-} from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
+import { isAdmin, requireTeacher } from "@/lib/school/auth";
+import { query } from "@/lib/school/convex";
+import { studentName, summariseAttendance, todayKey } from "@/lib/school/data";
+import { getDirectory } from "@/lib/school/directory";
 import { formatLongDate } from "@/lib/school/format";
-import { DEMO_TODAY } from "@/lib/school/seed";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Attendance" };
@@ -26,11 +23,8 @@ export default async function TeacherAttendancePage({
   const user = await requireTeacher();
   const params = await searchParams;
 
-  if (!user.teacherId) {
-    return <EmptyState icon="GraduationCap" title="No teaching record" description="Contact the school administrator." />;
-  }
-
-  const classes = classesForTeacher(user.teacherId);
+  const dir = await getDirectory();
+  const classes = isAdmin(user) ? dir.classes : dir.classesForTeacher(user.teacherId);
   if (classes.length === 0) {
     return (
       <EmptyState
@@ -44,13 +38,16 @@ export default async function TeacherAttendancePage({
   // Only ever accept a class this teacher actually teaches.
   const requested = typeof params.class === "string" ? params.class : undefined;
   const cls = classes.find((c) => c.id === requested) ?? classes[0];
+  const today = todayKey();
   const date =
-    typeof params.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(params.date)
+    typeof params.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(params.date) && params.date <= today
       ? params.date
-      : DEMO_TODAY.toISOString().slice(0, 10);
+      : today;
 
-  const roster = getStudentsByClass(cls.id);
-  const existing = getClassAttendanceForDate(cls.id, date);
+  const [roster, existing] = await Promise.all([
+    query(api.people.classRoster, { classId: cls.id as Id<"classes"> }),
+    query(api.attendance.classDay, { classId: cls.id as Id<"classes">, date }),
+  ]);
   const summary = summariseAttendance(existing);
 
   const pupils: RegisterPupil[] = roster.map((student) => {

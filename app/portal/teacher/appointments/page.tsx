@@ -1,17 +1,21 @@
 import type { Metadata } from "next";
-import { CalendarClockIcon, MapPinIcon, VideoIcon } from "lucide-react";
+import { CalendarClockIcon, CheckIcon, MapPinIcon, VideoIcon, XIcon } from "lucide-react";
 
 import { EmptyState, StatCard, StatusPill } from "@/components/common";
 import { AvailabilityForm } from "@/components/portal/availability-form";
 import { PortalPageHeader } from "@/components/portal/page-header";
-import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/portal/pending-button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { requireTeacher } from "@/lib/school/auth";
-import { cancelAppointment } from "@/lib/school/actions/portal";
-import { classDisplayName, getParent, getStudent, studentName } from "@/lib/school/data";
+import { cancelAppointment, completeAppointment, removeAvailability } from "@/lib/school/actions/portal";
+import { ConfirmAction } from "@/components/portal/confirm-action";
+import { api } from "@/convex/_generated/api";
+import { query } from "@/lib/school/convex";
+import { studentName } from "@/lib/school/data";
+import { getDirectory } from "@/lib/school/directory";
+import { todayKey } from "@/lib/school/data";
 import { formatLongDate } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
 import type { ToneName } from "@/lib/school/format";
 
 export const metadata: Metadata = { title: "Appointments" };
@@ -25,15 +29,11 @@ const STATUS_TONE: Record<string, ToneName> = {
 };
 
 export default async function TeacherAppointmentsPage() {
-  const user = await requireTeacher();
-  const db = getDb();
-
-  const mine = db.appointments
-    .filter((a) => a.teacherId === user.teacherId)
-    .sort((a, b) => a.date.localeCompare(b.date));
-  const slots = db.availability
-    .filter((a) => a.teacherId === user.teacherId)
-    .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+  await requireTeacher();
+  const [data, dir] = await Promise.all([query(api.appointments.forTeacher, {}), getDirectory()]);
+  const mine = data.appointments;
+  const slots = data.slots;
+  const today = todayKey();
 
   return (
     <>
@@ -43,7 +43,7 @@ export default async function TeacherAppointmentsPage() {
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <StatCard label="Booked meetings" value={mine.filter((a) => a.status !== "cancelled").length} icon="CalendarPlus" tone="info" />
+        <StatCard label="Booked meetings" value={mine.filter((a) => a.status !== "cancelled" && a.status !== "completed").length} icon="CalendarPlus" tone="info" />
         <StatCard label="Open slots" value={slots.filter((s) => !s.taken).length} icon="Clock" tone="success" />
         <StatCard label="Slots published" value={slots.length} icon="CalendarRange" tone="neutral" />
       </div>
@@ -60,18 +60,17 @@ export default async function TeacherAppointmentsPage() {
           ) : (
             <ul className="space-y-3">
               {mine.map((appointment) => {
-                const child = getStudent(appointment.studentId);
-                const parent = getParent(appointment.parentId);
+                const child = appointment.child;
                 return (
                   <li key={appointment.id}>
                     <Card className="gap-0 p-5">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="font-heading text-base font-extrabold">
-                            {parent ? `${parent.title} ${parent.firstName} ${parent.lastName}` : "Parent"}
+                            {appointment.parentName}
                           </p>
                           <p className="mt-0.5 text-sm text-muted-foreground">
-                            {child ? `${studentName(child)} · ${classDisplayName(child.classId)}` : ""}
+                            {child ? `${studentName(child)} · ${dir.className(child.classId)}` : ""}
                           </p>
                         </div>
                         <StatusPill tone={STATUS_TONE[appointment.status] ?? "neutral"}>
@@ -109,13 +108,24 @@ export default async function TeacherAppointmentsPage() {
                         </p>
                       ) : null}
 
+                      {appointment.parentPhone ? (
+                        <p className="mt-3 text-xs text-muted-foreground">Parent&apos;s phone: {appointment.parentPhone}</p>
+                      ) : null}
+
                       {appointment.status !== "cancelled" && appointment.status !== "completed" ? (
-                        <form action={cancelAppointment} className="mt-4">
-                          <input type="hidden" name="id" value={appointment.id} />
-                          <Button type="submit" variant="outline" size="sm" className="font-bold">
-                            Cancel meeting
-                          </Button>
-                        </form>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {appointment.date <= today ? (
+                            <ConfirmAction action={completeAppointment.bind(null, appointment.id)} icon={<CheckIcon />} pendingText="Saving…">
+                              Mark as held
+                            </ConfirmAction>
+                          ) : null}
+                          <form action={cancelAppointment}>
+                            <input type="hidden" name="id" value={appointment.id} />
+                            <PendingButton variant="ghost" size="sm" className="font-bold text-destructive" pendingText="Cancelling…">
+                              Cancel meeting
+                            </PendingButton>
+                          </form>
+                        </div>
                       ) : null}
                     </Card>
                   </li>
@@ -141,16 +151,26 @@ export default async function TeacherAppointmentsPage() {
               </p>
             ) : (
               <ul className="space-y-2">
-                {slots.slice(0, 12).map((slot) => (
+                {slots.slice(0, 30).map((slot) => (
                   <li
                     key={slot.id}
                     className="flex items-center justify-between gap-3 rounded-xl border bg-card p-3 text-sm"
                   >
                     <span className="min-w-0 truncate font-semibold">{formatLongDate(slot.date)}</span>
                     <span className="shrink-0 tabular-nums text-muted-foreground">{slot.time}</span>
-                    <StatusPill tone={slot.taken ? "neutral" : "success"}>
-                      {slot.taken ? "Booked" : "Open"}
-                    </StatusPill>
+                    {slot.taken ? (
+                      <StatusPill tone="neutral">Booked</StatusPill>
+                    ) : (
+                      <ConfirmAction
+                        action={removeAvailability.bind(null, slot.id)}
+                        icon={<XIcon />}
+                        variant="ghost"
+                        className="font-bold text-muted-foreground"
+                        pendingText="…"
+                      >
+                        Remove
+                      </ConfirmAction>
+                    )}
                   </li>
                 ))}
               </ul>

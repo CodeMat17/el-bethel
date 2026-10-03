@@ -2,26 +2,19 @@ import type { Metadata } from "next";
 
 import { EmptyState, StatCard, StatusPill } from "@/components/common";
 import { AdminFilters } from "@/components/portal/admin-filters";
-import { HeroFigure } from "@/components/portal/charts";
 import { PortalPageHeader } from "@/components/portal/page-header";
 import { Pager } from "@/components/portal/pager";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
+import Link from "next/link";
+
+import { Button } from "@/components/ui/button";
+import { api } from "@/convex/_generated/api";
 import { requireAdmin } from "@/lib/school/auth";
-import {
-  classDisplayName,
-  getAssignmentStats,
-  getClasses,
-  getSubject,
-  getSubjects,
-  getSubmissionRate,
-  paginate,
-  teacherNameById,
-} from "@/lib/school/data";
+import { query } from "@/lib/school/convex";
+import { pageParam, param } from "@/lib/school/data";
+import { getDirectory } from "@/lib/school/directory";
 import { formatDate } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
-import { DEMO_TODAY } from "@/lib/school/seed";
 
 export const metadata: Metadata = { title: "Assignments" };
 
@@ -29,75 +22,43 @@ export default async function AdminAssignmentsPage({ searchParams }: PageProps<"
   await requireAdmin();
   const params = await searchParams;
 
-  const q = (typeof params.q === "string" ? params.q : "").trim().toLowerCase();
-  const classId = typeof params.class === "string" ? params.class : "all";
-  const subjectId = typeof params.subject === "string" ? params.subject : "all";
-  const page = Number(typeof params.page === "string" ? params.page : "1") || 1;
+  const q = param(params.q).trim();
+  const classId = param(params.class, "all");
+  const subjectId = param(params.subject, "all");
+  const status = param(params.status, "all");
+  const page = pageParam(params.page);
 
-  const db = getDb();
-  const filtered = db.assignments
-    .filter((assignment) => {
-      if (classId !== "all" && assignment.classId !== classId) return false;
-      if (subjectId !== "all" && assignment.subjectId !== subjectId) return false;
-      if (!q) return true;
-      return `${assignment.title} ${assignment.topic}`.toLowerCase().includes(q);
-    })
-    .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
-
-  const result = paginate(filtered, page, 10);
-  const submissions = getSubmissionRate();
-  const openNow = db.assignments.filter(
-    (a) => a.status === "published" && new Date(a.dueDate) >= DEMO_TODAY,
-  ).length;
+  const [result, dir] = await Promise.all([
+    query(api.assignments.listAll, { search: q, classId, subjectId, status, page, pageSize: 10 }),
+    getDirectory(),
+  ]);
+  const totals = result.totals;
 
   return (
     <>
       <PortalPageHeader
         title="Assignments"
-        description="Every assignment set across the school, with submission and grading progress."
+        description="Every assignment set across the school, with submission and marking progress. Open one to see each pupil's answers."
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Assignments" value={db.assignments.length} icon="ClipboardList" tone="info" />
-        <StatCard label="Currently open" value={openNow} icon="Clock" tone="gold" />
-        <StatCard
-          label="Awaiting grading"
-          value={submissions.pending}
-          icon="PenSquare"
-          tone={submissions.pending > 0 ? "warning" : "success"}
-        />
-        <StatCard label="Late submissions" value={submissions.late} icon="CalendarX" tone={submissions.late > 0 ? "danger" : "success"} />
+        <StatCard label="Assignments" value={totals.assignments} icon="ClipboardList" tone="info" />
+        <StatCard label="Submissions" value={totals.submissions} icon="Send" tone="gold" />
+        <StatCard label="Marked" value={totals.graded} icon="ClipboardCheck" tone="success" />
+        <StatCard label="Awaiting marking" value={totals.pending} icon="PenSquare" tone={totals.pending > 0 ? "warning" : "success"} />
       </div>
-
-      <Card className="mb-6 gap-0 p-5 sm:p-6">
-        <h2 className="font-heading text-base font-extrabold">Engagement across the school</h2>
-        <Separator className="my-5" />
-        <div className="grid gap-6 sm:grid-cols-3">
-          <HeroFigure
-            value={`${submissions.submissionRate}%`}
-            label="Submission rate"
-            progress={submissions.submissionRate}
-            detail={`${submissions.submitted} of ${submissions.total} expected submissions`}
-          />
-          <HeroFigure
-            value={String(submissions.graded)}
-            label="Graded submissions"
-            detail={`${submissions.pending} still awaiting a mark`}
-          />
-          <HeroFigure
-            value={String(submissions.averageScore)}
-            label="Average score awarded"
-            detail="Across every graded submission this term"
-          />
-        </div>
-      </Card>
 
       <Card className="gap-0 p-4 sm:p-5">
         <AdminFilters
           searchPlaceholder="Search by title or topic"
           filters={[
-            { key: "class", label: "Classes", options: getClasses().map((c) => ({ value: c.id, label: c.name })) },
-            { key: "subject", label: "Subjects", options: getSubjects().map((s) => ({ value: s.id, label: s.name })) },
+            { key: "class", label: "Classes", options: dir.classes.map((c) => ({ value: c.id, label: c.name })) },
+            { key: "subject", label: "Subjects", options: dir.subjects.map((s) => ({ value: s.id, label: s.name })) },
+            {
+              key: "status",
+              label: "Statuses",
+              options: ["published", "draft", "closed", "archived"].map((v) => ({ value: v, label: v.charAt(0).toUpperCase() + v.slice(1) })),
+            },
           ]}
         />
       </Card>
@@ -112,8 +73,7 @@ export default async function AdminAssignmentsPage({ searchParams }: PageProps<"
       ) : (
         <>
           <ul className="mt-6 space-y-3">
-            {result.items.map((assignment) => {
-              const stats = getAssignmentStats(assignment.id);
+            {result.items.map(({ assignment, stats }) => {
               const pct = stats.students ? Math.round((stats.submitted / stats.students) * 100) : 0;
               return (
                 <li key={assignment.id}>
@@ -122,11 +82,11 @@ export default async function AdminAssignmentsPage({ searchParams }: PageProps<"
                       <div className="min-w-0">
                         <h3 className="font-heading text-base font-extrabold">{assignment.title}</h3>
                         <p className="mt-0.5 text-sm text-muted-foreground">
-                          {classDisplayName(assignment.classId)} · {getSubject(assignment.subjectId)?.name} ·{" "}
-                          {teacherNameById(assignment.teacherId)}
+                          {dir.className(assignment.classId)} · {dir.subjectName(assignment.subjectId)} ·{" "}
+                          {dir.teacherName(assignment.teacherId)}
                         </p>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                          Published {formatDate(assignment.publishedAt)} · due {formatDate(assignment.dueDate)}
+                          {assignment.questions.length} questions · opens {formatDate(assignment.startDate)} · due {formatDate(assignment.dueDate)}
                         </p>
                       </div>
                       <StatusPill
@@ -152,7 +112,7 @@ export default async function AdminAssignmentsPage({ searchParams }: PageProps<"
                       {[
                         ["Pupils", stats.students],
                         ["Submitted", stats.submitted],
-                        ["Graded", stats.graded],
+                        ["Marked", stats.graded],
                         ["Not submitted", stats.notSubmitted],
                       ].map(([label, value]) => (
                         <div key={String(label)} className="rounded-lg bg-muted/70 p-2 text-center">
@@ -161,6 +121,9 @@ export default async function AdminAssignmentsPage({ searchParams }: PageProps<"
                         </div>
                       ))}
                     </div>
+                    <Button size="sm" variant="outline" className="mt-4 w-fit font-bold" render={<Link href={`/portal/teacher/assignments/${assignment.id}`} />}>
+                      Open
+                    </Button>
                   </Card>
                 </li>
               );
@@ -173,7 +136,7 @@ export default async function AdminAssignmentsPage({ searchParams }: PageProps<"
             total={result.total}
             pageSize={result.pageSize}
             basePath="/portal/admin/assignments"
-            params={{ q, class: classId, subject: subjectId }}
+            params={{ q, class: classId, subject: subjectId, status }}
           />
         </>
       )}

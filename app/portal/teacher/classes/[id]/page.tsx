@@ -12,47 +12,27 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { assertClassAccess, requireTeacher } from "@/lib/school/auth";
-import {
-  getAssignmentStats,
-  getAssignmentsForClass,
-  getAttendanceForStudent,
-  getClass,
-  getLevel,
-  getMaterialsForClass,
-  getQuizzesForClass,
-  getStudentsByClass,
-  getSubject,
-  getSubjects,
-  getTimetableForClass,
-  studentName,
-  summariseAttendance,
-  teacherNameById,
-} from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { requireTeacher } from "@/lib/school/auth";
+import { query } from "@/lib/school/convex";
+import { studentName } from "@/lib/school/data";
+import { getDirectory } from "@/lib/school/directory";
 import { avatarTone, formatDate, initials } from "@/lib/school/format";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Digital classroom" };
 
 export default async function TeacherClassPage({ params }: PageProps<"/portal/teacher/classes/[id]">) {
-  const user = await requireTeacher();
+  await requireTeacher();
   const { id } = await params;
-  const cls = getClass(id);
-  if (!cls) notFound();
-  // Authorisation: a teacher may only open a class they teach.
-  assertClassAccess(user, cls.id);
-
-  const roster = getStudentsByClass(cls.id);
-  const level = getLevel(cls.levelId);
-  const subjects = getSubjects().filter((s) => level && s.levelIds.includes(level.id));
-  const assignments = getAssignmentsForClass(cls.id);
-  const materials = getMaterialsForClass(cls.id);
-  const quizzes = getQuizzesForClass(cls.id);
-  const timetable = getTimetableForClass(cls.id);
-
-  const attendanceRates = roster.map((s) => summariseAttendance(getAttendanceForStudent(s.id)).rate);
-  const classAttendance = attendanceRates.length
-    ? Math.round(attendanceRates.reduce((a, b) => a + b, 0) / attendanceRates.length)
+  // Convex refuses unless the viewer teaches this class (or is an administrator).
+  const [data, dir] = await Promise.all([query(api.classroom.overview, { classId: id }), getDirectory()]);
+  if (!data) notFound();
+  const { class: cls, roster, assignments, materials, quizzes, timetable } = data;
+  const subjects = dir.subjectsForClass(cls.id);
+  const levelName = dir.levelName(cls.levelId);
+  const classAttendance = roster.length
+    ? Math.round(roster.reduce((sum, s) => sum + s.attendanceRate, 0) / roster.length)
     : 0;
 
   return (
@@ -63,9 +43,9 @@ export default async function TeacherClassPage({ params }: PageProps<"/portal/te
       </Button>
 
       <PortalPageHeader
-        eyebrow={`${level?.name} · ${cls.room}`}
+        eyebrow={`${levelName} · ${cls.room}`}
         title={cls.name}
-        description={`Class teacher: ${teacherNameById(cls.classTeacherId)}`}
+        description={`Class teacher: ${dir.teacherName(cls.classTeacherId)}`}
         action={
           <>
             <Button variant="outline" size="lg" className="font-bold" render={<Link href={`/portal/teacher/attendance?class=${cls.id}`} />}>
@@ -104,7 +84,7 @@ export default async function TeacherClassPage({ params }: PageProps<"/portal/te
         <TabsContent value="pupils" className="mt-5">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {roster.map((student) => {
-              const rate = summariseAttendance(getAttendanceForStudent(student.id)).rate;
+              const rate = student.attendanceRate;
               return (
                 <Card key={student.id} className="gap-0 p-4">
                   <div className="flex items-center gap-3">
@@ -130,8 +110,7 @@ export default async function TeacherClassPage({ params }: PageProps<"/portal/te
 
         <TabsContent value="assignments" className="mt-5">
           <ul className="space-y-3">
-            {assignments.map((assignment) => {
-              const stats = getAssignmentStats(assignment.id);
+            {assignments.map(({ assignment, stats }) => {
               const pct = stats.students ? Math.round((stats.submitted / stats.students) * 100) : 0;
               return (
                 <li key={assignment.id}>
@@ -141,7 +120,7 @@ export default async function TeacherClassPage({ params }: PageProps<"/portal/te
                         <div className="min-w-0">
                           <p className="truncate text-sm font-extrabold">{assignment.title}</p>
                           <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                            {getSubject(assignment.subjectId)?.name} · due {formatDate(assignment.dueDate)}
+                            {dir.subjectName(assignment.subjectId)} · due {formatDate(assignment.dueDate)}
                           </p>
                         </div>
                         <span className="shrink-0 text-xs font-bold text-muted-foreground">
@@ -150,7 +129,7 @@ export default async function TeacherClassPage({ params }: PageProps<"/portal/te
                       </div>
                       <Progress value={pct} className="mt-3" />
                       <p className="mt-2 text-xs text-muted-foreground">
-                        {stats.graded} graded · {stats.pendingGrading} to mark · {stats.notSubmitted} not submitted
+                        {stats.graded} marked · {stats.pendingGrading} to mark · {stats.notSubmitted} not submitted
                       </p>
                     </Card>
                   </Link>
@@ -171,7 +150,7 @@ export default async function TeacherClassPage({ params }: PageProps<"/portal/te
                   </div>
                   <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{material.description}</p>
                   <p className="mt-3 text-xs text-muted-foreground">
-                    {getSubject(material.subjectId)?.name} · {material.downloads} downloads
+                    {dir.subjectName(material.subjectId)} · {formatDate(material.uploadedAt)}
                   </p>
                 </Card>
               </li>
@@ -184,10 +163,10 @@ export default async function TeacherClassPage({ params }: PageProps<"/portal/te
             {quizzes.map((quiz) => (
               <li key={quiz.id}>
                 <Card className="gap-0 p-4">
-                  <p className="text-sm font-extrabold">{quiz.title}</p>
+                  <Link href={`/portal/teacher/quizzes/${quiz.id}`} className="text-sm font-extrabold hover:underline">{quiz.title}</Link>
                   <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{quiz.description}</p>
                   <p className="mt-3 text-xs text-muted-foreground">
-                    {quiz.questions.length} questions · {quiz.durationMinutes} minutes
+                    {quiz.questionCount} questions · {quiz.durationMinutes} minutes
                   </p>
                 </Card>
               </li>
@@ -196,7 +175,7 @@ export default async function TeacherClassPage({ params }: PageProps<"/portal/te
         </TabsContent>
 
         <TabsContent value="timetable" className="mt-5">
-          <TimetableGrid slots={timetable} />
+          <TimetableGrid slots={timetable} dir={dir} />
         </TabsContent>
 
         <TabsContent value="subjects" className="mt-5">

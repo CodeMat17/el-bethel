@@ -1,9 +1,4 @@
-import type {
-  ApplicationStatus,
-  AttendanceStatus,
-  InvoiceStatus,
-  SubmissionStatus,
-} from "./types";
+import type { ApplicationStatus, AssignmentProgress, AttendanceStatus, InvoiceStatus } from "./types";
 
 const NAIRA = new Intl.NumberFormat("en-NG", {
   style: "currency",
@@ -46,8 +41,8 @@ export const formatTime = (value: string | Date): string => TIME_FMT.format(new 
 export const formatDateTime = (value: string | Date): string =>
   `${DATE_FMT.format(new Date(value))} · ${TIME_FMT.format(new Date(value))}`;
 
-/** Human relative time against the fixed demo clock. */
-export function relativeTime(value: string | Date, reference: Date): string {
+/** Human relative time, e.g. "2 days ago". */
+export function relativeTime(value: string | Date, reference: Date = new Date()): string {
   const diffMs = new Date(value).getTime() - reference.getTime();
   const diffMin = Math.round(diffMs / 60000);
   const abs = Math.abs(diffMin);
@@ -78,15 +73,11 @@ export const percent = (value: number, total: number): number =>
 
 export type ToneName = "neutral" | "success" | "warning" | "danger" | "info" | "gold";
 
-export const SUBMISSION_STATUS: Record<SubmissionStatus, { label: string; tone: ToneName }> = {
-  not_started: { label: "Not started", tone: "neutral" },
-  in_progress: { label: "In progress", tone: "info" },
-  submitted: { label: "Submitted", tone: "info" },
-  late: { label: "Late", tone: "warning" },
-  grading: { label: "Grading", tone: "info" },
-  graded: { label: "Graded", tone: "success" },
-  returned: { label: "Returned", tone: "success" },
-  resubmission_required: { label: "Resubmit", tone: "danger" },
+export const SUBMISSION_STATUS: Record<AssignmentProgress, { label: string; tone: ToneName }> = {
+  not_started: { label: "To do", tone: "neutral" },
+  missed: { label: "Missed", tone: "danger" },
+  submitted: { label: "Awaiting marking", tone: "info" },
+  graded: { label: "Marked", tone: "success" },
 };
 
 export const APPLICATION_STATUS: Record<ApplicationStatus, { label: string; tone: ToneName }> = {
@@ -143,3 +134,20 @@ export function gradeTone(grade: string): ToneName {
   if (grade === "D") return "warning";
   return "danger";
 }
+
+/** School shop order statuses, with what happens next for the parent. */
+export const ORDER_STATUS: Record<string, { label: string; tone: ToneName; next: string }> = {
+  placed: { label: "Awaiting payment", tone: "warning", next: "Pay at the bursary or by transfer, quoting the order number." },
+  paid: { label: "Paid — being prepared", tone: "info", next: "We'll tell you when it's ready to collect." },
+  ready: { label: "Ready to collect", tone: "success", next: "Collect from the school office, or it comes home in your child's bag." },
+  collected: { label: "Collected", tone: "neutral", next: "" },
+  cancelled: { label: "Cancelled", tone: "neutral", next: "" },
+};
+
+export const SHOP_CATEGORY: Record<string, string> = {
+  uniform: "Uniform",
+  sportswear: "Sportswear",
+  books: "Books",
+  stationery: "Stationery",
+  accessories: "Accessories",
+};

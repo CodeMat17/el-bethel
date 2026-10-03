@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { ArrowRightIcon, CheckCircle2Icon, PencilIcon } from "lucide-react";
 
 import {
@@ -16,9 +15,10 @@ import { PageHero } from "@/components/common";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { getSessionUser } from "@/lib/school/auth";
+import { api } from "@/convex/_generated/api";
+import { draftTokenHash } from "@/lib/school/admissions";
 import { ADMISSION_FEES, ADMISSION_OPEN_LEVELS, CLASS_LEVELS } from "@/lib/school/config";
-import { getApplicationsByEmail, getLevel } from "@/lib/school/data";
+import { publicQuery } from "@/lib/school/convex";
 import { formatDate } from "@/lib/school/format";
 
 export const metadata: Metadata = {
@@ -34,31 +34,28 @@ const OPEN_LEVELS = CLASS_LEVELS.filter((l) => ADMISSION_OPEN_LEVELS.includes(l.
 }));
 
 const STEP_COPY: Record<ApplyStepKey, { title: string; lede: string }> = {
-  account: { title: "Create your parent account", lede: "This account lets you save your progress, upload documents and track your application." },
+  account: { title: "Start your application", lede: "Tell us who you are and which class you are applying for. Your progress is saved in this browser." },
   pupil: { title: "Pupil information", lede: "Tell us about the child you are applying for." },
   guardian: { title: "Parent or guardian information", lede: "Who should we contact about this application?" },
   documents: { title: "Upload documents", lede: "Upload the documents required to complete your application." },
   review: { title: "Review your application", lede: "Check everything carefully. You can still go back and edit any step." },
-  payment: { title: "Application fee", lede: "Pay the application fee to unlock submission." },
+  payment: { title: "Application fee", lede: "How to pay the application fee." },
   submit: { title: "Submit your application", lede: "One last confirmation and your application goes to our admissions team." },
 };
 
 export default async function ApplyPage({ searchParams }: PageProps<"/admissions/apply">) {
   const params = await searchParams;
-  const user = await getSessionUser();
   const requested = (Array.isArray(params.step) ? params.step[0] : params.step) as ApplyStepKey | undefined;
 
-  const applications = user ? getApplicationsByEmail(user.email) : [];
-  const draft = applications.find((a) => a.status === "draft");
-  const submitted = applications.find((a) => a.status !== "draft");
+  // The draft belongs to whoever holds this browser's application cookie.
+  const tokenHash = await draftTokenHash();
+  const found = tokenHash ? await publicQuery(api.admissions.getDraft, { tokenHash }) : null;
+  const draft = found?.status === "draft" ? found : null;
 
-  // Someone with a submitted application belongs on the status page.
-  if (!draft && submitted) redirect("/admissions/status");
-
-  const step: ApplyStepKey = !user || !draft ? "account" : (requested && APPLY_STEPS.some((s) => s.key === requested) ? requested : "pupil");
+  const step: ApplyStepKey = !draft ? "account" : (requested && APPLY_STEPS.some((s) => s.key === requested) ? requested : "pupil");
 
   const reachable: ApplyStepKey[] = draft
-    ? ["pupil", "guardian", "documents", "review", ...(draft.documents.every((d) => !d.required || d.uploaded) ? (["payment"] as ApplyStepKey[]) : []), ...(draft.applicationFeePaid ? (["submit"] as ApplyStepKey[]) : [])]
+    ? ["pupil", "guardian", "documents", "review", ...(draft.documents.every((d) => !d.required || d.uploaded) ? (["payment", "submit"] as ApplyStepKey[]) : [])]
     : ["account"];
 
   const applicationFee = ADMISSION_FEES[0].amount;
@@ -68,7 +65,7 @@ export default async function ApplyPage({ searchParams }: PageProps<"/admissions
       <PageHero
         eyebrow="Admissions"
         title="Apply online"
-        lede="Seven short steps. Your progress is saved automatically, so you can stop and come back at any time."
+        lede="Seven short steps. Your progress is saved in this browser, so you can stop and come back on the same device."
         breadcrumb={[
           { label: "Home", href: "/" },
           { label: "Admissions", href: "/admissions" },
@@ -89,9 +86,9 @@ export default async function ApplyPage({ searchParams }: PageProps<"/admissions
               <>
                 <AccountStep levels={OPEN_LEVELS} />
                 <p className="mt-6 text-sm text-muted-foreground">
-                  Already started an application?{" "}
-                  <Link href="/login" className="font-bold text-primary underline-offset-4 hover:underline dark:text-gold">
-                    Sign in to resume
+                  Already submitted an application?{" "}
+                  <Link href="/admissions/status" className="font-bold text-primary underline-offset-4 hover:underline dark:text-gold">
+                    Check its status
                   </Link>
                 </p>
               </>
@@ -116,7 +113,7 @@ export default async function ApplyPage({ searchParams }: PageProps<"/admissions
                     ["Gender", draft.pupil.gender || "—"],
                     ["Nationality", draft.pupil.nationality || "—"],
                     ["Previous school", draft.pupil.previousSchool || "—"],
-                    ["Intended class", getLevel(draft.intendedLevelId)?.name ?? "—"],
+                    ["Intended class", CLASS_LEVELS.find((l) => l.id === draft.intendedLevelId)?.name ?? "—"],
                     ["Address", draft.pupil.address || "—"],
                   ]}
                 />
@@ -170,8 +167,7 @@ export default async function ApplyPage({ searchParams }: PageProps<"/admissions
                   <div className="flex items-start gap-3 rounded-xl border border-success/30 bg-success/10 p-4 text-sm">
                     <CheckCircle2Icon className="mt-0.5 size-4 shrink-0 text-success" />
                     <p>
-                      <span className="font-extrabold">Application fee received.</span> Reference{" "}
-                      {draft.applicationFeeReference}.
+                      <span className="font-extrabold">Application fee received.</span> Thank you.
                     </p>
                   </div>
                   <Button size="lg" className="h-11 font-bold" render={<Link href="/admissions/apply?step=submit" />}>
@@ -190,7 +186,7 @@ export default async function ApplyPage({ searchParams }: PageProps<"/admissions
           {draft ? (
             <p className="mt-6 text-center text-sm text-muted-foreground">
               Application <span className="font-bold text-foreground">{draft.applicationNo}</span> · saved
-              automatically · you can close this page and return any time.
+              in this browser · you can close this page and return on this device any time.
             </p>
           ) : null}
         </div>

@@ -18,10 +18,9 @@ export const metadata: Metadata = {
 };
 
 const DEPARTMENTS = [
-  { name: "Admissions", email: SCHOOL.admissionsEmail, detail: "Applications, assessments, tours and enrolment." },
+  { name: "Admissions", email: SCHOOL.admissionsEmail, detail: "Applications, assessments and enrolment." },
   { name: "Accounts", email: "accounts@elbethel.edu.ng", detail: "Invoices, payments, receipts and payment plans." },
   { name: "Academics", email: "academics@elbethel.edu.ng", detail: "Curriculum, results, report cards and learning support." },
-  { name: "Transport", email: "transport@elbethel.edu.ng", detail: "Routes, stops, timings and bus arrangements." },
 ];
 
 export default function ContactPage() {
@@ -117,12 +116,12 @@ export default function ContactPage() {
             </Card>
 
             <Card className="gap-0 border-gold/25 bg-gold/8 p-6">
-              <h2 className="font-heading text-base font-extrabold">Prefer to visit?</h2>
+              <h2 className="font-heading text-base font-extrabold">Ready to apply?</h2>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Tours run every week during term time and take about forty-five minutes.
+                Admission is open for the 2026/2027 session. Start an application online and save it as you go.
               </p>
-              <Button className="mt-4 w-full font-bold" size="lg" render={<Link href="/contact/tour" />}>
-                Book a school tour
+              <Button className="mt-4 w-full font-bold" size="lg" render={<Link href="/admissions/apply" />}>
+                Apply for admission
                 <ArrowRightIcon />
               </Button>
             </Card>

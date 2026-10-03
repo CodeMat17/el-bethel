@@ -3,22 +3,19 @@ import { CalendarClockIcon, VideoIcon, MapPinIcon } from "lucide-react";
 
 import { EmptyState, StatusPill } from "@/components/common";
 import { BookAppointmentDialog } from "@/components/portal/book-appointment";
+import { PendingButton } from "@/components/portal/pending-button";
+import { RescheduleAppointmentDialog } from "@/components/portal/reschedule-appointment";
 import { PortalPageHeader } from "@/components/portal/page-header";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { requireParent } from "@/lib/school/auth";
 import { cancelAppointment } from "@/lib/school/actions/portal";
-import {
-  childrenForSession,
-  classDisplayName,
-  getClass,
-  getStudent,
-  studentName,
-  teacherNameById,
-} from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { studentName } from "@/lib/school/data";
+import { getMyChildren } from "@/lib/school/parent";
+import { getDirectory } from "@/lib/school/directory";
+import { query } from "@/lib/school/convex";
 import { formatLongDate } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
 import type { ToneName } from "@/lib/school/format";
 
 export const metadata: Metadata = { title: "Appointments" };
@@ -32,34 +29,17 @@ const STATUS_TONE: Record<string, ToneName> = {
 };
 
 export default async function ParentAppointmentsPage() {
-  const user = await requireParent();
-  const db = getDb();
-  const myChildren = childrenForSession(user);
+  await requireParent();
+  const [dir, myChildren, data] = await Promise.all([getDirectory(), getMyChildren(), query(api.appointments.forParent, {})]);
+  const mine = data.appointments;
 
-  const mine = db.appointments
-    .filter((a) => a.parentId === user.parentId)
-    .sort((a, b) => a.date.localeCompare(b.date));
-
-  // Only offer slots with teachers who actually teach one of this parent's children.
-  const relevantTeacherIds = new Set(
-    myChildren.map((child) => getClass(child.classId)?.classTeacherId).filter(Boolean) as string[],
-  );
-  for (const child of myChildren) {
-    for (const teacher of db.teachers) {
-      if (teacher.classIds.includes(child.classId)) relevantTeacherIds.add(teacher.id);
-    }
-  }
-
-  const slots = db.availability
-    .filter((slot) => !slot.taken && relevantTeacherIds.has(slot.teacherId))
-    .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time))
-    .slice(0, 40)
-    .map((slot) => ({
-      id: slot.id,
-      teacherName: teacherNameById(slot.teacherId),
-      date: slot.date,
-      time: slot.time,
-    }));
+  // Convex only offers slots with teachers who teach one of this parent's children.
+  const slots = data.slots.slice(0, 40).map((slot) => ({
+    id: slot.id,
+    teacherName: dir.teacherName(slot.teacherId),
+    date: slot.date,
+    time: slot.time,
+  }));
 
   return (
     <>
@@ -88,17 +68,17 @@ export default async function ParentAppointmentsPage() {
           ) : (
             <ul className="space-y-3">
               {mine.map((appointment) => {
-                const child = getStudent(appointment.studentId);
+                const child = myChildren.find((c) => c.id === appointment.studentId);
                 return (
                   <li key={appointment.id}>
                     <Card className="gap-0 p-5">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <p className="font-heading text-base font-extrabold">
-                            {teacherNameById(appointment.teacherId)}
+                            {dir.teacherName(appointment.teacherId)}
                           </p>
                           <p className="mt-0.5 text-sm text-muted-foreground">
-                            {child ? `${studentName(child)} · ${classDisplayName(child.classId)}` : ""}
+                            {child ? `${studentName(child)} · ${dir.className(child.classId)}` : ""}
                           </p>
                         </div>
                         <StatusPill tone={STATUS_TONE[appointment.status] ?? "neutral"}>
@@ -136,12 +116,19 @@ export default async function ParentAppointmentsPage() {
                       ) : null}
 
                       {appointment.status !== "cancelled" && appointment.status !== "completed" ? (
-                        <form action={cancelAppointment} className="mt-4">
-                          <input type="hidden" name="id" value={appointment.id} />
-                          <Button type="submit" variant="outline" size="sm" className="font-bold">
-                            Cancel appointment
-                          </Button>
-                        </form>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <RescheduleAppointmentDialog
+                            appointmentId={appointment.id}
+                            teacherName={dir.teacherName(appointment.teacherId)}
+                            slots={data.slots.filter((s) => s.teacherId === appointment.teacherId).map((s) => ({ id: s.id, date: s.date, time: s.time }))}
+                          />
+                          <form action={cancelAppointment}>
+                            <input type="hidden" name="id" value={appointment.id} />
+                            <PendingButton variant="ghost" size="sm" className="font-bold text-destructive" pendingText="Cancelling…">
+                              Cancel appointment
+                            </PendingButton>
+                          </form>
+                        </div>
                       ) : null}
                     </Card>
                   </li>

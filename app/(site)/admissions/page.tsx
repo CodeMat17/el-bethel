@@ -16,7 +16,7 @@ import {
   STAGE_LABELS,
   SCHOOL,
 } from "@/lib/school/config";
-import { getFaqs } from "@/lib/school/data";
+import { getFaqs } from "@/lib/school/site-data";
 import { money } from "@/lib/school/format";
 
 export const metadata: Metadata = {
@@ -30,15 +30,15 @@ const STEPS = [
   { title: "Create an account", text: "One account, used for your application and later for the Parent Portal.", icon: "UserRound" },
   { title: "Complete the form", text: "Pupil details, parent details and your intended class. Saved as you go.", icon: "PenLine" },
   { title: "Upload documents", text: "Birth certificate, passport photograph, medical information and identification.", icon: "FileCheck" },
-  { title: "Pay the application fee", text: `${money(ADMISSION_FEES[0].amount)}, paid securely online.`, icon: "CreditCard" },
+  { title: "Pay the application fee", text: `${money(ADMISSION_FEES[0].amount)}, paid at the school bursary or by bank transfer.`, icon: "CreditCard" },
   { title: "Submit and track", text: "Receive your application number and follow every update in one place.", icon: "Search" },
   { title: "Assessment and decision", text: "Age-appropriate assessment, a short family conversation, then a decision.", icon: "BadgeCheck" },
 ];
 
-export default function AdmissionsPage() {
+export default async function AdmissionsPage() {
   const openLevels = CLASS_LEVELS.filter((l) => ADMISSION_OPEN_LEVELS.includes(l.id));
   const closedLevels = CLASS_LEVELS.filter((l) => !ADMISSION_OPEN_LEVELS.includes(l.id));
-  const faqs = getFaqs().filter((f) => f.category === "Admissions").slice(0, 4);
+  const faqs = (await getFaqs()).filter((f) => f.category === "Admissions").slice(0, 4);
 
   return (
     <>
@@ -57,9 +57,9 @@ export default function AdmissionsPage() {
             size="lg"
             variant="outline"
             className="h-12 border-navy-foreground/25 bg-transparent font-bold text-navy-foreground hover:bg-navy-foreground/10 hover:text-navy-foreground"
-            render={<Link href="/contact/tour" />}
+            render={<Link href="/admissions/fees" />}
           >
-            Book a school tour
+            View school fees
           </Button>
         </div>
       </PageHero>

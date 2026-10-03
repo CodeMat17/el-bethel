@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 
 import { CtaBand, PageHero, SectionHeading } from "@/components/common";
 import { TeacherDirectory, type DirectoryTeacher } from "@/components/site/teacher-directory";
-import { getSubject, getTeachers, teacherName } from "@/lib/school/data";
+import { teacherName } from "@/lib/school/data";
+import { getTeachers } from "@/lib/school/site-data";
+import { getDirectory } from "@/lib/school/directory";
 
 export const metadata: Metadata = {
   title: "Our Teachers",
@@ -11,15 +13,16 @@ export const metadata: Metadata = {
   alternates: { canonical: "/about/teachers" },
 };
 
-export default function TeachersPage() {
-  const teachers: DirectoryTeacher[] = getTeachers()
+export default async function TeachersPage() {
+  const dir = await getDirectory();
+  const teachers: DirectoryTeacher[] = (await getTeachers())
     .filter((t) => t.active)
     .map((t) => ({
       id: t.id,
       name: teacherName(t),
       position: t.position,
       department: t.department,
-      subjects: t.subjectIds.map((id) => getSubject(id)?.name ?? "").filter(Boolean),
+      subjects: t.subjectIds.map((id) => dir.subjectName(id) ?? "").filter(Boolean),
       experienceYears: t.experienceYears,
       qualifications: t.qualifications,
       bio: t.bio,
@@ -53,10 +56,10 @@ export default function TeachersPage() {
       </section>
 
       <CtaBand
-        title="Want to join our teaching community?"
-        text="We recruit teachers who are rigorous about learning and warm with children — in that combination."
-        primary={{ label: "See open vacancies", href: "/careers" }}
-        secondary={{ label: "Contact the school", href: "/contact" }}
+        title="Want to talk to a teacher?"
+        text="Contact the school office and we will put you in touch with the right class teacher or head of section."
+        primary={{ label: "Contact the school", href: "/contact" }}
+        secondary={{ label: "Meet our leadership", href: "/about/leadership" }}
       />
     </>
   );

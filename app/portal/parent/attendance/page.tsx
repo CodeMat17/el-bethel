@@ -16,47 +16,44 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { requireParent } from "@/lib/school/auth";
-import {
-  childrenForSession,
-  classDisplayName,
-  getActiveTerm,
-  getAttendanceForStudent,
-  resolveActiveChild,
-  studentName,
-  summariseAttendance,
-} from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { studentName, summariseAttendance } from "@/lib/school/data";
+import { getMyChildren, resolveActiveChild } from "@/lib/school/parent";
+import { getDirectory } from "@/lib/school/directory";
+import { query } from "@/lib/school/convex";
 import { ATTENDANCE_STATUS, formatLongDate } from "@/lib/school/format";
 
 export const metadata: Metadata = { title: "Attendance" };
 
 export default async function ParentAttendancePage({ searchParams }: PageProps<"/portal/parent/attendance">) {
   const user = await requireParent();
+  const dir = await getDirectory();
   const params = await searchParams;
-  const child = resolveActiveChild(user, typeof params.child === "string" ? params.child : undefined);
-  const myChildren = childrenForSession(user);
+  const child = await resolveActiveChild(typeof params.child === "string" ? params.child : undefined);
+  const myChildren = await getMyChildren();
 
   if (!child) {
     return <EmptyState icon="Users" title="No children linked" description="Contact the school office." />;
   }
 
-  const records = getAttendanceForStudent(child.id);
+  const records = await query(api.attendance.forStudent, { studentId: child.id });
   const summary = summariseAttendance(records);
-  const term = getActiveTerm();
+  const term = dir.activeTerm;
   const exceptions = records.filter((r) => r.status !== "present");
 
   return (
     <>
       <PortalPageHeader
-        eyebrow={`${studentName(child)} · ${classDisplayName(child.classId)}`}
+        eyebrow={`${studentName(child)} · ${dir.className(child.classId)}`}
         title="Attendance"
-        description={`Daily attendance recorded by the class teacher for ${term.name}.`}
+        description={`Daily attendance recorded by the class teacher${term ? ` for ${term.name}` : ""}.`}
         action={
           <ChildSwitcher
             activeId={child.id}
             options={myChildren.map((c) => ({
               id: c.id,
               name: studentName(c),
-              className: classDisplayName(c.classId),
+              className: dir.className(c.classId),
               avatarSeed: c.avatarSeed,
             }))}
           />

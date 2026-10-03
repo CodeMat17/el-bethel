@@ -9,31 +9,32 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { requireTeacher } from "@/lib/school/auth";
 import { ROLE_LABELS } from "@/lib/school/config";
-import {
-  classesForTeacher,
-  getStudentsByClass,
-  getTeacher,
-  subjectsForTeacher,
-  teacherName,
-} from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { query } from "@/lib/school/convex";
+import { teacherName } from "@/lib/school/data";
+import { getDirectory } from "@/lib/school/directory";
 import { avatarTone, formatDate, initials } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Profile" };
 
 export default async function TeacherProfilePage() {
   const user = await requireTeacher();
-  const teacher = user.teacherId ? getTeacher(user.teacherId) : null;
+  const teacher = user.teacherId ? await query(api.people.myTeacher, {}) : null;
 
   if (!teacher) {
     return <EmptyState icon="GraduationCap" title="No teaching record" description="Contact the school administrator." />;
   }
 
-  const classes = classesForTeacher(teacher.id);
-  const subjects = subjectsForTeacher(teacher.id);
-  const pupils = classes.reduce((sum, c) => sum + getStudentsByClass(c.id).length, 0);
-  const lessons = getDb().timetable.filter((s) => s.teacherId === teacher.id).length;
+  const [dir, sizes, timetable] = await Promise.all([
+    getDirectory(),
+    query(api.people.classSizes, {}),
+    query(api.timetable.forTeacher, {}),
+  ]);
+  const classes = dir.classesForTeacher(teacher.id);
+  const subjects = dir.subjectsForTeacher(teacher.id);
+  const pupils = classes.reduce((sum, c) => sum + (sizes[c.id] ?? 0), 0);
+  const lessons = timetable.length;
 
   return (
     <>

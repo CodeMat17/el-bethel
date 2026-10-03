@@ -8,58 +8,49 @@ import { PortalPageHeader } from "@/components/portal/page-header";
 import { AttendanceLegend, AttendanceStrip } from "@/components/portal/shared";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { StarsSummary } from "@/components/portal/stars";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { assertStudentAccess, requireParent } from "@/lib/school/auth";
-import {
-  getAttendanceForStudent,
-  getClass,
-  getInvoicesForStudent,
-  getLevel,
-  getParentsOfStudent,
-  getReportCardsForStudent,
-  getStudent,
-  getStudentAssignments,
-  getSubjects,
-  getTerm,
-  studentName,
-  summariseAttendance,
-  teacherNameById,
-} from "@/lib/school/data";
+import { requireParent } from "@/lib/school/auth";
+import { api } from "@/convex/_generated/api";
+import { studentName, summariseAttendance } from "@/lib/school/data";
+import { getDirectory } from "@/lib/school/directory";
+import { query } from "@/lib/school/convex";
 import { avatarTone, formatDate, initials, money } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Child profile" };
 
 export default async function ChildProfilePage({ params }: PageProps<"/portal/parent/children/[id]">) {
-  const user = await requireParent();
+  await requireParent();
+  const dir = await getDirectory();
   const { id } = await params;
-  const child = getStudent(id);
-  if (!child) notFound();
-  // Authorisation: a parent may only ever open their own child's record.
-  assertStudentAccess(user, child.id);
+  // Authorisation (in Convex): a parent may only ever open their own child's record.
+  const record = await query(api.people.getStudent, { id });
+  if (!record) notFound();
+  const child = record.student;
+  const guardians = record.parents;
 
-  const cls = getClass(child.classId);
-  const level = cls ? getLevel(cls.levelId) : null;
-  const attendance = summariseAttendance(getAttendanceForStudent(child.id));
-  const assignments = getStudentAssignments(child.id);
-  const graded = assignments.filter((a) => a.submission?.status === "graded");
+  const [attendanceRows, assignments, fees, reportCards, certificates, stars] = await Promise.all([
+    query(api.attendance.forStudent, { studentId: child.id }),
+    query(api.assignments.forStudent, { studentId: child.id }),
+    query(api.fees.forStudent, { studentId: child.id }),
+    query(api.results.historyForStudent, { studentId: child.id }),
+    query(api.awards.certificatesForStudent, { studentId: child.id }),
+    query(api.gamification.forStudent, { studentId: child.id }),
+  ]);
+  const cls = dir.getClass(child.classId);
+  const attendance = summariseAttendance(attendanceRows);
+  const graded = assignments.filter((a) => a.progress === "graded");
   const average = graded.length
     ? Math.round(
-        (graded.reduce((s, a) => s + (a.submission?.score ?? 0) / a.assignment.maxScore, 0) / graded.length) * 100,
+        (graded.reduce((s, a) => s + (a.submission?.score ?? 0) / Math.max(1, a.assignment.maxScore), 0) / graded.length) * 100,
       )
     : 0;
-  const invoices = getInvoicesForStudent(child.id);
+  const invoices = fees.invoices;
   const balance = invoices.reduce((s, i) => s + (i.total - i.amountPaid), 0);
-  const reportCards = getReportCardsForStudent(child.id);
-  const subjects = level ? getSubjects().filter((s) => s.levelIds.includes(level.id)) : [];
-  const guardians = getParentsOfStudent(child.id);
-  const route = child.transportRouteId
-    ? getDb().transportRoutes.find((r) => r.id === child.transportRouteId)
-    : null;
-  const certificates = getDb().certificates.filter((c) => c.studentId === child.id);
+  const subjects = dir.subjectsForClass(child.classId);
 
   return (
     <>
@@ -123,7 +114,7 @@ export default async function ChildProfilePage({ params }: PageProps<"/portal/pa
                   <li key={report.id} className="rounded-xl border bg-card p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="text-sm font-extrabold">{getTerm(report.termId)?.name}</p>
+                        <p className="text-sm font-extrabold">{dir.termName(report.termId)}</p>
                         <p className="mt-0.5 text-xs text-muted-foreground">
                           Average {report.average}% · position {report.position} of {report.classSize}
                         </p>
@@ -144,7 +135,7 @@ export default async function ChildProfilePage({ params }: PageProps<"/portal/pa
           <Card className="gap-0 p-5 sm:p-6">
             <h2 className="font-heading text-base font-extrabold">Attendance pattern</h2>
             <Separator className="my-4" />
-            <AttendanceStrip records={getAttendanceForStudent(child.id)} />
+            <AttendanceStrip records={attendanceRows} />
             <div className="mt-5">
               <AttendanceLegend />
             </div>
@@ -178,7 +169,7 @@ export default async function ChildProfilePage({ params }: PageProps<"/portal/pa
               </div>
               <div className="flex items-center justify-between gap-3">
                 <dt className="text-muted-foreground">Class teacher</dt>
-                <dd className="truncate font-bold">{teacherNameById(cls?.classTeacherId)}</dd>
+                <dd className="truncate font-bold">{dir.teacherName(cls?.classTeacherId)}</dd>
               </div>
             </dl>
             <Separator className="my-4" />
@@ -198,7 +189,7 @@ export default async function ChildProfilePage({ params }: PageProps<"/portal/pa
           </Card>
 
           <Card className="gap-0 p-5 sm:p-6">
-            <h2 className="font-heading text-base font-extrabold">Health & transport</h2>
+            <h2 className="font-heading text-base font-extrabold">Health</h2>
             <Separator className="my-4" />
             <dl className="space-y-3 text-sm">
               <div className="flex items-center justify-between gap-3">
@@ -209,12 +200,17 @@ export default async function ChildProfilePage({ params }: PageProps<"/portal/pa
                 <dt className="text-muted-foreground">Medical notes</dt>
                 <dd className="font-bold">{child.medicalNotes ?? "None recorded"}</dd>
               </div>
-              <div className="flex items-center justify-between gap-3">
-                <dt className="text-muted-foreground">Transport</dt>
-                <dd className="truncate font-bold">{route ? `${route.busNo} · ${route.route}` : "Not using school transport"}</dd>
-              </div>
             </dl>
           </Card>
+
+          {stars ? (
+            <div>
+              <StarsSummary data={stars} compact />
+              <p className="mt-2 text-xs text-muted-foreground">
+                {stars.badges.filter((b) => b.earned).length} of {stars.badges.length} badges earned · {stars.house} House
+              </p>
+            </div>
+          ) : null}
 
           {certificates.length > 0 ? (
             <Card className="gap-0 p-5 sm:p-6">
@@ -223,16 +219,29 @@ export default async function ChildProfilePage({ params }: PageProps<"/portal/pa
               <ul className="space-y-3">
                 {certificates.map((certificate) => (
                   <li key={certificate.id} className="rounded-xl border bg-card p-3.5">
-                    <p className="text-sm font-bold">{certificate.award}</p>
+                    <p className="text-sm font-bold">
+                      {certificate.award}
+                      {certificate.revokedAt ? <span className="ml-2 text-xs font-bold text-destructive">Withdrawn</span> : null}
+                    </p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {certificate.sessionName} · {certificate.certificateNo}
                     </p>
-                    <Link
-                      href={`/verify?no=${certificate.certificateNo}`}
-                      className="mt-1.5 inline-block text-xs font-bold text-primary underline-offset-4 hover:underline dark:text-gold"
-                    >
-                      Verify online
-                    </Link>
+                    <div className="mt-1.5 flex gap-3">
+                      {!certificate.revokedAt ? (
+                        <a
+                          href={`/api/certificates/${certificate.id}`}
+                          className="text-xs font-bold text-primary underline-offset-4 hover:underline dark:text-gold"
+                        >
+                          Download PDF
+                        </a>
+                      ) : null}
+                      <Link
+                        href={`/verify?no=${certificate.certificateNo}`}
+                        className="text-xs font-bold text-primary underline-offset-4 hover:underline dark:text-gold"
+                      >
+                        Verify online
+                      </Link>
+                    </div>
                   </li>
                 ))}
               </ul>

@@ -2,17 +2,17 @@ import type { Metadata } from "next";
 
 import { CtaBand, PageHero } from "@/components/common";
 import { FaqSearch } from "@/components/site/faq-search";
-import { getFaqs } from "@/lib/school/data";
+import { getFaqs } from "@/lib/school/site-data";
 
 export const metadata: Metadata = {
   title: "Frequently Asked Questions",
   description:
-    "Answers to common questions about admissions, fees, classes, uniform, transport, academics and the school calendar at El-Bethel International Academy, Abuja.",
+    "Answers to common questions about admissions, fees, classes, uniform, academics and the school calendar at El-Bethel International Academy, Abuja.",
   alternates: { canonical: "/admissions/faqs" },
 };
 
-export default function FaqsPage() {
-  const faqs = getFaqs();
+export default async function FaqsPage() {
+  const faqs = await getFaqs();
 
   const schema = {
     "@context": "https://schema.org",
@@ -30,7 +30,7 @@ export default function FaqsPage() {
       <PageHero
         eyebrow="Admissions"
         title="Frequently Asked Questions"
-        lede="Twenty questions we are asked most often, across admissions, fees, academics, uniform, transport and the school calendar."
+        lede="The questions we are asked most often, across admissions, fees, academics, uniform and the school calendar."
         breadcrumb={[
           { label: "Home", href: "/" },
           { label: "Admissions", href: "/admissions" },
@@ -48,7 +48,7 @@ export default function FaqsPage() {
         title="Still have a question?"
         text="Our school office answers enquiries within one working day, Monday to Friday."
         primary={{ label: "Send an enquiry", href: "/contact" }}
-        secondary={{ label: "Book a school tour", href: "/contact/tour" }}
+        secondary={{ label: "Apply for admission", href: "/admissions/apply" }}
       />
     </>
   );

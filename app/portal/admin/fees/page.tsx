@@ -17,9 +17,12 @@ import {
 } from "@/components/ui/table";
 import { requireAdmin } from "@/lib/school/auth";
 import { CLASS_LEVELS, FEE_STRUCTURE } from "@/lib/school/config";
-import { classDisplayName, getAdminMetrics, getStudent, paginate, studentName } from "@/lib/school/data";
+import { RecordPaymentDialog } from "@/components/admin/office-dialogs";
+import { api } from "@/convex/_generated/api";
+import { query } from "@/lib/school/convex";
+import { pageParam, param } from "@/lib/school/data";
+import { getDirectory } from "@/lib/school/directory";
 import { INVOICE_STATUS, compactMoney, formatDate, money } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
 
 export const metadata: Metadata = { title: "Fees & invoices" };
 
@@ -27,48 +30,32 @@ export default async function AdminFeesPage({ searchParams }: PageProps<"/portal
   await requireAdmin();
   const params = await searchParams;
 
-  const q = (typeof params.q === "string" ? params.q : "").trim().toLowerCase();
-  const status = typeof params.status === "string" ? params.status : "all";
-  const page = Number(typeof params.page === "string" ? params.page : "1") || 1;
+  const q = param(params.q).trim();
+  const status = param(params.status, "all");
+  const page = pageParam(params.page);
 
-  const db = getDb();
-  const metrics = getAdminMetrics();
-
-  const filtered = db.invoices
-    .filter((invoice) => {
-      if (status !== "all" && invoice.status !== status) return false;
-      if (!q) return true;
-      const student = getStudent(invoice.studentId);
-      return (
-        invoice.invoiceNo.toLowerCase().includes(q) ||
-        (student ? studentName(student).toLowerCase().includes(q) : false)
-      );
-    })
-    .sort((a, b) => b.total - b.amountPaid - (a.total - a.amountPaid));
-
-  const result = paginate(filtered, page, 12);
-
-  const byLevel = CLASS_LEVELS.map((level) => {
-    const classIds = db.classes.filter((c) => c.levelId === level.id).map((c) => c.id);
-    const outstanding = db.invoices
-      .filter((i) => {
-        const student = getStudent(i.studentId);
-        return student ? classIds.includes(student.classId) : false;
-      })
-      .reduce((sum, i) => sum + (i.total - i.amountPaid), 0);
-    return { label: level.name, value: Math.round(outstanding / 1000), hint: money(outstanding) };
-  });
+  const [result, metricsAll, dir] = await Promise.all([
+    query(api.fees.listInvoices, { search: q, status, page, pageSize: 12 }),
+    query(api.dashboard.metrics, {}),
+    getDirectory(),
+  ]);
+  const metrics = result.totals;
+  const byLevel = metricsAll.outstandingByLevel.map((row) => ({
+    label: row.label,
+    value: Math.round(row.amount / 1000),
+    hint: money(row.amount),
+  }));
 
   return (
     <>
       <PortalPageHeader
         title="Fees & invoices"
-        description="Termly billing, collection rate and outstanding balances across the school."
+        description="Billing, collection and balances. Record payments here once the bursary has confirmed them — parents then see them in their portal."
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Billed this term" value={compactMoney(metrics.feesBilled)} icon="Receipt" tone="neutral" />
-        <StatCard label="Collected" value={compactMoney(metrics.feesCollected)} icon="CircleCheck" tone="success" />
+        <StatCard label="Billed this term" value={compactMoney(metrics.billed)} icon="Receipt" tone="neutral" />
+        <StatCard label="Collected" value={compactMoney(metrics.collected)} icon="CircleCheck" tone="success" />
         <StatCard label="Outstanding" value={compactMoney(metrics.outstanding)} icon="Wallet" tone={metrics.outstanding > 0 ? "warning" : "success"} />
         <StatCard label="Collection rate" value={`${metrics.collectionRate}%`} icon="TrendingUp" tone={metrics.collectionRate >= 80 ? "success" : "warning"} />
       </div>
@@ -81,7 +68,7 @@ export default async function AdminFeesPage({ searchParams }: PageProps<"/portal
             value={`${metrics.collectionRate}%`}
             label="of billed fees collected this term"
             progress={metrics.collectionRate}
-            detail={`${money(metrics.outstanding)} still outstanding across ${db.invoices.filter((i) => i.total > i.amountPaid).length} invoices`}
+            detail={`${money(metrics.outstanding)} still outstanding · ${metrics.overdue} invoices overdue`}
           />
         </Card>
 
@@ -154,19 +141,19 @@ export default async function AdminFeesPage({ searchParams }: PageProps<"/portal
                   <TableHead className="text-right">Balance</TableHead>
                   <TableHead className="text-right">Due</TableHead>
                   <TableHead className="text-right">Status</TableHead>
+                  <TableHead className="text-right" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {result.items.map((invoice) => {
-                  const student = getStudent(invoice.studentId);
                   const balance = invoice.total - invoice.amountPaid;
                   const meta = INVOICE_STATUS[invoice.status];
                   return (
                     <TableRow key={invoice.id}>
                       <TableCell className="font-mono text-xs font-bold">{invoice.invoiceNo}</TableCell>
-                      <TableCell className="font-bold">{student ? studentName(student) : "—"}</TableCell>
+                      <TableCell className="font-bold">{invoice.studentName}</TableCell>
                       <TableCell className="text-muted-foreground">
-                        {student ? classDisplayName(student.classId) : "—"}
+                        {dir.className(invoice.classId)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{money(invoice.total)}</TableCell>
                       <TableCell className="text-right tabular-nums text-success">{money(invoice.amountPaid)}</TableCell>
@@ -178,6 +165,11 @@ export default async function AdminFeesPage({ searchParams }: PageProps<"/portal
                       </TableCell>
                       <TableCell className="text-right">
                         <StatusPill tone={meta.tone}>{meta.label}</StatusPill>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {balance > 0 ? (
+                          <RecordPaymentDialog invoiceId={invoice.id} invoiceNo={invoice.invoiceNo} balance={balance} studentName={invoice.studentName} />
+                        ) : null}
                       </TableCell>
                     </TableRow>
                   );

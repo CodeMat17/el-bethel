@@ -31,8 +31,6 @@ const TOGGLES = [
 ];
 
 const INTEGRATIONS = [
-  { name: "Paystack", role: "Payments", status: "Configured" },
-  { name: "Flutterwave", role: "Payments", status: "Configured" },
   { name: "Resend", role: "Transactional email", status: "Configured" },
   { name: "SMS provider", role: "Critical alerts", status: "Configured" },
   { name: "Cloudinary", role: "Private file storage", status: "Configured" },
@@ -121,7 +119,8 @@ export default async function AdminSettingsPage() {
               ))}
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
-              Continuous assessment carries 40 percent, the examination 60 percent. Weightings must total 100.
+              This is the default split. Teachers set the CA weighting for each subject, class and term when entering
+              scores; the examination carries the rest, so the total is always 100.
             </p>
           </Card>
 
@@ -159,22 +158,24 @@ export default async function AdminSettingsPage() {
             ))}
           </div>
           <Card className="gap-0 p-5 sm:p-6">
-            <h2 className="font-heading text-base font-extrabold">Payment providers</h2>
+            <h2 className="font-heading text-base font-extrabold">Payment methods</h2>
             <Separator className="my-5" />
             <ul className="space-y-2.5">
-              {INTEGRATIONS.filter((i) => i.role === "Payments").map((integration) => (
-                <li key={integration.name} className="flex items-center justify-between gap-3 rounded-xl border bg-card p-4">
+              {[
+                { name: "Bank transfer", detail: "Paid into the school account, quoting the invoice or application number." },
+                { name: "Cash / POS at the bursary", detail: "Paid in person at the school bursary." },
+              ].map((method) => (
+                <li key={method.name} className="flex items-center justify-between gap-3 rounded-xl border bg-card p-4">
                   <div>
-                    <p className="text-sm font-extrabold">{integration.name}</p>
-                    <p className="text-xs text-muted-foreground">{integration.role}</p>
+                    <p className="text-sm font-extrabold">{method.name}</p>
+                    <p className="text-xs text-muted-foreground">{method.detail}</p>
                   </div>
-                  <Badge className="font-bold">{integration.status}</Badge>
+                  <Badge className="font-bold">Enabled</Badge>
                 </li>
               ))}
             </ul>
             <p className="mt-4 rounded-xl bg-muted/70 p-4 text-xs leading-relaxed text-muted-foreground">
-              Provider credentials live in environment variables and are never exposed to the browser.
-              A payment is only ever marked successful after server-side verification.
+              Online payment is not offered. A payment only counts once the finance team records it against an invoice.
             </p>
           </Card>
         </TabsContent>
@@ -209,7 +210,7 @@ export default async function AdminSettingsPage() {
                 "Signed, HTTP-only session cookies with an 8-hour lifetime",
                 `Upload validation: type and size, maximum ${fileSize(MAX_UPLOAD_BYTES)}`,
                 "Private documents served through short-lived signed URLs",
-                "Payments verified server-side with the provider",
+                "No card or bank details collected online",
                 "Append-only audit log for administrative actions",
                 "Portals excluded from search engine indexing",
               ].map((item) => (

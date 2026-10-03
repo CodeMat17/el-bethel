@@ -1,19 +1,23 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ExternalLinkIcon, PlusIcon } from "lucide-react";
+import { ExternalLinkIcon, TrashIcon } from "lucide-react";
 
 import { EmptyState, StatCard, StatusPill } from "@/components/common";
 import { AdminFilters } from "@/components/portal/admin-filters";
 import { PortalPageHeader } from "@/components/portal/page-header";
 import { Pager } from "@/components/portal/pager";
+import { NewsDialog } from "@/components/admin/content-dialogs";
 import { ToneImage } from "@/components/motion";
+import { ConfirmAction } from "@/components/portal/confirm-action";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { requireAdmin } from "@/lib/school/auth";
+import { api } from "@/convex/_generated/api";
+import { removeNews } from "@/lib/school/actions/admin";
+import { query } from "@/lib/school/convex";
 import { paginate } from "@/lib/school/data";
 import { formatDate } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
 
 export const metadata: Metadata = { title: "News" };
 
@@ -25,7 +29,7 @@ export default async function AdminNewsPage({ searchParams }: PageProps<"/portal
   const category = typeof params.category === "string" ? params.category : "all";
   const page = Number(typeof params.page === "string" ? params.page : "1") || 1;
 
-  const db = getDb();
+  const db = { news: await query(api.content.adminNews, {}) };
   const categories = Array.from(new Set(db.news.map((n) => n.category))).sort();
 
   const filtered = db.news
@@ -43,12 +47,7 @@ export default async function AdminNewsPage({ searchParams }: PageProps<"/portal
       <PortalPageHeader
         title="News & announcements"
         description="Everything published to the public website, with author, category and publication date."
-        action={
-          <Button size="lg" className="font-bold" disabled>
-            <PlusIcon />
-            New post
-          </Button>
-        }
+        action={<NewsDialog categories={categories.length ? categories : ["School News"]} />}
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -83,6 +82,7 @@ export default async function AdminNewsPage({ searchParams }: PageProps<"/portal
                   <ToneImage
                     tone={post.tone}
                     seed={post.slug}
+                    media={post.cover}
                     label={post.title}
                     className="h-24 w-full shrink-0 rounded-xl sm:h-20 sm:w-32"
                   />
@@ -100,15 +100,26 @@ export default async function AdminNewsPage({ searchParams }: PageProps<"/portal
                       {post.authorName} · {formatDate(post.publishedAt)} · /news/{post.slug}
                     </p>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="shrink-0 font-bold"
-                    render={<Link href={`/news/${post.slug}`} />}
-                  >
-                    <ExternalLinkIcon />
-                    View
-                  </Button>
+                  <div className="flex shrink-0 flex-wrap gap-1 sm:flex-col">
+                    <NewsDialog post={post} categories={categories} />
+                    {post.status === "published" ? (
+                      <Button variant="ghost" size="sm" className="font-bold" render={<Link href={`/news/${post.slug}`} />}>
+                        <ExternalLinkIcon />
+                        View
+                      </Button>
+                    ) : null}
+                    <ConfirmAction
+                      action={removeNews.bind(null, post.id)}
+                      icon={<TrashIcon />}
+                      variant="ghost"
+                      className="font-bold text-destructive"
+                      pendingText="Deleting…"
+                      destructive
+                      confirm={{ title: "Delete this post?", description: "It will be removed from the website. This can't be undone.", confirmLabel: "Delete" }}
+                    >
+                      Delete
+                    </ConfirmAction>
+                  </div>
                 </Card>
               </li>
             ))}
@@ -125,10 +136,6 @@ export default async function AdminNewsPage({ searchParams }: PageProps<"/portal
         </>
       )}
 
-      <p className="mt-6 text-xs text-muted-foreground">
-        Content authoring is disabled in this demonstration environment. In a live deployment posts
-        support draft, scheduled, published and archived states with full SEO metadata.
-      </p>
     </>
   );
 }

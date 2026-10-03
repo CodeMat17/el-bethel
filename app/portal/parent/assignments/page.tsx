@@ -9,48 +9,41 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { requireParent } from "@/lib/school/auth";
-import {
-  childrenForSession,
-  classDisplayName,
-  getStudentAssignments,
-  resolveActiveChild,
-  studentName,
-} from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { studentName } from "@/lib/school/data";
+import { getMyChildren, resolveActiveChild } from "@/lib/school/parent";
+import { getDirectory, type Directory } from "@/lib/school/directory";
+import type { FamilyAssignment } from "@/lib/school/api-types";
+import { AnswerReview } from "@/components/portal/answer-review";
+import { query } from "@/lib/school/convex";
 import { SUBMISSION_STATUS, formatDate, formatDateTime } from "@/lib/school/format";
-import { DEMO_TODAY } from "@/lib/school/seed";
-import type { AssignmentWithSubmission } from "@/lib/school/data";
 
 export const metadata: Metadata = { title: "Assignments" };
 
-function AssignmentCard({ item }: { item: AssignmentWithSubmission }) {
-  const { assignment, submission, subject, teacherLabel } = item;
-  const status = SUBMISSION_STATUS[submission?.status ?? "not_started"];
-  const overdue =
-    new Date(assignment.dueDate) < DEMO_TODAY &&
-    ["not_started", "in_progress"].includes(submission?.status ?? "not_started");
-  const pct = submission?.score ? Math.round((submission.score / assignment.maxScore) * 100) : 0;
+function AssignmentCard({ item, dir }: { item: FamilyAssignment; dir: Directory }) {
+  const { assignment, submission, progress } = item;
+  const status = SUBMISSION_STATUS[progress];
+  const pct = submission?.score !== undefined ? Math.round((submission.score / Math.max(1, assignment.maxScore)) * 100) : 0;
 
   return (
     <Card className="gap-0 p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary" className="font-bold">{subject?.name}</Badge>
+            <Badge variant="secondary" className="font-bold">{dir.subjectName(assignment.subjectId)}</Badge>
             <span className="text-xs text-muted-foreground">{assignment.topic}</span>
           </div>
           <h3 className="mt-2 font-heading text-base font-extrabold">{assignment.title}</h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            Set by {teacherLabel} · due {formatDateTime(assignment.dueDate)}
+            Set by {dir.teacherName(assignment.teacherId)} · due {formatDateTime(assignment.dueDate)} · {assignment.questions.length} questions
           </p>
         </div>
-        <StatusPill tone={overdue ? "danger" : status.tone}>
-          {overdue ? "Overdue" : status.label}
-        </StatusPill>
+        <StatusPill tone={status.tone}>{status.label}</StatusPill>
       </div>
 
-      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{assignment.instructions}</p>
+      {assignment.instructions ? <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{assignment.instructions}</p> : null}
 
-      {submission?.status === "graded" ? (
+      {progress === "graded" && submission ? (
         <>
           <Separator className="my-4" />
           <div className="flex items-center justify-between gap-3">
@@ -67,34 +60,29 @@ function AssignmentCard({ item }: { item: AssignmentWithSubmission }) {
               {submission.feedback}
             </p>
           ) : null}
-          {submission.gradedAt ? (
-            <p className="mt-2 text-xs text-muted-foreground">Graded {formatDate(submission.gradedAt)}</p>
-          ) : null}
+          {submission.gradedAt ? <p className="mt-2 text-xs text-muted-foreground">Marked {formatDate(submission.gradedAt)}</p> : null}
+          <details className="mt-4">
+            <summary className="cursor-pointer text-sm font-bold">See the answers</summary>
+            <div className="mt-3">
+              <AnswerReview questions={assignment.questions} answers={submission.answers} showMarks />
+            </div>
+          </details>
         </>
       ) : null}
 
-      {submission?.status === "resubmission_required" && submission.feedback ? (
-        <p className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 p-3.5 text-sm leading-relaxed">
-          <span className="font-extrabold">Resubmission requested · </span>
-          {submission.feedback}
-        </p>
-      ) : null}
-
-      {submission?.submittedAt ? (
-        <p className="mt-3 text-xs text-muted-foreground">
-          Submitted {formatDateTime(submission.submittedAt)}
-          {submission.files.length > 0 ? ` · ${submission.files.length} file(s)` : ""}
-        </p>
+      {submission ? (
+        <p className="mt-3 text-xs text-muted-foreground">Submitted {formatDateTime(submission.submittedAt)}</p>
       ) : null}
     </Card>
   );
 }
 
 export default async function ParentAssignmentsPage({ searchParams }: PageProps<"/portal/parent/assignments">) {
-  const user = await requireParent();
+  await requireParent();
+  const dir = await getDirectory();
   const params = await searchParams;
-  const child = resolveActiveChild(user, typeof params.child === "string" ? params.child : undefined);
-  const myChildren = childrenForSession(user);
+  const child = await resolveActiveChild(typeof params.child === "string" ? params.child : undefined);
+  const myChildren = await getMyChildren();
 
   if (!child) {
     return (
@@ -106,34 +94,30 @@ export default async function ParentAssignmentsPage({ searchParams }: PageProps<
     );
   }
 
-  const all = getStudentAssignments(child.id);
-  const pending = all.filter((a) =>
-    ["not_started", "in_progress", "resubmission_required"].includes(a.submission?.status ?? "not_started"),
-  );
-  const submitted = all.filter((a) =>
-    ["submitted", "late", "grading"].includes(a.submission?.status ?? ""),
-  );
-  const graded = all.filter((a) => ["graded", "returned"].includes(a.submission?.status ?? ""));
+  const all = await query(api.assignments.forStudent, { studentId: child.id });
+  const pending = all.filter((a) => a.progress === "not_started");
+  const submitted = all.filter((a) => a.progress === "submitted");
+  const graded = all.filter((a) => a.progress === "graded");
 
   const averagePct = graded.length
     ? Math.round(
-        (graded.reduce((sum, a) => sum + (a.submission?.score ?? 0) / a.assignment.maxScore, 0) /
+        (graded.reduce((sum, a) => sum + (a.submission?.score ?? 0) / Math.max(1, a.assignment.maxScore), 0) /
           graded.length) *
           100,
       )
     : 0;
 
-  const tabs: { value: string; label: string; items: AssignmentWithSubmission[]; empty: string }[] = [
+  const tabs: { value: string; label: string; items: FamilyAssignment[]; empty: string }[] = [
     { value: "all", label: `All (${all.length})`, items: all, empty: "No assignments have been posted for this class yet." },
     { value: "pending", label: `To do (${pending.length})`, items: pending, empty: "You're all caught up. Nothing is outstanding." },
-    { value: "submitted", label: `Submitted (${submitted.length})`, items: submitted, empty: "Nothing is currently awaiting grading." },
-    { value: "graded", label: `Graded (${graded.length})`, items: graded, empty: "No assignments have been graded yet." },
+    { value: "submitted", label: `Awaiting marking (${submitted.length})`, items: submitted, empty: "Nothing is currently awaiting marking." },
+    { value: "graded", label: `Marked (${graded.length})`, items: graded, empty: "No assignments have been marked yet." },
   ];
 
   return (
     <>
       <PortalPageHeader
-        eyebrow={`${studentName(child)} · ${classDisplayName(child.classId)}`}
+        eyebrow={`${studentName(child)} · ${dir.className(child.classId)}`}
         title="Assignments"
         description="Everything set for this class, with submission status, scores and teacher feedback."
         action={
@@ -142,7 +126,7 @@ export default async function ParentAssignmentsPage({ searchParams }: PageProps<
             options={myChildren.map((c) => ({
               id: c.id,
               name: studentName(c),
-              className: classDisplayName(c.classId),
+              className: dir.className(c.classId),
               avatarSeed: c.avatarSeed,
             }))}
           />
@@ -182,7 +166,7 @@ export default async function ParentAssignmentsPage({ searchParams }: PageProps<
             ) : (
               <div className="grid gap-4">
                 {tab.items.map((item) => (
-                  <AssignmentCard key={item.assignment.id} item={item} />
+                  <AssignmentCard key={item.assignment.id} item={item} dir={dir} />
                 ))}
               </div>
             )}

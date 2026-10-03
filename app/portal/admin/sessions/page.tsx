@@ -8,21 +8,29 @@ import { Separator } from "@/components/ui/separator";
 import { requireAdmin } from "@/lib/school/auth";
 import { ACADEMIC_CALENDAR, CLASS_LEVELS } from "@/lib/school/config";
 import { formatDate } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
-import { DEMO_TODAY } from "@/lib/school/seed";
+import { CircleCheckIcon } from "lucide-react";
+
+import { SessionDialog, TermDialog } from "@/components/admin/academic-dialogs";
+import { ConfirmAction } from "@/components/portal/confirm-action";
+import { setActiveTerm } from "@/lib/school/actions/admin";
+import { getDirectory } from "@/lib/school/directory";
 
 export const metadata: Metadata = { title: "Sessions & terms" };
 
 export default async function AdminSessionsPage() {
   await requireAdmin();
-  const db = getDb();
+  const dir = await getDirectory();
+  const db = { sessions: dir.sessions, terms: dir.terms };
   const activeSession = db.sessions.find((s) => s.active);
+  const sessionOptions = [...db.sessions].reverse().map((s) => ({ value: s.id, label: s.name }));
+  const now = new Date();
 
   return (
     <>
       <PortalPageHeader
         title="Academic sessions & terms"
-        description="Session dates, term dates, examination windows and result publication dates."
+        description="Session dates, term dates and examination windows. The current term is used for new assignments and results."
+        action={<SessionDialog />}
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -49,9 +57,11 @@ export default async function AdminSessionsPage() {
                         {formatDate(session.startDate)} — {formatDate(session.endDate)}
                       </p>
                     </div>
-                    <StatusPill tone={session.active ? "gold" : "neutral"}>
-                      {session.active ? "Active" : "Closed"}
-                    </StatusPill>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StatusPill tone={session.active ? "gold" : "neutral"}>{session.active ? "Current" : "Not current"}</StatusPill>
+                      <SessionDialog session={session} />
+                      <TermDialog sessions={sessionOptions} sessionId={session.id} />
+                    </div>
                   </div>
 
                   {terms.length > 0 ? (
@@ -62,7 +72,22 @@ export default async function AdminSessionsPage() {
                           <li key={term.id} className="rounded-xl border bg-card p-4">
                             <div className="flex flex-wrap items-center justify-between gap-3">
                               <p className="text-sm font-extrabold">{term.name}</p>
-                              {term.active ? <StatusPill tone="success">Current term</StatusPill> : null}
+                              <div className="flex flex-wrap items-center gap-1">
+                                {term.active ? (
+                                  <StatusPill tone="success">Current term</StatusPill>
+                                ) : (
+                                  <ConfirmAction
+                                    action={setActiveTerm.bind(null, term.id)}
+                                    icon={<CircleCheckIcon />}
+                                    variant="outline"
+                                    pendingText="Switching…"
+                                    confirm={{ title: `Make ${term.name} the current term?`, description: "New assignments and results will use this term.", confirmLabel: "Make current" }}
+                                  >
+                                    Make current
+                                  </ConfirmAction>
+                                )}
+                                <TermDialog term={term} sessions={sessionOptions} />
+                              </div>
                             </div>
                             <dl className="mt-3 grid gap-3 text-xs sm:grid-cols-3">
                               <div>
@@ -98,7 +123,7 @@ export default async function AdminSessionsPage() {
             <Separator className="my-4" />
             <ul className="space-y-2.5">
               {ACADEMIC_CALENDAR.map((block) => {
-                const current = DEMO_TODAY >= new Date(block.start) && DEMO_TODAY <= new Date(block.end);
+                const current = now >= new Date(block.start) && now <= new Date(block.end);
                 return (
                   <li
                     key={block.name}

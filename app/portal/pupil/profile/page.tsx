@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { StarIcon } from "lucide-react";
 
@@ -7,35 +8,32 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { api } from "@/convex/_generated/api";
 import { requirePupil } from "@/lib/school/auth";
-import {
-  classDisplayName,
-  getAttendanceForStudent,
-  getClass,
-  getStudent,
-  getStudentAssignments,
-  studentName,
-  summariseAttendance,
-  teacherNameById,
-} from "@/lib/school/data";
+import { query } from "@/lib/school/convex";
+import { studentName, summariseAttendance } from "@/lib/school/data";
+import { getDirectory } from "@/lib/school/directory";
 import { avatarTone, formatDate, initials } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "My profile" };
 
 export default async function PupilProfilePage() {
   const user = await requirePupil();
-  const student = user.studentId ? getStudent(user.studentId) : null;
+  const student = user.studentId ? await query(api.people.myStudent, {}) : null;
   if (!student) {
     return <EmptyState icon="Backpack" title="No pupil record" description="Please ask your class teacher." />;
   }
 
-  const cls = getClass(student.classId);
-  const attendance = summariseAttendance(getAttendanceForStudent(student.id));
-  const assignments = getStudentAssignments(student.id);
-  const graded = assignments.filter((a) => a.submission?.status === "graded");
-  const certificates = getDb().certificates.filter((c) => c.studentId === student.id);
+  const [attendanceRows, assignments, certificates, dir] = await Promise.all([
+    query(api.attendance.forStudent, { studentId: student.id }),
+    query(api.assignments.forStudent, { studentId: student.id }),
+    query(api.awards.certificatesForStudent, { studentId: student.id }),
+    getDirectory(),
+  ]);
+  const cls = dir.getClass(student.classId);
+  const attendance = summariseAttendance(attendanceRows);
+  const graded = assignments.filter((a) => a.progress === "graded");
 
   return (
     <>
@@ -51,10 +49,10 @@ export default async function PupilProfilePage() {
           <div className="min-w-0">
             <h2 className="font-heading text-2xl font-extrabold">{studentName(student)}</h2>
             <p className="mt-1 text-sm text-navy-foreground/70">
-              {classDisplayName(student.classId)} · {student.house} House
+              {dir.className(student.classId)} · {student.house} House
             </p>
             <p className="mt-0.5 text-sm text-navy-foreground/70">
-              My class teacher is {teacherNameById(cls?.classTeacherId)}
+              My class teacher is {dir.teacherName(cls?.classTeacherId)}
             </p>
           </div>
         </div>
@@ -73,7 +71,7 @@ export default async function PupilProfilePage() {
           <dl className="grid gap-4 sm:grid-cols-2">
             {[
               ["Student number", student.studentNo],
-              ["Class", classDisplayName(student.classId)],
+              ["Class", dir.className(student.classId)],
               ["Classroom", cls?.room ?? "—"],
               ["House", student.house],
               ["Date of birth", formatDate(student.dateOfBirth)],
@@ -109,23 +107,27 @@ export default async function PupilProfilePage() {
                     <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-gold text-gold-foreground">
                       <StarIcon className="size-5" />
                     </span>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-extrabold">{certificate.award}</p>
                       <p className="truncate text-xs text-muted-foreground">
                         {certificate.sessionName} · {certificate.certificateNo}
                       </p>
                     </div>
+                    {!certificate.revokedAt ? (
+                      <a href={`/api/certificates/${certificate.id}`} className="shrink-0 text-xs font-bold text-primary underline-offset-4 hover:underline dark:text-gold">
+                        Download
+                      </a>
+                    ) : null}
                   </div>
                 </li>
               ))}
             </ul>
           )}
-          <div className="mt-5 flex flex-wrap gap-2">
-            <Badge variant="secondary" className="font-bold">Reader</Badge>
+          <div className="mt-5 flex flex-wrap items-center gap-2">
             <Badge variant="secondary" className="font-bold">{student.house} House</Badge>
-            <Badge variant="secondary" className="font-bold">
-              {attendance.rate >= 98 ? "Great attendance" : "Keep it up"}
-            </Badge>
+            <Link href="/portal/pupil/stars" className="text-sm font-bold text-primary underline-offset-4 hover:underline dark:text-gold">
+              See my stars and badges
+            </Link>
           </div>
         </Card>
       </div>

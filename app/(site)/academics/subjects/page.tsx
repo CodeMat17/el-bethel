@@ -5,7 +5,7 @@ import { Reveal } from "@/components/motion";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { CLASS_LEVELS } from "@/lib/school/config";
-import { getSubjects } from "@/lib/school/data";
+import { getSubjects } from "@/lib/school/site-data";
 
 export const metadata: Metadata = {
   title: "Subjects",
@@ -15,28 +15,28 @@ export const metadata: Metadata = {
 };
 
 const SUBJECT_BLURB: Record<string, string> = {
-  "sub-eng": "Reading, comprehension, grammar, composition and spoken English, with a termly reading challenge running alongside.",
-  "sub-mth": "Number, measurement, geometry and data, taught with concrete materials before abstract notation.",
-  "sub-bsc": "Living things, matter, energy and the environment, with weekly practicals from Primary 4.",
-  "sub-sst": "Family, community, Nigeria and the wider world — geography, history and civics woven together.",
-  "sub-civ": "Rights, responsibilities, national values and what it means to be a good citizen at school and at home.",
-  "sub-cmp": "Computer literacy from Primary 1, block coding from Primary 3, robotics and internet safety from Primary 4.",
-  "sub-qr": "Number patterns, logic puzzles and visual reasoning — the mathematics behind the mathematics.",
-  "sub-vr": "Analogies, vocabulary relationships, sequences and comprehension under time.",
-  "sub-fre": "Greetings, everyday vocabulary, songs and Francophone culture, taught conversationally.",
-  "sub-crs": "Bible stories, values and moral reasoning for pupils of Christian families.",
-  "sub-irs": "Qur'anic studies, values and moral reasoning for pupils of Muslim families.",
-  "sub-art": "Drawing, painting, printmaking, modelling and craft, exhibited each term.",
-  "sub-mus": "Voice, rhythm, recorder and percussion, plus the school choir.",
-  "sub-phe": "Movement, games, athletics, health education and personal hygiene.",
-  "sub-hec": "Home management, nutrition, basic sewing and food safety.",
-  "sub-agr": "Plants, soil, crops and animal care, with a working school garden.",
-  "sub-lit": "Phonics, rhymes, storytelling and pre-writing skills for our youngest learners.",
-  "sub-num": "Counting, sorting, patterns and shape through play and manipulatives.",
+  ENG: "Reading, comprehension, grammar, composition and spoken English, with a termly reading challenge running alongside.",
+  MTH: "Number, measurement, geometry and data, taught with concrete materials before abstract notation.",
+  BSC: "Living things, matter, energy and the environment, with weekly practicals from Primary 4.",
+  SST: "Family, community, Nigeria and the wider world — geography, history and civics woven together.",
+  CIV: "Rights, responsibilities, national values and what it means to be a good citizen at school and at home.",
+  CMP: "Computer literacy from Primary 1, block coding from Primary 3, robotics and internet safety from Primary 4.",
+  QNR: "Number patterns, logic puzzles and visual reasoning — the mathematics behind the mathematics.",
+  VBR: "Analogies, vocabulary relationships, sequences and comprehension under time.",
+  FRE: "Greetings, everyday vocabulary, songs and Francophone culture, taught conversationally.",
+  CRS: "Bible stories, values and moral reasoning for pupils of Christian families.",
+  IRS: "Qur'anic studies, values and moral reasoning for pupils of Muslim families.",
+  ART: "Drawing, painting, printmaking, modelling and craft, exhibited each term.",
+  MUS: "Voice, rhythm, recorder and percussion, plus the school choir.",
+  PHE: "Movement, games, athletics, health education and personal hygiene.",
+  HEC: "Home management, nutrition, basic sewing and food safety.",
+  AGR: "Plants, soil, crops and animal care, with a working school garden.",
+  LIT: "Phonics, rhymes, storytelling and pre-writing skills for our youngest learners.",
+  NUM: "Counting, sorting, patterns and shape through play and manipulatives.",
 };
 
-export default function SubjectsPage() {
-  const subjects = getSubjects();
+export default async function SubjectsPage() {
+  const subjects = await getSubjects();
   const core = subjects.filter((s) => s.group === "core");
   const additional = subjects.filter((s) => s.group === "additional");
 
@@ -52,7 +52,7 @@ export default function SubjectsPage() {
                 <Badge variant="secondary" className="shrink-0 font-mono font-bold">{subject.code}</Badge>
               </div>
               <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
-                {SUBJECT_BLURB[subject.id]}
+                {SUBJECT_BLURB[subject.code]}
               </p>
               <p className="mt-4 text-xs font-semibold text-muted-foreground">
                 {levels.length === CLASS_LEVELS.length

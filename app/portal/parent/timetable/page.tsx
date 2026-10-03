@@ -8,39 +8,33 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { requireParent } from "@/lib/school/auth";
 import { DAY_NAMES } from "@/lib/school/config";
-import {
-  childrenForSession,
-  classDisplayName,
-  getSubject,
-  getTimetableForClass,
-  getTodaySlots,
-  resolveActiveChild,
-  studentName,
-  teacherNameById,
-} from "@/lib/school/data";
-import { DEMO_TODAY } from "@/lib/school/seed";
+import { api } from "@/convex/_generated/api";
+import { schoolDay, slotsForDay, sortTimetable, studentName } from "@/lib/school/data";
+import { getMyChildren, resolveActiveChild } from "@/lib/school/parent";
+import { getDirectory } from "@/lib/school/directory";
+import { query } from "@/lib/school/convex";
 
 export const metadata: Metadata = { title: "Timetable" };
 
 export default async function ParentTimetablePage({ searchParams }: PageProps<"/portal/parent/timetable">) {
-  const user = await requireParent();
+  await requireParent();
+  const dir = await getDirectory();
   const params = await searchParams;
-  const child = resolveActiveChild(user, typeof params.child === "string" ? params.child : undefined);
-  const myChildren = childrenForSession(user);
+  const child = await resolveActiveChild(typeof params.child === "string" ? params.child : undefined);
+  const myChildren = await getMyChildren();
 
   if (!child) {
     return <EmptyState icon="Users" title="No children linked" description="Contact the school office." />;
   }
 
-  const slots = getTimetableForClass(child.classId);
-  const today = getTodaySlots(child.classId);
-  const weekday = DEMO_TODAY.getUTCDay();
-  const dayLabel = DAY_NAMES[weekday === 0 || weekday === 6 ? 1 : weekday];
+  const slots = sortTimetable(await query(api.timetable.forClass, { classId: child.classId }));
+  const today = slotsForDay(slots);
+  const dayLabel = DAY_NAMES[schoolDay()];
 
   return (
     <>
       <PortalPageHeader
-        eyebrow={`${studentName(child)} · ${classDisplayName(child.classId)}`}
+        eyebrow={`${studentName(child)} · ${dir.className(child.classId)}`}
         title="Class timetable"
         description="The full weekly timetable for your child's class, including breaks."
         action={
@@ -49,7 +43,7 @@ export default async function ParentTimetablePage({ searchParams }: PageProps<"/
             options={myChildren.map((c) => ({
               id: c.id,
               name: studentName(c),
-              className: classDisplayName(c.classId),
+              className: dir.className(c.classId),
               avatarSeed: c.avatarSeed,
             }))}
           />
@@ -71,11 +65,11 @@ export default async function ParentTimetablePage({ searchParams }: PageProps<"/
               </span>
               <span className="min-w-0">
                 <span className="block truncate text-sm font-bold">
-                  {slot.label ?? getSubject(slot.subjectId ?? "")?.name}
+                  {slot.label ?? dir.subjectName(slot.subjectId ?? "")}
                 </span>
                 {slot.teacherId ? (
                   <span className="block truncate text-xs text-muted-foreground">
-                    {teacherNameById(slot.teacherId)}
+                    {dir.teacherName(slot.teacherId)}
                   </span>
                 ) : null}
               </span>
@@ -85,7 +79,7 @@ export default async function ParentTimetablePage({ searchParams }: PageProps<"/
       </Card>
 
       <div className="hidden lg:block">
-        <TimetableGrid slots={slots} />
+        <TimetableGrid slots={slots} dir={dir} />
       </div>
 
       <p className="mt-4 text-xs text-muted-foreground">

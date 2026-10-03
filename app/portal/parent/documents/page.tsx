@@ -5,16 +5,17 @@ import { PortalPageHeader } from "@/components/portal/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { api } from "@/convex/_generated/api";
 import { requireParent } from "@/lib/school/auth";
+import { query } from "@/lib/school/convex";
 import { fileSize, formatDate } from "@/lib/school/format";
-import { getDb } from "@/lib/school/store";
 
 export const metadata: Metadata = { title: "School documents" };
 
 export default async function ParentDocumentsPage() {
   await requireParent();
   // A parent may see public and parent-visibility documents — never staff-only ones.
-  const documents = getDb().documents.filter((d) => d.visibility !== "staff");
+  const documents = await query(api.content.portalDocuments, {});
 
   return (
     <>

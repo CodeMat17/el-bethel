@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FACILITIES } from "@/lib/school/config";
-import { getAchievements, getClubs, getGallery, getUpcomingEvents } from "@/lib/school/data";
+import { getAchievements, getClubs, getGallery, getUpcomingEvents } from "@/lib/school/site-data";
 import { formatDate } from "@/lib/school/format";
 
 export const metadata: Metadata = {
@@ -23,18 +23,17 @@ const SECTIONS = [
   { title: "Clubs & Activities", href: "/school-life/clubs", icon: "Puzzle", text: "Sixteen clubs across STEM, arts, sport, literature and service." },
   { title: "Sports", href: "/school-life/sports", icon: "Trophy", text: "Football, basketball, volleyball and athletics, plus four competing houses." },
   { title: "Achievements", href: "/school-life/achievements", icon: "Star", text: "Our Stars — pupil achievements across academics, sport and the arts." },
-  { title: "Facilities", href: "/school-life/facilities", icon: "Building2", text: "Fourteen spaces designed around small people." },
+  { title: "Facilities", href: "/school-life/facilities", icon: "Building2", text: "Thirteen spaces designed around small people." },
   { title: "Events", href: "/school-life/events", icon: "CalendarDays", text: "Sports day, cultural day, open days and excursions." },
   { title: "Gallery", href: "/school-life/gallery", icon: "Images", text: "A term in pictures, updated throughout the year." },
   { title: "Library", href: "/school-life/library", icon: "BookOpenCheck", text: "Our catalogue, borrowing system and reading challenge." },
-  { title: "Transport", href: "/school-life/transport", icon: "Bus", text: "Four routes across Abuja, with a trained attendant on every bus." },
 ];
 
-export default function SchoolLifePage() {
-  const clubs = getClubs().slice(0, 6);
-  const events = getUpcomingEvents().slice(0, 3);
-  const achievements = getAchievements().slice(0, 3);
-  const gallery = getGallery().slice(0, 6);
+export default async function SchoolLifePage() {
+  const clubs = (await getClubs()).slice(0, 6);
+  const events = (await getUpcomingEvents()).slice(0, 3);
+  const achievements = (await getAchievements()).slice(0, 3);
+  const gallery = (await getGallery()).slice(0, 6);
 
   return (
     <>

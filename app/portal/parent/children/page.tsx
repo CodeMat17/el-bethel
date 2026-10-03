@@ -10,17 +10,11 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { requireParent } from "@/lib/school/auth";
-import {
-  childrenForSession,
-  classDisplayName,
-  getAttendanceForStudent,
-  getClass,
-  getInvoicesForStudent,
-  getStudentAssignments,
-  studentName,
-  summariseAttendance,
-  teacherNameById,
-} from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { studentName } from "@/lib/school/data";
+import { getMyChildren } from "@/lib/school/parent";
+import { getDirectory } from "@/lib/school/directory";
+import { query } from "@/lib/school/convex";
 import { avatarTone, initials, money } from "@/lib/school/format";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +22,10 @@ export const metadata: Metadata = { title: "My Children" };
 
 export default async function ParentChildrenPage() {
   const user = await requireParent();
-  const myChildren = childrenForSession(user);
+  const dir = await getDirectory();
+  const myChildren = await getMyChildren();
+
+  const summaries = await query(api.dashboard.childSummaries, {});
 
   if (myChildren.length === 0) {
     return (
@@ -49,17 +46,10 @@ export default async function ParentChildrenPage() {
 
       <div className="grid gap-5 lg:grid-cols-2">
         {myChildren.map((child) => {
-          const attendance = summariseAttendance(getAttendanceForStudent(child.id));
-          const assignments = getStudentAssignments(child.id);
-          const pending = assignments.filter((a) =>
-            ["not_started", "in_progress", "resubmission_required"].includes(
-              a.submission?.status ?? "not_started",
-            ),
-          ).length;
-          const balance = getInvoicesForStudent(child.id).reduce(
-            (sum, i) => sum + (i.total - i.amountPaid),
-            0,
-          );
+          const summary = summaries.find((x) => x.studentId === child.id);
+          const attendance = { rate: summary?.attendanceRate ?? 0 };
+          const pending = summary?.pendingAssignments ?? 0;
+          const balance = summary?.balance ?? 0;
 
           return (
             <Card key={child.id} className="gap-0 overflow-hidden p-0">
@@ -72,7 +62,7 @@ export default async function ParentChildrenPage() {
                 <div className="min-w-0">
                   <h2 className="truncate font-heading text-lg font-extrabold">{studentName(child)}</h2>
                   <p className="mt-0.5 truncate text-sm text-navy-foreground/70">
-                    {classDisplayName(child.classId)} · {child.studentNo}
+                    {dir.className(child.classId)} · {child.studentNo}
                   </p>
                 </div>
               </div>
@@ -101,7 +91,7 @@ export default async function ParentChildrenPage() {
                   <div className="flex items-center justify-between gap-3">
                     <dt className="text-muted-foreground">Class teacher</dt>
                     <dd className="truncate font-bold">
-                      {teacherNameById(getClass(child.classId)?.classTeacherId)}
+                      {dir.teacherName(dir.getClass(child.classId)?.classTeacherId)}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-3">

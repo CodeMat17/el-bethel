@@ -1,181 +1,173 @@
 "use client";
 
 import * as React from "react";
-import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
-import { PaperclipIcon, TriangleAlertIcon, UploadIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { TriangleAlertIcon, UploadIcon } from "lucide-react";
 import { toast } from "sonner";
 
+import { MediaUpload } from "@/components/media-upload";
+import type { TeachingOption } from "@/components/portal/assignment-form";
 import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
-import { uploadMaterial, type TeachingState } from "@/lib/school/actions/teaching";
-import { fileSize } from "@/lib/school/format";
+import { addMaterial } from "@/lib/school/actions/teaching";
+import type { CloudMedia, LearningMaterial } from "@/lib/school/types";
 
-const INITIAL: TeachingState = { ok: false };
-
-const KINDS = [
+const KINDS: { value: LearningMaterial["kind"]; label: string }[] = [
   { value: "note", label: "Lesson notes" },
-  { value: "pdf", label: "PDF" },
   { value: "worksheet", label: "Worksheet" },
-  { value: "slides", label: "Presentation slides" },
   { value: "video", label: "Video" },
-  { value: "audio", label: "Audio" },
-  { value: "image", label: "Image" },
-  { value: "link", label: "External link" },
+  { value: "image", label: "Photo or diagram" },
+  { value: "link", label: "Link to a website" },
+  { value: "pdf", label: "PDF (link)" },
+  { value: "slides", label: "Slides (link)" },
+  { value: "audio", label: "Audio (link)" },
 ];
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
+export function MaterialForm({ options, defaultClassId }: { options: TeachingOption[]; defaultClassId?: string }) {
+  const router = useRouter();
+  const first = options.find((o) => o.classId === defaultClassId) ?? options[0];
+  const [classId, setClassId] = React.useState(first?.classId ?? "");
+  const [subjectId, setSubjectId] = React.useState(first?.subjects[0]?.id ?? "");
+  const [kind, setKind] = React.useState<LearningMaterial["kind"]>("note");
+  const [title, setTitle] = React.useState("");
+  const [description, setDescription] = React.useState("");
+  const [url, setUrl] = React.useState("");
+  const [media, setMedia] = React.useState<CloudMedia | undefined>();
+  const [uploading, setUploading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [pending, startTransition] = React.useTransition();
+
+  const subjects = options.find((o) => o.classId === classId)?.subjects ?? [];
+  const usesUpload = kind === "video" || kind === "image";
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (title.trim().length < 3) return setError("Give the material a title.");
+    if (usesUpload && !media) return setError(kind === "video" ? "Upload the video first." : "Upload the photo first.");
+    if (!usesUpload && url && !/^https:\/\//.test(url.trim())) return setError("Links must start with https://");
+    startTransition(async () => {
+      const res = await addMaterial({
+        title,
+        description,
+        classId,
+        subjectId,
+        kind,
+        url: usesUpload ? undefined : url.trim() || undefined,
+        media: usesUpload ? media : undefined,
+      });
+      if (!res.ok) {
+        setError(res.message ?? "The material was not published.");
+        return;
+      }
+      toast.success("Material published", { description: res.message });
+      setTitle("");
+      setDescription("");
+      setUrl("");
+      setMedia(undefined);
+      router.refresh();
+    });
+  }
+
+  const busy = pending || uploading;
+
   return (
-    <Button type="submit" size="lg" className="h-11 w-full font-bold" disabled={pending}>
-      {pending ? <Spinner /> : <UploadIcon />}
-      {pending ? "Publishing…" : "Publish to class"}
-    </Button>
-  );
-}
-
-export function MaterialForm({
-  classes,
-  subjects,
-  defaultClassId,
-}: {
-  classes: { id: string; name: string }[];
-  subjects: { id: string; name: string }[];
-  defaultClassId?: string;
-}) {
-  const [state, action] = useActionState<TeachingState, FormData>(uploadMaterial, INITIAL);
-  const [fileName, setFileName] = React.useState<string | null>(null);
-  const formRef = React.useRef<HTMLFormElement>(null);
-  const inputRef = React.useRef<HTMLInputElement>(null);
-
-  React.useEffect(() => {
-    if (state.ok && state.message) {
-      toast.success("Material published", { description: state.message });
-      formRef.current?.reset();
-    } else if (!state.ok && state.message) {
-      toast.error(state.message);
-    }
-  }, [state]);
-
-  return (
-    <form ref={formRef} action={action} className="space-y-5" noValidate>
-      {state.message && !state.ok ? (
-        <div
-          role="alert"
-          className="flex items-start gap-2.5 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive"
-        >
+    <form onSubmit={submit} className="space-y-5" noValidate>
+      {error ? (
+        <div role="alert" className="flex items-start gap-2.5 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive">
           <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" />
-          {state.message}
+          {error}
         </div>
       ) : null}
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Field data-invalid={Boolean(state.fieldErrors?.classId) || undefined}>
-          <FieldLabel htmlFor="mat-class">Class</FieldLabel>
-          <Select name="classId" defaultValue={defaultClassId ?? classes[0]?.id}>
-            <SelectTrigger id="mat-class" className="h-11 w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {classes.map((cls) => (
-                <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {state.fieldErrors?.classId ? <FieldError>{state.fieldErrors.classId}</FieldError> : null}
-        </Field>
-
-        <Field data-invalid={Boolean(state.fieldErrors?.subjectId) || undefined}>
-          <FieldLabel htmlFor="mat-subject">Subject</FieldLabel>
-          <Select name="subjectId" defaultValue={subjects[0]?.id}>
-            <SelectTrigger id="mat-subject" className="h-11 w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {subjects.map((subject) => (
-                <SelectItem key={subject.id} value={subject.id}>{subject.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {state.fieldErrors?.subjectId ? <FieldError>{state.fieldErrors.subjectId}</FieldError> : null}
-        </Field>
-      </div>
-
-      <Field data-invalid={Boolean(state.fieldErrors?.title) || undefined}>
-        <FieldLabel htmlFor="mat-title">Title</FieldLabel>
-        <Input id="mat-title" name="title" required className="h-11" placeholder="Fractions — revision worksheet" />
-        {state.fieldErrors?.title ? <FieldError>{state.fieldErrors.title}</FieldError> : null}
+      <Field>
+        <FieldLabel htmlFor="m-class">Class</FieldLabel>
+        <Select
+          value={classId}
+          items={options.map((o) => ({ value: o.classId, label: o.className }))}
+          onValueChange={(v) => {
+            const next = options.find((o) => o.classId === v);
+            setClassId(String(v));
+            setSubjectId(next?.subjects[0]?.id ?? "");
+          }}
+          disabled={busy}
+        >
+          <SelectTrigger id="m-class" className="h-11 w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {options.map((o) => (
+              <SelectItem key={o.classId} value={o.classId}>
+                {o.className}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </Field>
-
-      <Field data-invalid={Boolean(state.fieldErrors?.description) || undefined}>
-        <FieldLabel htmlFor="mat-description">Description</FieldLabel>
-        <Textarea id="mat-description" name="description" rows={3} required />
-        {state.fieldErrors?.description ? <FieldError>{state.fieldErrors.description}</FieldError> : null}
-      </Field>
-
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Field>
-          <FieldLabel htmlFor="mat-kind">Type</FieldLabel>
-          <Select name="kind" defaultValue="worksheet">
-            <SelectTrigger id="mat-kind" className="h-11 w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {KINDS.map((kind) => (
-                <SelectItem key={kind.value} value={kind.value}>{kind.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-
-        <Field>
-          <FieldLabel htmlFor="mat-url">External link (optional)</FieldLabel>
-          <Input id="mat-url" name="url" className="h-11" placeholder="https://…" />
-        </Field>
-      </div>
 
       <Field>
-        <FieldLabel htmlFor="mat-file">Attach a file (optional)</FieldLabel>
-        <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            className="h-11 font-bold"
-            onClick={() => inputRef.current?.click()}
-          >
-            <PaperclipIcon />
-            Choose file
-          </Button>
-          <span className="min-w-0 truncate text-sm text-muted-foreground">
-            {(state.ok ? null : fileName) ?? "No file chosen"}
-          </span>
-        </div>
-        <input
-          ref={inputRef}
-          id="mat-file"
-          name="file"
-          type="file"
-          className="sr-only"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            setFileName(file ? `${file.name} · ${fileSize(file.size)}` : null);
-          }}
-        />
-        <FieldDescription>Up to 20 MB. Files are stored privately and shared only with this class.</FieldDescription>
+        <FieldLabel htmlFor="m-subject">Subject</FieldLabel>
+        <Select value={subjectId} items={subjects.map((s) => ({ value: s.id, label: s.name }))} onValueChange={(v) => setSubjectId(String(v))} disabled={busy}>
+          <SelectTrigger id="m-subject" className="h-11 w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {subjects.map((s) => (
+              <SelectItem key={s.id} value={s.id}>
+                {s.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </Field>
 
-      <SubmitButton />
+      <Field>
+        <FieldLabel htmlFor="m-kind">Type</FieldLabel>
+        <Select value={kind} items={KINDS} onValueChange={(v) => setKind(v as LearningMaterial["kind"])} disabled={busy}>
+          <SelectTrigger id="m-kind" className="h-11 w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {KINDS.map((k) => (
+              <SelectItem key={k.value} value={k.value}>
+                {k.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </Field>
+
+      <Field>
+        <FieldLabel htmlFor="m-title">Title</FieldLabel>
+        <Input id="m-title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={140} className="h-11" disabled={busy} />
+      </Field>
+
+      <Field>
+        <FieldLabel htmlFor="m-description">Description</FieldLabel>
+        <Textarea id="m-description" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={1000} disabled={busy} />
+      </Field>
+
+      {usesUpload ? (
+        <Field>
+          <FieldLabel>{kind === "video" ? "Video" : "Photo"}</FieldLabel>
+          <MediaUpload purpose="materials" accept={kind === "video" ? "video" : "image"} value={media} onChange={setMedia} onBusyChange={setUploading} disabled={pending} />
+        </Field>
+      ) : (
+        <Field>
+          <FieldLabel htmlFor="m-url">Link (optional)</FieldLabel>
+          <Input id="m-url" type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://" className="h-11" disabled={busy} />
+          <FieldDescription>For documents, share a link (for example Google Drive). Photos and videos can be uploaded.</FieldDescription>
+        </Field>
+      )}
+
+      <Button type="submit" size="lg" className="h-11 w-full font-bold" disabled={busy}>
+        {pending ? <Spinner /> : <UploadIcon />}
+        {pending ? "Publishing…" : "Publish to class"}
+      </Button>
     </form>
   );
 }

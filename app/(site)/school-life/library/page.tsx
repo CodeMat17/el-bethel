@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getDb } from "@/lib/school/store";
+import { getPublicCatalogue, verifyCertificate } from "@/lib/school/site-data";
 
 export const metadata: Metadata = {
   title: "School Library",
@@ -28,8 +28,8 @@ const PROGRAMMES = [
   { title: "Borrowing", text: "Pupils from Primary 1 may borrow one book at a time for two weeks, renewable once." },
 ];
 
-export default function LibraryPage() {
-  const books = getDb().books;
+export default async function LibraryPage() {
+  const books = (await getPublicCatalogue()).books;
   const totalCopies = books.reduce((s, b) => s + b.copiesTotal, 0);
   const available = books.reduce((s, b) => s + b.copiesAvailable, 0);
 

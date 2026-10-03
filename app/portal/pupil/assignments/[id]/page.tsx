@@ -1,48 +1,40 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { forbidden, notFound } from "next/navigation";
-import { ArrowLeftIcon, CalendarClockIcon, FileIcon, PaperclipIcon } from "lucide-react";
+import { notFound } from "next/navigation";
+import { ArrowLeftIcon, CalendarClockIcon, ListChecksIcon } from "lucide-react";
 
 import { StatusPill } from "@/components/common";
+import { AnswerReview } from "@/components/portal/answer-review";
 import { PortalPageHeader } from "@/components/portal/page-header";
-import { SubmitAssignmentForm } from "@/components/portal/submit-assignment";
-import { Badge } from "@/components/ui/badge";
+import { AnswerAssignmentForm } from "@/components/portal/submit-assignment";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { api } from "@/convex/_generated/api";
 import { requirePupil } from "@/lib/school/auth";
-import {
-  getAssignment,
-  getStudent,
-  getSubject,
-  getSubmission,
-  teacherNameById,
-} from "@/lib/school/data";
-import { SUBMISSION_STATUS, fileSize, formatDateTime } from "@/lib/school/format";
-import { DEMO_TODAY } from "@/lib/school/seed";
+import { query } from "@/lib/school/convex";
+import { getDirectory } from "@/lib/school/directory";
+import { SUBMISSION_STATUS, formatDateTime } from "@/lib/school/format";
 
 export const metadata: Metadata = { title: "Assignment" };
 
 export default async function PupilAssignmentPage({ params }: PageProps<"/portal/pupil/assignments/[id]">) {
   const user = await requirePupil();
   const { id } = await params;
-  const assignment = getAssignment(id);
-  if (!assignment) notFound();
+  if (!user.studentId) notFound();
 
-  const student = user.studentId ? getStudent(user.studentId) : null;
-  // A pupil may only open an assignment set for their own class.
-  if (!student || student.classId !== assignment.classId) forbidden();
+  const [data, dir] = await Promise.all([
+    query(api.assignments.getForStudent, { assignmentId: id, studentId: user.studentId }),
+    getDirectory(),
+  ]);
+  // Only assignments for the pupil's own class are returned.
+  if (!data) notFound();
 
-  const submission = getSubmission(assignment.id, student.id);
-  const subject = getSubject(assignment.subjectId);
-  const status = SUBMISSION_STATUS[submission?.status ?? "not_started"];
-  const overdue = new Date(assignment.dueDate) < DEMO_TODAY;
-  const pct = submission?.score ? Math.round((submission.score / assignment.maxScore) * 100) : 0;
-  const canSubmit =
-    !submission ||
-    ["not_started", "in_progress", "resubmission_required"].includes(submission.status) ||
-    assignment.allowResubmission;
+  const { assignment, submission, progress } = data;
+  const status = SUBMISSION_STATUS[progress];
+  const pct = submission?.score !== undefined ? Math.round((submission.score / Math.max(1, assignment.maxScore)) * 100) : 0;
+  const types = new Set(assignment.questions.map((q) => q.type));
 
   return (
     <>
@@ -52,43 +44,26 @@ export default async function PupilAssignmentPage({ params }: PageProps<"/portal
       </Button>
 
       <PortalPageHeader
-        eyebrow={`${subject?.name} · ${assignment.topic}`}
+        eyebrow={`${dir.subjectName(assignment.subjectId)} · ${assignment.topic}`}
         title={assignment.title}
-        description={`Set by ${teacherNameById(assignment.teacherId)}`}
-        action={<StatusPill tone={overdue && canSubmit ? "danger" : status.tone}>{status.label}</StatusPill>}
+        description={`Set by ${dir.teacherName(assignment.teacherId)}`}
+        action={<StatusPill tone={status.tone}>{status.label}</StatusPill>}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         <div className="space-y-6">
-          <Card className="gap-0 p-5 sm:p-6">
-            <h2 className="font-heading text-base font-extrabold">What to do</h2>
-            <Separator className="my-4" />
-            <p className="text-base leading-relaxed">{assignment.instructions}</p>
-            {assignment.description ? (
-              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{assignment.description}</p>
-            ) : null}
+          {assignment.instructions || assignment.description ? (
+            <Card className="gap-0 p-5 sm:p-6">
+              <h2 className="font-heading text-base font-extrabold">What to do</h2>
+              <Separator className="my-4" />
+              {assignment.instructions ? <p className="text-base leading-relaxed">{assignment.instructions}</p> : null}
+              {assignment.description ? (
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{assignment.description}</p>
+              ) : null}
+            </Card>
+          ) : null}
 
-            {assignment.attachments.length > 0 ? (
-              <>
-                <Separator className="my-5" />
-                <p className="flex items-center gap-2 text-sm font-bold">
-                  <PaperclipIcon className="size-4" />
-                  Resources from your teacher
-                </p>
-                <ul className="mt-3 space-y-2">
-                  {assignment.attachments.map((attachment) => (
-                    <li key={attachment.id} className="flex items-center gap-3 rounded-xl border bg-card p-3">
-                      <FileIcon className="size-4 shrink-0 text-muted-foreground" />
-                      <span className="min-w-0 flex-1 truncate text-sm font-semibold">{attachment.name}</span>
-                      <span className="shrink-0 text-xs text-muted-foreground">{fileSize(attachment.sizeBytes)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            ) : null}
-          </Card>
-
-          {submission?.status === "graded" ? (
+          {progress === "graded" && submission ? (
             <Card className="gap-0 border-success/40 bg-success/10 p-5 sm:p-6">
               <h2 className="font-heading text-base font-extrabold">Your result</h2>
               <Separator className="my-4" />
@@ -107,26 +82,43 @@ export default async function PupilAssignmentPage({ params }: PageProps<"/portal
             </Card>
           ) : null}
 
-          {submission?.status === "resubmission_required" ? (
-            <Card className="gap-0 border-destructive/30 bg-destructive/10 p-5 sm:p-6">
-              <h2 className="font-heading text-base font-extrabold">Please try again</h2>
-              <Separator className="my-4" />
-              <p className="text-sm leading-relaxed">{submission.feedback}</p>
+          {progress === "submitted" ? (
+            <Card className="gap-0 border-info/40 bg-info/10 p-5 sm:p-6">
+              <p className="text-sm font-semibold">
+                Your work was submitted on {formatDateTime(submission!.submittedAt)}. Your teacher will mark it soon and
+                your score will appear here.
+              </p>
             </Card>
           ) : null}
 
-          {canSubmit ? (
-            <Card className="gap-0 p-5 sm:p-6">
-              <h2 className="font-heading text-base font-extrabold">Send your work</h2>
-              <Separator className="my-4" />
-              <SubmitAssignmentForm
-                assignmentId={assignment.id}
-                allowResubmission={assignment.allowResubmission}
-                alreadySubmitted={Boolean(submission?.submittedAt)}
-                defaultText={submission?.textAnswer ?? ""}
-              />
+          {progress === "missed" ? (
+            <Card className="gap-0 border-destructive/30 bg-destructive/10 p-5 sm:p-6">
+              <p className="text-sm font-semibold">
+                This assignment closed on {formatDateTime(assignment.dueDate)} and was not submitted.
+              </p>
             </Card>
           ) : null}
+
+          <Card className="gap-0 p-5 sm:p-6">
+            <h2 className="font-heading text-base font-extrabold">
+              {progress === "not_started" ? "Answer the questions" : "Your answers"}
+            </h2>
+            <Separator className="my-4" />
+            {progress === "not_started" ? (
+              <AnswerAssignmentForm assignmentId={assignment.id} questions={assignment.questions} dueDate={assignment.dueDate} />
+            ) : submission ? (
+              <AnswerReview questions={assignment.questions} answers={submission.answers} showMarks={progress === "graded"} />
+            ) : (
+              <ol className="space-y-3">
+                {assignment.questions.map((q, i) => (
+                  <li key={q.id} className="rounded-xl border bg-card p-3 text-sm">
+                    <span className="mr-1.5 font-bold text-gold-foreground dark:text-gold">{i + 1}.</span>
+                    {q.prompt}
+                  </li>
+                ))}
+              </ol>
+            )}
+          </Card>
         </div>
 
         <div className="space-y-6">
@@ -141,52 +133,35 @@ export default async function PupilAssignmentPage({ params }: PageProps<"/portal
                   <dd className="mt-0.5 font-semibold">{formatDateTime(assignment.dueDate)}</dd>
                 </div>
               </div>
-              <div>
-                <dt className="text-xs font-bold text-muted-foreground uppercase">Maximum score</dt>
-                <dd className="mt-0.5 font-semibold">{assignment.maxScore} marks</dd>
+              <div className="flex gap-3">
+                <ListChecksIcon className="mt-0.5 size-4 shrink-0 text-gold" />
+                <div>
+                  <dt className="text-xs font-bold text-muted-foreground uppercase">Questions</dt>
+                  <dd className="mt-0.5 font-semibold">
+                    {assignment.questions.length} · {assignment.maxScore} marks in total
+                  </dd>
+                </div>
               </div>
               <div>
-                <dt className="text-xs font-bold text-muted-foreground uppercase">How to send it</dt>
-                <dd className="mt-1 flex flex-wrap gap-1.5">
-                  {assignment.submissionTypes.map((type) => (
-                    <Badge key={type} variant="secondary" className="font-bold capitalize">{type}</Badge>
-                  ))}
+                <dt className="text-xs font-bold text-muted-foreground uppercase">How marking works</dt>
+                <dd className="mt-0.5 leading-relaxed">
+                  {types.has("text")
+                    ? "Choice questions are marked straight away. Your teacher marks written answers, then you'll see your score."
+                    : "Every question is marked as soon as you submit, so you'll see your score straight away."}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs font-bold text-muted-foreground uppercase">Can you send it again?</dt>
-                <dd className="mt-0.5 font-semibold">
-                  {assignment.allowResubmission ? "Yes, until it is marked" : "No — check before you submit"}
+                <dt className="text-xs font-bold text-muted-foreground uppercase">Can you submit again?</dt>
+                <dd className="mt-0.5 font-semibold">No — check your answers before you submit.</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-bold text-muted-foreground uppercase">Files and drawings</dt>
+                <dd className="mt-0.5 leading-relaxed text-muted-foreground">
+                  If your teacher asked for written or drawn work on paper, hand it in at school.
                 </dd>
               </div>
             </dl>
           </Card>
-
-          {submission?.submittedAt ? (
-            <Card className="gap-0 p-5 sm:p-6">
-              <h2 className="font-heading text-base font-extrabold">Your submission</h2>
-              <Separator className="my-4" />
-              <p className="text-sm text-muted-foreground">
-                Sent {formatDateTime(submission.submittedAt)} · version {submission.version}
-              </p>
-              {submission.textAnswer ? (
-                <p className="mt-3 rounded-xl bg-muted/70 p-3.5 text-sm leading-relaxed">
-                  {submission.textAnswer}
-                </p>
-              ) : null}
-              {submission.files.length > 0 ? (
-                <ul className="mt-3 space-y-2">
-                  {submission.files.map((file) => (
-                    <li key={file.id} className="flex items-center gap-3 rounded-xl border bg-card p-3">
-                      <FileIcon className="size-4 shrink-0 text-muted-foreground" />
-                      <span className="min-w-0 flex-1 truncate text-sm font-semibold">{file.name}</span>
-                      <span className="shrink-0 text-xs text-muted-foreground">{fileSize(file.sizeBytes)}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </Card>
-          ) : null}
         </div>
       </div>
     </>

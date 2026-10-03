@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import {
-  BellIcon,
   CalendarClockIcon,
   CheckCircle2Icon,
   CircleAlertIcon,
@@ -10,19 +9,14 @@ import {
   SearchIcon,
 } from "lucide-react";
 
-import { EmptyState, PageHero, SectionHeading, StatusPill } from "@/components/common";
+import { PageHero, StatusPill } from "@/components/common";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { getSessionUser } from "@/lib/school/auth";
-import { ADMISSION_FEES, SCHOOL } from "@/lib/school/config";
-import {
-  getApplicationByNumber,
-  getApplicationsByEmail,
-  getLevel,
-  getNotifications,
-} from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { ADMISSION_FEES, CLASS_LEVELS, SCHOOL } from "@/lib/school/config";
+import { publicQuery } from "@/lib/school/convex";
 import { APPLICATION_STATUS, formatDate, formatDateTime, money } from "@/lib/school/format";
 import type { Application } from "@/lib/school/types";
 
@@ -74,16 +68,12 @@ export default async function StatusPage({ searchParams }: PageProps<"/admission
   const ref = typeof params.ref === "string" ? params.ref : "";
   const email = typeof params.email === "string" ? params.email : "";
 
-  const user = await getSessionUser();
-  const mine = user ? getApplicationsByEmail(user.email) : [];
+  const justSubmitted = params.submitted === "1";
 
   // Public lookup requires BOTH the application number and the email on the record.
-  const looked = ref ? getApplicationByNumber(ref) : null;
-  const lookupOk =
-    looked && (mine.some((a) => a.id === looked.id) || (email && looked.ownerEmail.toLowerCase() === email.toLowerCase()));
-
-  const applications = mine.length > 0 ? mine : lookupOk && looked ? [looked] : [];
-  const notifications = user ? getNotifications(user.id).slice(0, 5) : [];
+  const looked = ref && email ? await publicQuery(api.admissions.lookup, { applicationNo: ref, email }) : null;
+  const lookupOk = Boolean(looked);
+  const applications: Application[] = looked ? [looked] : [];
 
   return (
     <>
@@ -100,16 +90,21 @@ export default async function StatusPage({ searchParams }: PageProps<"/admission
 
       <section className="eb-section">
         <div className="eb-container max-w-5xl">
-          {!user ? (
+          {justSubmitted ? (
+            <div className="mb-6 flex items-start gap-3 rounded-xl border border-success/30 bg-success/10 p-4 text-sm">
+              <CheckCircle2Icon className="mt-0.5 size-4 shrink-0 text-success" />
+              <p>
+                <span className="font-extrabold">Application {ref} submitted.</span> Keep this number. Enter it with your
+                email address below at any time to see your application&apos;s progress.
+              </p>
+            </div>
+          ) : null}
+
+          {applications.length === 0 ? (
             <Card className="gap-0 p-6 sm:p-8">
               <h2 className="font-heading text-lg font-extrabold">Look up an application</h2>
               <p className="mt-1.5 text-sm text-muted-foreground">
-                Enter your application number and the email address on the application. For the full
-                applicant dashboard,{" "}
-                <Link href="/login" className="font-bold text-primary underline-offset-4 hover:underline dark:text-gold">
-                  sign in
-                </Link>
-                .
+                Enter your application number and the email address on the application.
               </p>
               <form method="get" className="mt-6 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
                 <div>
@@ -132,7 +127,7 @@ export default async function StatusPage({ searchParams }: PageProps<"/admission
                 </div>
               </form>
 
-              {ref && !lookupOk ? (
+              {ref && email && !lookupOk ? (
                 <div
                   role="alert"
                   className="mt-5 flex items-start gap-2.5 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive"
@@ -143,19 +138,6 @@ export default async function StatusPage({ searchParams }: PageProps<"/admission
                 </div>
               ) : null}
             </Card>
-          ) : null}
-
-          {applications.length === 0 && user ? (
-            <EmptyState
-              icon="FileCheck"
-              title="You don't have an application yet"
-              description="Start an online application for the 2026/2027 session — it takes about fifteen minutes."
-              action={
-                <Button size="lg" className="font-bold" render={<Link href="/admissions/apply" />}>
-                  Start an application
-                </Button>
-              }
-            />
           ) : null}
 
           <div className="mt-8 space-y-8">
@@ -179,7 +161,7 @@ export default async function StatusPage({ searchParams }: PageProps<"/admission
                           <p className="mt-3 text-sm text-navy-foreground/80">
                             {[application.pupil.firstName, application.pupil.lastName].filter(Boolean).join(" ") || "Pupil name pending"}
                             {" · "}
-                            {getLevel(application.intendedLevelId)?.name}
+                            {CLASS_LEVELS.find((l) => l.id === application.intendedLevelId)?.name}
                             {" · "}
                             {SCHOOL.session}
                           </p>
@@ -381,27 +363,6 @@ export default async function StatusPage({ searchParams }: PageProps<"/admission
             })}
           </div>
 
-          {notifications.length > 0 ? (
-            <div className="mt-12">
-              <SectionHeading eyebrow="Notifications" title="Recent updates" />
-              <ul className="mt-6 space-y-2">
-                {notifications.map((n) => (
-                  <li key={n.id}>
-                    <Card className={`gap-0 p-4 ${n.read ? "" : "border-gold/40 bg-gold/8"}`}>
-                      <div className="flex items-start gap-3">
-                        <BellIcon className="mt-0.5 size-4 shrink-0 text-gold" />
-                        <div className="min-w-0">
-                          <p className="text-sm font-extrabold">{n.title}</p>
-                          <p className="mt-0.5 text-sm text-muted-foreground">{n.body}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">{formatDateTime(n.createdAt)}</p>
-                        </div>
-                      </div>
-                    </Card>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
         </div>
       </section>
     </>

@@ -1,37 +1,36 @@
 import type { Metadata } from "next";
-import { ShieldCheckIcon, UploadIcon } from "lucide-react";
+import { ShieldCheckIcon, TrashIcon } from "lucide-react";
+
+import { GalleryEditDialog, GalleryUploadDialog } from "@/components/admin/content-dialogs";
+import { ConfirmAction } from "@/components/portal/confirm-action";
 
 import { StatCard, StatusPill } from "@/components/common";
 import { ToneImage } from "@/components/motion";
 import { PortalPageHeader } from "@/components/portal/page-header";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { requireAdmin } from "@/lib/school/auth";
-import { getGallery } from "@/lib/school/data";
+import { api } from "@/convex/_generated/api";
+import { removeGalleryItem } from "@/lib/school/actions/admin";
+import { query } from "@/lib/school/convex";
 import { formatDate } from "@/lib/school/format";
 
 export const metadata: Metadata = { title: "Gallery" };
 
 export default async function AdminGalleryPage() {
   await requireAdmin();
-  const gallery = getGallery();
+  const gallery = await query(api.content.adminGallery, {});
   const categories = Array.from(new Set(gallery.map((g) => g.category)));
 
   return (
     <>
       <PortalPageHeader
         title="Gallery"
-        description="Photographs published to the public website, with consent status for each image."
-        action={
-          <Button size="lg" className="font-bold" disabled>
-            <UploadIcon />
-            Upload images
-          </Button>
-        }
+        description="Photos and videos for the public website, stored on Cloudinary, with consent status for each one."
+        action={<GalleryUploadDialog categories={categories.length ? categories : ["School Life"]} />}
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Images" value={gallery.length} icon="Images" tone="info" />
+        <StatCard label="Photos & videos" value={gallery.length} icon="Images" tone="info" />
         <StatCard label="Categories" value={categories.length} icon="Layers" tone="neutral" />
         <StatCard
           label="Consent cleared"
@@ -62,7 +61,7 @@ export default async function AdminGalleryPage() {
         {gallery.map((item) => (
           <li key={item.id}>
             <Card className="gap-0 overflow-hidden p-0">
-              <ToneImage tone={item.tone} seed={item.id} label={item.title} className="aspect-square" />
+              <ToneImage tone={item.tone} seed={item.id} media={item.media} label={item.title} className="aspect-square" />
               <div className="p-3">
                 <p className="line-clamp-2 text-xs font-bold">{item.title}</p>
                 <p className="mt-1 text-[0.68rem] text-muted-foreground">
@@ -70,8 +69,22 @@ export default async function AdminGalleryPage() {
                 </p>
                 <div className="mt-2">
                   <StatusPill tone={item.consentCleared ? "success" : "warning"}>
-                    {item.consentCleared ? "Consent on file" : "Consent pending"}
+                    {item.consentCleared ? "On the website" : "Hidden · consent pending"}
                   </StatusPill>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-1">
+                  <GalleryEditDialog item={item} categories={categories} />
+                  <ConfirmAction
+                    action={removeGalleryItem.bind(null, item.id)}
+                    icon={<TrashIcon />}
+                    variant="ghost"
+                    className="font-bold text-destructive"
+                    pendingText="Removing…"
+                    destructive
+                    confirm={{ title: "Remove this from the gallery?", description: "The file is deleted from Cloudinary too.", confirmLabel: "Remove" }}
+                  >
+                    Remove
+                  </ConfirmAction>
                 </div>
               </div>
             </Card>

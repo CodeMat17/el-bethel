@@ -9,21 +9,19 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { api } from "@/convex/_generated/api";
+import type { FamilyAssignment } from "@/lib/school/api-types";
 import { requirePupil } from "@/lib/school/auth";
-import { getStudent, getStudentAssignments } from "@/lib/school/data";
-import { SUBMISSION_STATUS, formatDate } from "@/lib/school/format";
-import { DEMO_TODAY } from "@/lib/school/seed";
-import type { AssignmentWithSubmission } from "@/lib/school/data";
+import { query } from "@/lib/school/convex";
+import { getDirectory, type Directory } from "@/lib/school/directory";
+import { SUBMISSION_STATUS, formatDateTime } from "@/lib/school/format";
 
 export const metadata: Metadata = { title: "My assignments" };
 
-function Row({ item }: { item: AssignmentWithSubmission }) {
-  const { assignment, submission, subject } = item;
-  const status = SUBMISSION_STATUS[submission?.status ?? "not_started"];
-  const overdue =
-    new Date(assignment.dueDate) < DEMO_TODAY &&
-    ["not_started", "in_progress"].includes(submission?.status ?? "not_started");
-  const pct = submission?.score ? Math.round((submission.score / assignment.maxScore) * 100) : 0;
+function Row({ item, dir }: { item: FamilyAssignment; dir: Directory }) {
+  const { assignment, submission, progress } = item;
+  const status = SUBMISSION_STATUS[progress];
+  const pct = submission?.score !== undefined ? Math.round((submission.score / Math.max(1, assignment.maxScore)) * 100) : 0;
 
   return (
     <Link href={`/portal/pupil/assignments/${assignment.id}`} className="block">
@@ -34,11 +32,14 @@ function Row({ item }: { item: AssignmentWithSubmission }) {
           </span>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary" className="font-bold">{subject?.name}</Badge>
-              <span className="text-xs text-muted-foreground">due {formatDate(assignment.dueDate)}</span>
+              <Badge variant="secondary" className="font-bold">{dir.subjectName(assignment.subjectId)}</Badge>
+              <span className="text-xs text-muted-foreground">
+                due {formatDateTime(assignment.dueDate)} · {assignment.questions.length}{" "}
+                {assignment.questions.length === 1 ? "question" : "questions"}
+              </span>
             </div>
             <h3 className="mt-2 text-base font-extrabold">{assignment.title}</h3>
-            {submission?.status === "graded" ? (
+            {progress === "graded" && submission ? (
               <div className="mt-3">
                 <div className="flex items-center justify-between gap-3 text-sm">
                   <span className="font-bold">
@@ -51,9 +52,7 @@ function Row({ item }: { item: AssignmentWithSubmission }) {
             ) : null}
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
-            <StatusPill tone={overdue ? "danger" : status.tone}>
-              {overdue ? "Late" : status.label}
-            </StatusPill>
+            <StatusPill tone={status.tone}>{status.label}</StatusPill>
             <ArrowRightIcon className="size-4 text-muted-foreground" />
           </div>
         </div>
@@ -64,30 +63,31 @@ function Row({ item }: { item: AssignmentWithSubmission }) {
 
 export default async function PupilAssignmentsPage() {
   const user = await requirePupil();
-  const student = user.studentId ? getStudent(user.studentId) : null;
-  if (!student) {
+  if (!user.studentId) {
     return <EmptyState icon="Backpack" title="No pupil record" description="Please ask your class teacher for help." />;
   }
 
-  const all = getStudentAssignments(student.id);
-  const todo = all.filter((a) =>
-    ["not_started", "in_progress", "resubmission_required"].includes(a.submission?.status ?? "not_started"),
-  );
-  const done = all.filter((a) => ["submitted", "late", "grading"].includes(a.submission?.status ?? ""));
-  const marked = all.filter((a) => ["graded", "returned"].includes(a.submission?.status ?? ""));
+  const [all, dir] = await Promise.all([
+    query(api.assignments.forStudent, { studentId: user.studentId }),
+    getDirectory(),
+  ]);
+  const todo = all.filter((a) => a.progress === "not_started");
+  const done = all.filter((a) => a.progress === "submitted");
+  const marked = all.filter((a) => a.progress === "graded");
+  const missed = all.filter((a) => a.progress === "missed");
 
   const tabs = [
-    { value: "todo", label: `To do (${todo.length})`, items: todo, empty: "You're all caught up. No assignments have been posted yet." },
+    { value: "todo", label: `To do (${todo.length})`, items: todo, empty: "You're all caught up. There is nothing to do right now." },
     { value: "done", label: `Sent (${done.length})`, items: done, empty: "Nothing is waiting to be marked right now." },
     { value: "marked", label: `Marked (${marked.length})`, items: marked, empty: "Nothing has been marked yet." },
-    { value: "all", label: `All (${all.length})`, items: all, empty: "No assignments yet." },
+    { value: "missed", label: `Missed (${missed.length})`, items: missed, empty: "You haven't missed anything. Well done!" },
   ];
 
   return (
     <>
       <PortalPageHeader
         title="My assignments"
-        description="Everything your teachers have set. Tap one to see what to do and send your work."
+        description="Everything your teachers have set. Tap one to answer the questions and send your work."
       />
 
       <Tabs defaultValue="todo">
@@ -113,7 +113,7 @@ export default async function PupilAssignmentsPage() {
             ) : (
               <div className="grid gap-3">
                 {tab.items.map((item) => (
-                  <Row key={item.assignment.id} item={item} />
+                  <Row key={item.assignment.id} item={item} dir={dir} />
                 ))}
               </div>
             )}
