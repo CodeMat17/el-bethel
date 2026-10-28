@@ -8,16 +8,18 @@ export type UploadTicket =
   | { ok: false; message: string };
 
 /** Who may upload what. The record that references the upload is re-checked by Convex. */
-const ALLOWED: Record<MediaPurpose, ("super_admin" | "admin" | "teacher")[]> = {
-  gallery: ["super_admin", "admin"],
-  news: ["super_admin", "admin"],
-  events: ["super_admin", "admin"],
-  people: ["super_admin", "admin"],
+const ALLOWED: Record<MediaPurpose, ("super_admin" | "admin" | "site_admin" | "teacher" | "parent")[]> = {
+  gallery: ["super_admin", "site_admin"],
+  news: ["super_admin", "site_admin"],
+  events: ["super_admin", "site_admin", "admin"],
+  // Teachers and parents add their own profile photo.
+  people: ["super_admin", "admin", "teacher", "parent"],
   materials: ["super_admin", "admin", "teacher"],
   tour: ["super_admin", "admin"],
   library: ["super_admin", "admin"],
   shop: ["super_admin", "admin"],
   alumni: ["super_admin", "admin"],
+  site: ["super_admin", "site_admin"],
 };
 
 export async function requestUploadTicket(purpose: MediaPurpose): Promise<UploadTicket> {

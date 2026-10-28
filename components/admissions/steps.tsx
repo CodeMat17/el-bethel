@@ -1,17 +1,16 @@
 "use client";
 
-import * as React from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import {
   ArrowRightIcon,
-  CheckCircle2Icon,
-  FileUpIcon,
-  PaperclipIcon,
-  TrashIcon,
+  BanknoteIcon,
+  FileCheckIcon,
+  FileTextIcon,
+  InfoIcon,
+  LandmarkIcon,
   TriangleAlertIcon,
 } from "lucide-react";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -30,14 +29,12 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   createApplicantAccount,
   payApplicationFee,
-  removeDocument,
   saveGuardianStep,
   savePupilStep,
   submitApplication,
-  uploadDocument,
   type FormState,
 } from "@/lib/school/actions/admissions";
-import { fileSize, money } from "@/lib/school/format";
+import { money } from "@/lib/school/format";
 import type { ApplicationDocument, ApplicationGuardian, ApplicationPupil } from "@/lib/school/types";
 
 const INITIAL: FormState = { ok: false };
@@ -295,149 +292,44 @@ export function GuardianStep({ guardian }: { guardian: ApplicationGuardian }) {
 
 /* ----------------------------- step: documents ---------------------------- */
 
-const MAX_BYTES = 5 * 1024 * 1024;
-const ACCEPT = ".jpg,.jpeg,.png,.webp,.pdf,.docx";
-
-function DocumentRow({ document }: { document: ApplicationDocument }) {
-  const [uploadState, uploadAction] = useActionState<FormState, FormData>(uploadDocument, INITIAL);
-  const [removeState, removeAction] = useActionState<FormState, FormData>(removeDocument, INITIAL);
-  const [fileName, setFileName] = React.useState<string | null>(null);
-  const [clientError, setClientError] = React.useState<string | null>(null);
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  const formRef = React.useRef<HTMLFormElement>(null);
-
-  React.useEffect(() => {
-    if (uploadState.message) {
-      if (uploadState.ok) toast.success(uploadState.message);
-      else toast.error(uploadState.message);
-    }
-  }, [uploadState]);
-
-  React.useEffect(() => {
-    if (removeState.message) toast.info(removeState.message);
-  }, [removeState]);
-
-  function onFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    setClientError(null);
-    if (!file) {
-      setFileName(null);
-      return;
-    }
-    if (file.size > MAX_BYTES) {
-      setClientError(`This file is too large (${fileSize(file.size)}). Please choose a file smaller than 5 MB.`);
-      setFileName(null);
-      event.target.value = "";
-      return;
-    }
-    setFileName(file.name);
-    formRef.current?.requestSubmit();
-  }
-
+function DocumentList({ title, documents, required }: { title: string; documents: ApplicationDocument[]; required: boolean }) {
+  if (documents.length === 0) return null;
   return (
-    <Card className="gap-0 p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="flex items-center gap-2 text-sm font-extrabold">
-            {document.label}
-            {document.required ? (
-              <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[0.65rem] font-bold text-destructive">
-                Required
-              </span>
+    <div>
+      <h3 className="text-xs font-bold tracking-wide text-muted-foreground uppercase">{title}</h3>
+      <ul className="mt-3 grid gap-2">
+        {documents.map((doc) => (
+          <li key={doc.key} className="flex items-center gap-3 rounded-xl border bg-card px-4 py-3 text-sm font-semibold">
+            {required ? (
+              <FileCheckIcon className="size-4 shrink-0 text-success" />
             ) : (
-              <span className="rounded-full bg-muted px-2 py-0.5 text-[0.65rem] font-bold text-muted-foreground">
-                Optional
-              </span>
+              <FileTextIcon className="size-4 shrink-0 text-muted-foreground" />
             )}
-          </p>
-          {document.uploaded ? (
-            <p className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-success">
-              <CheckCircle2Icon className="size-3.5" />
-              {document.fileName}
-            </p>
-          ) : (
-            <p className="mt-1 text-xs text-muted-foreground">JPG, PNG, WEBP, PDF or DOCX · up to 5 MB</p>
-          )}
-        </div>
-
-        {document.uploaded ? (
-          <form action={removeAction}>
-            <input type="hidden" name="key" value={document.key} />
-            <Button type="submit" variant="outline" size="sm" className="font-bold">
-              <TrashIcon />
-              Remove
-            </Button>
-          </form>
-        ) : (
-          <form ref={formRef} action={uploadAction} className="flex items-center gap-2">
-            <input type="hidden" name="key" value={document.key} />
-            <input
-              ref={inputRef}
-              type="file"
-              name="file"
-              accept={ACCEPT}
-              onChange={onFileChange}
-              className="sr-only"
-              id={`file-${document.key}`}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="font-bold"
-              onClick={() => inputRef.current?.click()}
-            >
-              <FileUpIcon />
-              Choose file
-            </Button>
-          </form>
-        )}
-      </div>
-
-      {fileName && !document.uploaded ? (
-        <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-          <Spinner className="size-3" />
-          Uploading {fileName}…
-        </p>
-      ) : null}
-      {clientError ? (
-        <p role="alert" className="mt-3 text-xs font-semibold text-destructive">{clientError}</p>
-      ) : null}
-    </Card>
+            {doc.label}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
+/** Nothing is uploaded online: families bring these documents to the screening. */
 export function DocumentsStep({ documents }: { documents: ApplicationDocument[] }) {
-  const outstanding = documents.filter((d) => d.required && !d.uploaded).length;
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-start gap-2.5 rounded-xl border border-info/30 bg-info/10 px-4 py-3 text-sm">
-        <PaperclipIcon className="mt-0.5 size-4 shrink-0 text-info" />
+        <InfoIcon className="mt-0.5 size-4 shrink-0 text-info" />
         <p>
-          Photographs of original documents are fine, as long as every corner is visible and the text is
-          readable. Files are stored privately and are visible only to our admissions team.
+          Nothing needs to be uploaded. Please bring the originals and one photocopy of each document when
+          you come in for screening. Our admissions team will check them and hand the originals back to you.
         </p>
       </div>
 
-      <div className="grid gap-3">
-        {documents.map((doc) => (
-          <DocumentRow key={doc.key} document={doc} />
-        ))}
-      </div>
+      <DocumentList title="Required" documents={documents.filter((d) => d.required)} required />
+      <DocumentList title="Optional · bring if applicable" documents={documents.filter((d) => !d.required)} required={false} />
 
-      <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm font-semibold text-muted-foreground">
-          {outstanding === 0
-            ? "All required documents uploaded."
-            : `${outstanding} required document${outstanding === 1 ? "" : "s"} still to upload.`}
-        </p>
-        <Button
-          size="lg"
-          className="h-11 font-bold"
-          disabled={outstanding > 0}
-          render={<a href="/admissions/apply?step=review" />}
-        >
+      <div className="flex justify-end pt-2">
+        <Button size="lg" className="h-11 font-bold" render={<a href="/admissions/apply?step=review" />}>
           Continue to review
           <ArrowRightIcon />
         </Button>
@@ -448,7 +340,16 @@ export function DocumentsStep({ documents }: { documents: ApplicationDocument[] 
 
 /* ------------------------------ step: payment ----------------------------- */
 
-export function PaymentStep({ amount }: { amount: number }) {
+export function PaymentStep({
+  amount,
+  applicationNo,
+  bank,
+}: {
+  amount: number;
+  applicationNo: string;
+  /** Optional so a page rendered by an older server (e.g. mid-deploy) still works. */
+  bank?: { bankName: string; accountNumber: string; accountName: string };
+}) {
   const [state, action] = useActionState<FormState, FormData>(payApplicationFee, INITIAL);
 
   return (
@@ -463,14 +364,48 @@ export function PaymentStep({ amount }: { amount: number }) {
         </p>
       </Card>
 
-      <div className="rounded-xl bg-muted/70 p-4 text-sm leading-relaxed">
-        <p className="font-bold">How to pay</p>
-        <p className="mt-1 text-muted-foreground">
-          Pay the application fee at the school bursary, or by bank transfer using the account details from the school
-          office, quoting your application number. The admissions office confirms your payment — you can submit your
-          application now and pay before the assessment.
-        </p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card className="gap-0 p-5">
+          <p className="flex items-center gap-2 text-sm font-extrabold">
+            <LandmarkIcon className="size-4 text-gold" />
+            Bank transfer
+          </p>
+          {bank ? (
+            <dl className="mt-4 space-y-3 text-sm">
+              {[
+                ["Bank", bank.bankName],
+                ["Account number", bank.accountNumber],
+                ["Account name", bank.accountName],
+              ].map(([label, value]) => (
+                <div key={label}>
+                  <dt className="text-xs font-bold text-muted-foreground uppercase">{label}</dt>
+                  <dd className={`mt-0.5 font-semibold ${label === "Account number" ? "font-mono text-base tracking-wider" : ""}`}>{value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <p className="mt-4 text-sm text-muted-foreground">
+              Please reload this page to see the school&apos;s account details.
+            </p>
+          )}
+          <p className="mt-4 text-xs text-muted-foreground">
+            Use <span className="font-bold text-foreground">{applicationNo}</span> as the transfer narration or reference.
+          </p>
+        </Card>
+        <Card className="gap-0 p-5">
+          <p className="flex items-center gap-2 text-sm font-extrabold">
+            <BanknoteIcon className="size-4 text-gold" />
+            At the school bursary
+          </p>
+          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+            Pay in person by cash or POS at the school bursary during office hours, quoting your application number.
+          </p>
+        </Card>
       </div>
+
+      <p className="rounded-xl bg-muted/70 p-4 text-sm leading-relaxed text-muted-foreground">
+        The admissions office confirms your payment. You can submit your application now and pay before the screening.
+      </p>
 
       <Submit label="Continue" pendingLabel="Continuing…" />
     </form>

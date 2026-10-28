@@ -16,7 +16,7 @@ const QUICK_NAV = [
   { label: "Work", href: "/portal/parent/assignments", icon: "ClipboardList" },
   { label: "Results", href: "/portal/parent/results", icon: "Trophy" },
   { label: "Fees", href: "/portal/parent/fees", icon: "Receipt" },
-  { label: "Messages", href: "/portal/parent/messages", icon: "MessagesSquare" },
+  { label: "Timetable", href: "/portal/parent/timetable", icon: "Clock" },
 ];
 
 export default async function ParentLayout({ children }: LayoutProps<"/portal/parent">) {
@@ -37,6 +37,7 @@ export default async function ParentLayout({ children }: LayoutProps<"/portal/pa
         email: user.email,
         roleLabel: `${count} ${count === 1 ? "child" : "children"} enrolled`,
         avatarSeed: user.avatarSeed,
+        photoUrl: user.photoUrl,
       }}
     >
       {children}

@@ -45,9 +45,9 @@ The platform should feel like a **premium educational product**, not a generic s
 - **Address:** No.3 Engr. Demola Oduneye Avenue, Opposite Ushafa Mini Stadium, Ushafa, Abuja
 - **Phone:** 0812 390 8499, 0803 567 2400
 - **WhatsApp:** 0812 390 8499
-- **Email:** info@elbethel.edu.ng
-- **Admissions Email:** admissions@elbethel.edu.ng
-- **Website:** www.elbethel.edu.ng
+- **Email:** info@ebia.com.ng
+- **Admissions Email:** info@ebia.com.ng
+- **Website:** ebia.com.ng
 - **Motto:** Knowledge and the fear of God
 - **School Colors:** Deep Navy, Warm Gold, Ivory
 - **School Type:** Day School
@@ -2683,9 +2683,9 @@ Abuja, Nigeria
 
 **Phone:** 0812 390 8499
 
-**Email:** info@elbethel.edu.ng
+**Email:** info@ebia.com.ng
 
-**Admissions:** admissions@elbethel.edu.ng
+**Admissions:** info@ebia.com.ng
 
 **Office Hours:**
 

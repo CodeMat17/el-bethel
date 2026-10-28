@@ -9,7 +9,6 @@ export const AWARD_CATEGORIES = [
   "Reading",
   "Leadership",
   "Community Service",
-  "Attendance",
   "Special Recognition",
 ] as const;
 

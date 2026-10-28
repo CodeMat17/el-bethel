@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 
-import type { Doc, Id } from "./_generated/dataModel";
+import type { Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx } from "./_generated/server";
 import {
   assertStudentAccess,
@@ -32,13 +32,17 @@ function paged<T>(items: T[], page = 1, pageSize = 12) {
 const byName = (a: { lastName: string; firstName: string }, b: { lastName: string; firstName: string }) =>
   a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName);
 
+/** The Cloudinary id of a photo an edit replaced or removed, so the caller can delete it. */
+const replacedPhoto = (before: { photo?: { publicId: string } }, after?: { publicId: string }) =>
+  before.photo && before.photo.publicId !== after?.publicId ? before.photo.publicId : undefined;
+
 /* --------------------------------- pupils --------------------------------- */
 
 /** The signed-in pupil's own record. */
 export const myStudent = query({
   args: {},
   handler: async (ctx) => {
-    const viewer = await requireRole(ctx, "pupil");
+    const viewer = await requireRole(ctx, "pupil", "super_admin");
     if (!viewer.studentId) return null;
     const student = await ctx.db.get(viewer.studentId);
     return student ? await toStudent(ctx, student) : null;
@@ -49,7 +53,7 @@ export const myStudent = query({
 export const myChildren = query({
   args: {},
   handler: async (ctx) => {
-    const viewer = await requireRole(ctx, "parent");
+    const viewer = await requireRole(ctx, "parent", "super_admin");
     if (!viewer.parentId) return [];
     const students = await getStudentsByIds(ctx, await parentStudentIds(ctx, viewer.parentId));
     return (await toStudents(ctx, students)).sort(byName);
@@ -151,7 +155,7 @@ const studentFields = {
   photo: v.optional(cloudMedia),
 };
 
-async function nextStudentNo(ctx: MutationCtx): Promise<string> {
+export async function nextStudentNo(ctx: MutationCtx): Promise<string> {
   const year = new Date().getUTCFullYear();
   const prefix = `EIA-${year}-`;
   const all = await ctx.db.query("students").collect();
@@ -211,6 +215,7 @@ export const updateStudent = mutation({
     } else {
       await audit(ctx, viewer, { action: "Updated pupil record", entity: "Student", entityId: studentId, newValue: `${args.firstName} ${args.lastName}` });
     }
+    return { previousPhoto: replacedPhoto(before, args.photo) };
   },
 });
 
@@ -251,7 +256,7 @@ export const linkGuardian = mutation({
 export const myParent = query({
   args: {},
   handler: async (ctx) => {
-    const viewer = await requireRole(ctx, "parent");
+    const viewer = await requireRole(ctx, "parent", "super_admin");
     if (!viewer.parentId) return null;
     const parent = await ctx.db.get(viewer.parentId);
     return parent ? await toParent(ctx, parent) : null;
@@ -310,6 +315,7 @@ const parentFields = {
   address: v.string(),
   emergencyContactName: v.string(),
   emergencyContactPhone: v.string(),
+  photo: v.optional(cloudMedia),
 };
 
 export const createParent = mutation({
@@ -333,9 +339,11 @@ export const updateParent = mutation({
   handler: async (ctx, { parentId, ...args }) => {
     const viewer = await requireAdmin(ctx);
     checkPerson(args);
-    if (!(await ctx.db.get(parentId))) fail("NOT_FOUND", "Parent not found.");
+    const before = await ctx.db.get(parentId);
+    if (!before) fail("NOT_FOUND", "Parent not found.");
     await ctx.db.patch(parentId, { ...args, email: args.email.trim().toLowerCase() });
     await audit(ctx, viewer, { action: "Updated parent", entity: "Parent", entityId: parentId, newValue: `${args.firstName} ${args.lastName}` });
+    return { previousPhoto: replacedPhoto(before, args.photo) };
   },
 });
 
@@ -438,7 +446,7 @@ export const updateTeacher = mutation({
       }
     }
     await audit(ctx, viewer, { action: "Updated staff member", entity: "Teacher", entityId: teacherId, newValue: `${args.firstName} ${args.lastName}` });
-    return { clerkUserId };
+    return { clerkUserId, previousPhoto: replacedPhoto(before, args.photo) };
   },
 });
 
@@ -456,26 +464,23 @@ export const updateMyTeacherProfile = mutation({
   },
 });
 
-/** Profile photos (Cloudinary) for a pupil or teacher. */
-export const setPhoto = mutation({
-  args: {
-    studentId: v.optional(v.id("students")),
-    teacherId: v.optional(v.id("teachers")),
-    photo: v.optional(cloudMedia),
-  },
-  handler: async (ctx, { studentId, teacherId, photo }) => {
+/**
+ * The signed-in teacher's or parent's own profile photo (Cloudinary). Pupils'
+ * photos are set by the school office, through the pupil record.
+ */
+export const setMyPhoto = mutation({
+  args: { photo: v.optional(cloudMedia) },
+  handler: async (ctx, { photo }) => {
     const viewer = await requireViewer(ctx);
-    const own = (teacherId && viewer.teacherId === teacherId) || false;
-    if (!isAdmin(viewer) && !own) fail("FORBIDDEN", "You can't change this photo.");
-    let previous: Doc<"students">["photo"];
-    if (studentId) {
-      previous = (await ctx.db.get(studentId))?.photo;
-      await ctx.db.patch(studentId, { photo });
-    } else if (teacherId) {
-      previous = (await ctx.db.get(teacherId))?.photo;
-      await ctx.db.patch(teacherId, { photo });
-    }
-    return { previousPublicId: previous?.publicId };
+    const record = viewer.teacherId
+      ? await ctx.db.get(viewer.teacherId)
+      : viewer.parentId
+        ? await ctx.db.get(viewer.parentId)
+        : null;
+    if (!record) fail("FORBIDDEN", "This account has no profile to add a photo to.");
+    if (photo && photo.resourceType !== "image") fail("INVALID", "Choose a photo.");
+    await ctx.db.patch(record._id, { photo });
+    return { previousPhoto: replacedPhoto(record, photo) };
   },
 });
 

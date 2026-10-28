@@ -1,22 +1,16 @@
-import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowRightIcon } from "lucide-react";
 
 import { CtaBand, PageHero, SectionHeading } from "@/components/common";
-import { Icon } from "@/components/icon";
 import { Reveal, ToneImage } from "@/components/motion";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   ASSESSMENT_WEIGHTING,
   CLASS_LEVELS,
+  GRADE_BANDS,
   STAGES,
-  LEVEL_POPULATION,
-  LEVEL_SECTIONS,
-  TEACHING_METHODS,
 } from "@/lib/school/config";
-import { getSubjects } from "@/lib/school/site-data";
+import { getContent } from "@/lib/school/site-content";
+import { getLevelSummary, getSubjects } from "@/lib/school/site-data";
 
 export const metadata: Metadata = {
   title: "Academics",
@@ -25,150 +19,55 @@ export const metadata: Metadata = {
   alternates: { canonical: "/academics" },
 };
 
-const PILLARS = [
-  { title: "Curriculum", icon: "BookOpen", href: "/academics/curriculum", text: "The Nigerian national curriculum, enriched and sequenced year by year." },
-  { title: "Subjects", icon: "Library", href: "/academics/subjects", text: "Seventeen subjects across core and additional strands." },
-  { title: "Learning Approach", icon: "Lightbulb", href: "/academics/approach", text: "Child-centred, activity-based and unapologetically practical." },
-  { title: "Assessment & Reports", icon: "ClipboardCheck", href: "/academics/assessment", text: "Continuous assessment, published results and termly report cards." },
-];
+/** Colour and built-in photo for each stage; the photo can be replaced in the Site portal. */
+const STAGE_TONES = Object.fromEntries(STAGES.map((s) => [s.key, s.tone]));
+const STAGE_SEEDS = Object.fromEntries(STAGES.map((s) => [s.key, s.name]));
 
 export default async function AcademicsPage() {
-  const subjects = await getSubjects();
+  const [subjects, page, levels] = await Promise.all([getSubjects(), getContent("academics"), getLevelSummary()]);
+  const { hero, stages, assessment, grading, classes, methods, cta } = page;
+  const focus = new Map(stages.levels.map((l) => [l.id, l.focus]));
 
   return (
     <>
       <PageHero
-        eyebrow="Academics"
-        title="A curriculum children can actually use"
-        lede="Fourteen class levels from creche to JSS 3, thirty subjects and an assessment rhythm designed to catch a struggling child in week three — not at the end of term."
+        eyebrow={hero.eyebrow}
+        title={hero.title}
+        lede={hero.lede}
         breadcrumb={[{ label: "Home", href: "/" }, { label: "Academics", href: "/academics" }]}
       />
 
+      {stages.visible ? (
       <section className="eb-section">
         <div className="eb-container grid gap-6 lg:grid-cols-2">
-          {STAGES.map((programme, i) => (
+          {stages.items.map((programme, i) => (
             <Reveal key={programme.key} delay={i * 0.08}>
-              <Card className="h-full gap-0 overflow-hidden p-0">
-                <ToneImage tone={programme.tone} seed={programme.name} label={programme.name} className="aspect-21/9" />
+              <Card id={programme.key} className="h-full scroll-mt-24 gap-0 overflow-hidden p-0">
+                <ToneImage tone={STAGE_TONES[programme.key]} seed={STAGE_SEEDS[programme.key]} media={programme.image ?? undefined} label={programme.name} className="aspect-21/9" />
                 <CardContent className="p-7">
                   <h2 className="font-heading text-2xl font-extrabold">{programme.name}</h2>
                   <p className="text-xs font-bold tracking-wide text-muted-foreground uppercase">{programme.ages}</p>
                   <p className="mt-2 leading-relaxed text-muted-foreground">{programme.text}</p>
-                  <div className="mt-5 flex flex-wrap gap-2">
+                  <dl className="mt-5 space-y-3">
                     {CLASS_LEVELS.filter((l) => l.stage === programme.key).map((level) => (
-                      <Badge key={level.id} variant="secondary" className="h-7 px-3 font-bold">
-                        {level.name}
-                      </Badge>
+                      <div key={level.id} className="rounded-xl bg-muted/60 p-3">
+                        <dt className="text-sm font-extrabold">{level.name}</dt>
+                        <dd className="mt-0.5 text-sm leading-relaxed text-muted-foreground">{focus.get(level.id)}</dd>
+                      </div>
                     ))}
-                  </div>
-                  <Button className="mt-6 font-bold" size="lg" render={<Link href={programme.href} />}>
-                    Explore the programme
-                    <ArrowRightIcon />
-                  </Button>
+                  </dl>
                 </CardContent>
               </Card>
             </Reveal>
           ))}
         </div>
       </section>
+      ) : null}
 
+      {page.subjects.visible && subjects.length ? (
       <section className="eb-section border-y bg-muted/40">
         <div className="eb-container">
-          <SectionHeading eyebrow="Explore" title="Four ways into our academic programme" align="center" />
-          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {PILLARS.map((pillar, i) => (
-              <Reveal key={pillar.title} delay={i * 0.05}>
-                <Link href={pillar.href} className="group block h-full">
-                  <Card className="h-full gap-0 p-6 transition-all group-hover:-translate-y-1 group-hover:border-gold/40 group-hover:shadow-lg">
-                    <span className="grid size-11 place-items-center rounded-2xl bg-navy text-gold">
-                      <Icon name={pillar.icon} className="size-5" />
-                    </span>
-                    <h3 className="mt-4 font-heading text-base font-extrabold">{pillar.title}</h3>
-                    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{pillar.text}</p>
-                    <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-primary dark:text-gold">
-                      Read more <ArrowRightIcon className="size-3.5" />
-                    </span>
-                  </Card>
-                </Link>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="eb-section">
-        <div className="eb-container grid gap-12 lg:grid-cols-[1fr_1fr]">
-          <div>
-            <SectionHeading
-              eyebrow="Class structure"
-              title="Twenty-nine classes across fourteen levels"
-              lede="Sections are kept deliberately small. Our average class size is 24 pupils."
-            />
-            <div className="mt-8 overflow-hidden rounded-2xl border">
-              <table className="w-full text-sm">
-                <caption className="sr-only">Class structure by level</caption>
-                <thead className="bg-muted/70 text-xs uppercase">
-                  <tr>
-                    <th scope="col" className="px-4 py-3 text-left font-extrabold">Level</th>
-                    <th scope="col" className="px-4 py-3 text-right font-extrabold">Sections</th>
-                    <th scope="col" className="px-4 py-3 text-right font-extrabold">Pupils</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {CLASS_LEVELS.map((level) => (
-                    <tr key={level.id} className="border-t">
-                      <th scope="row" className="px-4 py-3 text-left font-bold">{level.name}</th>
-                      <td className="px-4 py-3 text-right tabular-nums">{LEVEL_SECTIONS[level.id].length}</td>
-                      <td className="px-4 py-3 text-right tabular-nums">{LEVEL_POPULATION[level.id]}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div>
-            <SectionHeading
-              eyebrow="Assessment"
-              title="How a term score is built"
-              lede="Every subject score is out of 100, split between continuous assessment and the examination. The usual split is 40/60; each subject teacher sets the exact weighting for the term."
-            />
-            <div className="mt-8 space-y-4">
-              {ASSESSMENT_WEIGHTING.map((w) => (
-                <div key={w.component}>
-                  <div className="flex items-baseline justify-between text-sm font-bold">
-                    <span>{w.label}</span>
-                    <span className="tabular-nums text-muted-foreground">typically {w.weight}%</span>
-                  </div>
-                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-gold"
-                      style={{ width: `${w.weight}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <Button variant="outline" size="lg" className="mt-8 font-bold" render={<Link href="/academics/assessment" />}>
-              How assessment works
-              <ArrowRightIcon />
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      <section className="eb-section border-y bg-muted/40">
-        <div className="eb-container">
-          <SectionHeading
-            eyebrow="Subjects"
-            title={`${subjects.length} subjects across the school`}
-            action={
-              <Button variant="outline" size="lg" className="font-bold" render={<Link href="/academics/subjects" />}>
-                Subject details
-                <ArrowRightIcon />
-              </Button>
-            }
-          />
+          <SectionHeading eyebrow={page.subjects.eyebrow} title={page.subjects.title.replace("{count}", String(subjects.length))} />
           <div className="mt-10 flex flex-wrap gap-2.5">
             {subjects.map((subject) => (
               <span
@@ -182,26 +81,113 @@ export default async function AcademicsPage() {
           </div>
         </div>
       </section>
+      ) : null}
 
-      <section className="eb-section">
-        <div className="eb-container">
-          <SectionHeading eyebrow="Teaching methods" title="Eleven ways we teach" align="center" />
-          <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {TEACHING_METHODS.map((method, i) => (
-              <Reveal key={method} delay={i * 0.03}>
-                <div className="flex items-center gap-3 rounded-xl border bg-card p-4 text-sm font-bold">
+      {assessment.visible || grading.visible ? (
+      <section id="assessment" className="eb-section scroll-mt-24">
+        <div className="eb-container grid gap-12 lg:grid-cols-[1fr_1fr]">
+          {assessment.visible ? (
+          <div>
+            <SectionHeading eyebrow={assessment.eyebrow} title={assessment.title} lede={assessment.lede} />
+            <div className="mt-8 space-y-4">
+              {ASSESSMENT_WEIGHTING.map((w) => (
+                <div key={w.component}>
+                  <div className="flex items-baseline justify-between text-sm font-bold">
+                    <span>{w.label}</span>
+                    <span className="tabular-nums text-muted-foreground">typically {w.weight}%</span>
+                  </div>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-gold" style={{ width: `${w.weight}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          ) : null}
+
+          {grading.visible ? (
+          <div>
+            <SectionHeading eyebrow={grading.eyebrow} title={grading.title} />
+            <div className="mt-8 overflow-hidden rounded-2xl border">
+              <table className="w-full text-sm">
+                <caption className="sr-only">Grade bands</caption>
+                <thead className="bg-muted/70 text-xs uppercase">
+                  <tr>
+                    <th scope="col" className="px-4 py-3 text-left font-extrabold">Grade</th>
+                    <th scope="col" className="px-4 py-3 text-left font-extrabold">Score range</th>
+                    <th scope="col" className="px-4 py-3 text-left font-extrabold">Remark</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {GRADE_BANDS.map((band, i) => (
+                    <tr key={band.grade} className="border-t">
+                      <th scope="row" className="px-4 py-3 text-left font-heading text-base font-extrabold">{band.grade}</th>
+                      <td className="px-4 py-3 tabular-nums">
+                        {band.min}
+                        {i === 0 ? "–100" : `–${GRADE_BANDS[i - 1].min - 1}`}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{band.remark}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          ) : null}
+        </div>
+      </section>
+      ) : null}
+
+      {classes.visible || methods.visible ? (
+      <section className="eb-section border-y bg-muted/40">
+        <div className="eb-container grid gap-12 lg:grid-cols-[1fr_1fr]">
+          {classes.visible ? (
+          <div>
+            <SectionHeading eyebrow={classes.eyebrow} title={classes.title} lede={classes.lede} />
+            <div className="mt-8 overflow-hidden rounded-2xl border bg-card">
+              <table className="w-full text-sm">
+                <caption className="sr-only">Class structure by level</caption>
+                <thead className="bg-muted/70 text-xs uppercase">
+                  <tr>
+                    <th scope="col" className="px-4 py-3 text-left font-extrabold">Level</th>
+                    <th scope="col" className="px-4 py-3 text-right font-extrabold">Sections</th>
+                    <th scope="col" className="px-4 py-3 text-right font-extrabold">Pupils</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {CLASS_LEVELS.map((level) => (
+                    <tr key={level.id} className="border-t">
+                      <th scope="row" className="px-4 py-3 text-left font-bold">{level.name}</th>
+                      <td className="px-4 py-3 text-right tabular-nums">{levels[level.id]?.sections ?? 0}</td>
+                      <td className="px-4 py-3 text-right tabular-nums">{levels[level.id]?.pupils ?? 0}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          ) : null}
+
+          {methods.visible ? (
+          <div>
+            <SectionHeading eyebrow={methods.eyebrow} title={methods.title} />
+            <div className="mt-8 grid gap-3 sm:grid-cols-2">
+              {methods.items.map((method, i) => (
+                <div key={`${method}-${i}`} className="flex items-center gap-3 rounded-xl border bg-card p-4 text-sm font-bold">
                   <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-gold/15 text-xs font-extrabold text-gold-foreground dark:text-gold">
                     {i + 1}
                   </span>
                   {method}
                 </div>
-              </Reveal>
-            ))}
+              ))}
+            </div>
           </div>
+          ) : null}
         </div>
       </section>
+      ) : null}
 
-      <CtaBand />
+      {cta.visible ? <CtaBand title={cta.title} text={cta.text} primary={cta.primary} secondary={cta.secondary} /> : null}
     </>
   );
 }

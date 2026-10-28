@@ -1,6 +1,6 @@
 import { BanIcon, CircleCheckIcon } from "lucide-react";
 
-import { CreateLoginDialog, ResetPasswordDialog } from "@/components/admin/account-dialogs";
+import { CreateLoginDialog, ResetPasswordDialog, SendInviteButton } from "@/components/admin/account-dialogs";
 import { ConfirmAction } from "@/components/portal/confirm-action";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -39,6 +39,7 @@ export function SignInCard({
             </p>
           </div>
           <div className="flex flex-wrap gap-1">
+            {kind !== "pupil" && !account.lastLoginAt ? <SendInviteButton userId={account.id} name={name} /> : null}
             <ResetPasswordDialog userId={account.id} name={name} />
             {account.active ? (
               <ConfirmAction

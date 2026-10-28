@@ -1,10 +1,11 @@
 import { v } from "convex/values";
 
-import { ADMISSION_OPEN_LEVELS, APPLICATION_DOCUMENT_REQUIREMENTS } from "../lib/school/config";
-import type { Doc } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { fail, requireAdmin } from "./lib/access";
+import { publishedContent } from "./lib/cms";
 import { audit, getByLooseId, nowISO, withId } from "./lib/util";
+import { nextStudentNo } from "./people";
 import { applicationStatus } from "./validators";
 
 /**
@@ -68,7 +69,8 @@ export const start = mutation({
   },
   handler: async (ctx, args) => {
     if (args.tokenHash.length < 32) fail("INVALID", "Invalid session.");
-    if (!ADMISSION_OPEN_LEVELS.includes(args.intendedLevelId)) fail("INVALID", "Choose a class that is open for admission.");
+    const rules = await publishedContent(ctx, "fees");
+    if (!rules.openLevels.includes(args.intendedLevelId)) fail("INVALID", "Choose a class that is open for admission.");
     const session = (await ctx.db.query("academicSessions").collect()).find((s) => s.active);
     if (!session) fail("INVALID", "Admissions are not open right now.");
     const email = args.email.trim().toLowerCase();
@@ -87,7 +89,7 @@ export const start = mutation({
         name: args.fullName.trim(), relationship: "", phone: args.phone.trim(), email,
         occupation: "", address: "", emergencyContact: "", emergencyPhone: "",
       },
-      documents: APPLICATION_DOCUMENT_REQUIREMENTS.map((d) => ({ key: d.key, label: d.label, required: d.required, uploaded: false })),
+      documents: rules.documents.map((d) => ({ key: d.key, label: d.label, required: d.required, uploaded: false })),
       applicationFeePaid: false,
       timeline: [{ at: now, status: "draft", note: "Application started.", actor: "Parent" }],
       ownerEmail: email,
@@ -115,7 +117,7 @@ export const savePupil = mutation({
   },
   handler: async (ctx, { tokenHash, intendedLevelId, pupil }) => {
     const app = await requireDraft(ctx, tokenHash);
-    if (!ADMISSION_OPEN_LEVELS.includes(intendedLevelId)) fail("INVALID", "Choose a class that is open.");
+    if (!(await publishedContent(ctx, "fees")).openLevels.includes(intendedLevelId)) fail("INVALID", "Choose a class that is open.");
     await ctx.db.patch(app._id, { intendedLevelId, pupil: { ...pupil, photoUploaded: app.pupil.photoUploaded } });
   },
 });
@@ -140,27 +142,6 @@ export const saveGuardian = mutation({
   },
 });
 
-export const setDocument = mutation({
-  args: { tokenHash: v.string(), key: v.string(), fileName: v.optional(v.string()) },
-  handler: async (ctx, { tokenHash, key, fileName }) => {
-    const app = await requireDraft(ctx, tokenHash);
-    const doc = app.documents.find((d) => d.key === key);
-    if (!doc) fail("INVALID", "That document is not part of this application.");
-    const documents = app.documents.map((d) =>
-      d.key === key
-        ? fileName
-          ? { ...d, uploaded: true, fileName, uploadedAt: nowISO() }
-          : { key: d.key, label: d.label, required: d.required, uploaded: false }
-        : d,
-    );
-    await ctx.db.patch(app._id, {
-      documents,
-      pupil: key === "passport" ? { ...app.pupil, photoUploaded: Boolean(fileName) } : app.pupil,
-    });
-    return doc.label;
-  },
-});
-
 export const submit = mutation({
   args: { tokenHash: v.string() },
   handler: async (ctx, { tokenHash }) => {
@@ -168,8 +149,6 @@ export const submit = mutation({
     const p = app.pupil;
     if (!p.firstName || !p.lastName || !p.dateOfBirth || !p.gender) fail("INVALID", "Pupil information is incomplete. Please review that step.");
     if (!app.guardian.relationship || !app.guardian.occupation) fail("INVALID", "Parent information is incomplete. Please review that step.");
-    const missing = app.documents.filter((d) => d.required && !d.uploaded);
-    if (missing.length) fail("INVALID", `Please upload the required documents: ${missing.map((d) => d.label).join(", ")}.`);
     const now = nowISO();
     await ctx.db.patch(app._id, {
       status: "submitted",
@@ -259,6 +238,8 @@ export const updateStatus = mutation({
     const app = await ctx.db.get(applicationId);
     if (!app) fail("NOT_FOUND", "Application not found.");
     if (status === "draft") fail("INVALID", "Choose a valid status.");
+    if (status === "enrolled") fail("INVALID", "Use Enrol pupil to enrol an accepted applicant.");
+    if (app.status === "enrolled") fail("INVALID", "This applicant has already been enrolled.");
     const now = nowISO();
     const text = note?.trim();
     await ctx.db.patch(applicationId, {
@@ -269,5 +250,135 @@ export const updateStatus = mutation({
       timeline: [...app.timeline, { at: now, status, note: text || `Status changed to ${status.replace(/_/g, " ")}.`, actor: viewer.name }],
     });
     await audit(ctx, viewer, { action: "Changed application status", entity: "Application", entityId: applicationId, previousValue: app.status, newValue: status });
+  },
+});
+
+/* -------------------------------- enrolment ------------------------------- */
+
+const ENROLLABLE = ["accepted", "conditionally_accepted"];
+const HOUSES = ["Emerald", "Sapphire", "Ruby", "Amber"] as const;
+const TITLE = /^(Mrs|Mr|Miss|Ms|Dr|Prof|Chief|Engr|Barr|Pastor|Rev)\.?\s+/i;
+
+async function guardianMatch(ctx: Ctx, email: string) {
+  const parent = email
+    ? await ctx.db.query("parents").withIndex("by_email", (q) => q.eq("email", email.trim().toLowerCase())).first()
+    : null;
+  const account = parent
+    ? await ctx.db.query("users").withIndex("by_parent", (q) => q.eq("parentId", parent._id)).first()
+    : null;
+  return { parent, account };
+}
+
+/** What enrolling this applicant would do, for the admin to check before confirming. */
+export const enrolmentPreview = query({
+  args: { applicationId: v.id("applications") },
+  handler: async (ctx, { applicationId }) => {
+    await requireAdmin(ctx);
+    const app = await ctx.db.get(applicationId);
+    if (!app) return null;
+    const classes = await ctx.db.query("classes").withIndex("by_level", (q) => q.eq("levelId", app.intendedLevelId)).collect();
+    const { parent, account } = await guardianMatch(ctx, app.guardian.email);
+    return {
+      enrollable: ENROLLABLE.includes(app.status),
+      genderMissing: !app.pupil.gender,
+      classes: classes.map((c) => ({ id: c._id, name: c.name })),
+      guardian: { name: app.guardian.name, email: app.guardian.email.trim().toLowerCase() },
+      existingParent: parent ? { id: parent._id, name: `${parent.title} ${parent.firstName} ${parent.lastName}`.trim() } : null,
+      parentHasSignIn: Boolean(account?.clerkUserId),
+    };
+  },
+});
+
+/**
+ * Turn an accepted application into a pupil record: create the pupil in the
+ * chosen class, reuse the parent with the same email (siblings) or create one,
+ * link them, and mark the application enrolled. Run only when an administrator
+ * confirms it. The sign-in for a new parent is created by the caller (Clerk).
+ */
+export const enrol = mutation({
+  args: { applicationId: v.id("applications"), classId: v.id("classes") },
+  handler: async (ctx, { applicationId, classId }) => {
+    const viewer = await requireAdmin(ctx);
+    const app = await ctx.db.get(applicationId);
+    if (!app) fail("NOT_FOUND", "Application not found.");
+    if (!ENROLLABLE.includes(app.status)) fail("INVALID", "Only an accepted application can be enrolled.");
+    const cls = await ctx.db.get(classId);
+    if (!cls) fail("INVALID", "Choose a class.");
+    const { pupil, guardian } = app;
+    if (!pupil.gender) fail("INVALID", "The application has no gender for the pupil. Add it on the pupil record after enrolling, or ask the family.");
+    if (!pupil.firstName.trim() || !pupil.lastName.trim()) fail("INVALID", "The application is missing the pupil's name.");
+
+    // Balance the houses: the new pupil joins the smallest one.
+    const active = await ctx.db.query("students").withIndex("by_status", (q) => q.eq("status", "active")).collect();
+    const house = [...HOUSES].sort((a, b) => active.filter((s) => s.house === a).length - active.filter((s) => s.house === b).length)[0];
+
+    const studentNo = await nextStudentNo(ctx);
+    const studentId = await ctx.db.insert("students", {
+      studentNo,
+      admissionNo: app.applicationNo,
+      firstName: pupil.firstName.trim(),
+      middleName: pupil.middleName.trim() || undefined,
+      lastName: pupil.lastName.trim(),
+      dateOfBirth: pupil.dateOfBirth,
+      gender: pupil.gender,
+      nationality: pupil.nationality,
+      address: pupil.address,
+      classId,
+      status: "active",
+      enrolledAt: nowISO().slice(0, 10),
+      avatarSeed: `${pupil.firstName}${pupil.lastName}${studentNo}`,
+      house,
+      bloodGroup: "",
+    });
+
+    const email = guardian.email.trim().toLowerCase();
+    let { parent } = await guardianMatch(ctx, email);
+    let parentId: Id<"parents">;
+    let parentCreated = false;
+    if (parent) {
+      parentId = parent._id;
+    } else {
+      const title = guardian.name.trim().match(TITLE)?.[1] ?? "";
+      const [firstName = "", ...rest] = guardian.name.trim().replace(TITLE, "").split(/\s+/);
+      const relation = guardian.relationship.toLowerCase();
+      parentId = await ctx.db.insert("parents", {
+        title,
+        firstName,
+        lastName: rest.join(" ") || pupil.lastName.trim(),
+        relationship: relation.includes("father") ? "Father" : relation.includes("mother") ? "Mother" : "Guardian",
+        email,
+        phone: guardian.phone,
+        occupation: guardian.occupation,
+        address: guardian.address || pupil.address,
+        emergencyContactName: guardian.emergencyContact,
+        emergencyContactPhone: guardian.emergencyPhone,
+        avatarSeed: `${firstName}${rest.join("")}${Date.now()}`,
+      });
+      parentCreated = true;
+      parent = await ctx.db.get(parentId);
+    }
+    await ctx.db.insert("guardianships", { parentId, studentId });
+
+    const now = nowISO();
+    await ctx.db.patch(applicationId, {
+      status: "enrolled",
+      studentId,
+      timeline: [...app.timeline, { at: now, status: "enrolled", note: `Enrolled in ${cls.name}.`, actor: viewer.name }],
+    });
+    await audit(ctx, viewer, { action: "Enrolled applicant", entity: "Application", entityId: applicationId, previousValue: app.status, newValue: `${studentNo} · ${cls.name}` });
+
+    const account = await ctx.db.query("users").withIndex("by_parent", (q) => q.eq("parentId", parentId)).first();
+    return {
+      studentId,
+      studentNo,
+      className: cls.name,
+      parentId,
+      parentCreated,
+      parentName: parent ? `${parent.title} ${parent.firstName} ${parent.lastName}`.trim() : guardian.name,
+      parentEmail: email,
+      // A parent who already signs in just sees the new child; anyone else needs a sign-in.
+      needsSignIn: !account?.clerkUserId,
+      accountId: account?._id,
+    };
   },
 });

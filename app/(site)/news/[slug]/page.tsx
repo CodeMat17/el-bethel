@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { SCHOOL, SITE_URL } from "@/lib/school/config";
+import { SITE_URL } from "@/lib/school/config";
+import { getSchool } from "@/lib/school/site-content";
 import { getNewsBySlug, getPublishedNews } from "@/lib/school/site-data";
 import { formatDate, initials } from "@/lib/school/format";
 
@@ -20,7 +21,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps<"/news/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getNewsBySlug(slug);
+  const [post, SCHOOL] = await Promise.all([getNewsBySlug(slug), getSchool()]);
   if (!post) return { title: "Article not found" };
   return {
     title: post.seoTitle.replace(` | ${SCHOOL.name}`, ""),
@@ -44,7 +45,7 @@ export default async function NewsArticlePage({ params }: PageProps<"/news/[slug
   const post = await getNewsBySlug(slug);
   if (!post) notFound();
 
-  const all = await getPublishedNews();
+  const [all, SCHOOL] = await Promise.all([getPublishedNews(), getSchool()]);
   const index = all.findIndex((p) => p.slug === post.slug);
   const previous = index > 0 ? all[index - 1] : null;
   const next = index < all.length - 1 ? all[index + 1] : null;

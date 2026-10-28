@@ -18,7 +18,7 @@ export default async function PupilTimetablePage() {
   const user = await requirePupil();
   const student = user.studentId ? await query(api.people.myStudent, {}) : null;
   if (!student) {
-    return <EmptyState icon="Backpack" title="No pupil record" description="Please ask your class teacher." />;
+    return <EmptyState icon="Backpack" title="No school record" description="Please ask your class teacher." />;
   }
 
   const [rows, dir] = await Promise.all([query(api.timetable.forClass, { classId: student.classId }), getDirectory()]);

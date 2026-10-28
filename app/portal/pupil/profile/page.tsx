@@ -1,20 +1,18 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { StarIcon } from "lucide-react";
 
 import { EmptyState, StatCard } from "@/components/common";
 import { PortalPageHeader } from "@/components/portal/page-header";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ProfilePhoto } from "@/components/portal/profile-photo";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { api } from "@/convex/_generated/api";
 import { requirePupil } from "@/lib/school/auth";
 import { query } from "@/lib/school/convex";
-import { studentName, summariseAttendance } from "@/lib/school/data";
+import { studentName } from "@/lib/school/data";
 import { getDirectory } from "@/lib/school/directory";
-import { avatarTone, formatDate, initials } from "@/lib/school/format";
-import { cn } from "@/lib/utils";
+import { formatDate, initials } from "@/lib/school/format";
 
 export const metadata: Metadata = { title: "My profile" };
 
@@ -22,17 +20,15 @@ export default async function PupilProfilePage() {
   const user = await requirePupil();
   const student = user.studentId ? await query(api.people.myStudent, {}) : null;
   if (!student) {
-    return <EmptyState icon="Backpack" title="No pupil record" description="Please ask your class teacher." />;
+    return <EmptyState icon="Backpack" title="No school record" description="Please ask your class teacher." />;
   }
 
-  const [attendanceRows, assignments, certificates, dir] = await Promise.all([
-    query(api.attendance.forStudent, { studentId: student.id }),
+  const [assignments, certificates, dir] = await Promise.all([
     query(api.assignments.forStudent, { studentId: student.id }),
     query(api.awards.certificatesForStudent, { studentId: student.id }),
     getDirectory(),
   ]);
   const cls = dir.getClass(student.classId);
-  const attendance = summariseAttendance(attendanceRows);
   const graded = assignments.filter((a) => a.progress === "graded");
 
   return (
@@ -41,13 +37,13 @@ export default async function PupilProfilePage() {
 
       <Card className="mb-6 gap-0 overflow-hidden p-0">
         <div className="flex flex-col items-center gap-4 bg-navy p-6 text-center text-navy-foreground sm:flex-row sm:text-left">
-          <Avatar className="size-20 shrink-0 ring-2 ring-gold/40">
-            <AvatarFallback className={cn("text-xl font-extrabold", avatarTone(student.avatarSeed))}>
-              {initials(student.firstName, student.lastName)}
-            </AvatarFallback>
-          </Avatar>
+          <ProfilePhoto
+            url={student.photo?.url}
+            seed={student.avatarSeed}
+            initials={initials(student.firstName, student.lastName)}
+          />
           <div className="min-w-0">
-            <h2 className="font-heading text-2xl font-extrabold">{studentName(student)}</h2>
+            <h2 className="font-heading text-2xl font-extrabold sm:text-3xl">{studentName(student)}</h2>
             <p className="mt-1 text-sm text-navy-foreground/70">
               {dir.className(student.classId)} · {student.house} House
             </p>
@@ -58,8 +54,7 @@ export default async function PupilProfilePage() {
         </div>
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="My attendance" value={`${attendance.rate}%`} icon="CalendarCheck" tone={attendance.rate >= 95 ? "success" : "warning"} />
+      <div className="grid gap-4 sm:grid-cols-2">
         <StatCard label="Work marked" value={graded.length} icon="ClipboardCheck" tone="info" />
         <StatCard label="Certificates" value={certificates.length} icon="Award" tone="gold" />
       </div>
@@ -125,9 +120,6 @@ export default async function PupilProfilePage() {
           )}
           <div className="mt-5 flex flex-wrap items-center gap-2">
             <Badge variant="secondary" className="font-bold">{student.house} House</Badge>
-            <Link href="/portal/pupil/stars" className="text-sm font-bold text-primary underline-offset-4 hover:underline dark:text-gold">
-              See my stars and badges
-            </Link>
           </div>
         </Card>
       </div>

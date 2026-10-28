@@ -6,7 +6,7 @@ import { BanknoteIcon, PencilIcon } from "lucide-react";
 import { Hidden, SelectField, TextField, TextareaField } from "@/components/admin/fields";
 import { FormDialog } from "@/components/admin/form-dialog";
 import { Button } from "@/components/ui/button";
-import { recordPayment, updateEnquiry } from "@/lib/school/actions/admin";
+import { recordPayment, updateBankDetails, updateEnquiry } from "@/lib/school/actions/admin";
 import { money } from "@/lib/school/format";
 import type { Enquiry } from "@/lib/school/types";
 
@@ -37,6 +37,28 @@ export function EnquiryDialog({ enquiry }: { enquiry: Enquiry }) {
         defaultValue={enquiry.status}
       />
       <TextareaField name="reply" label="Reply / note" rows={4} defaultValue={enquiry.reply} />
+    </FormDialog>
+  );
+}
+
+export function BankDetailsDialog({ bank }: { bank: { bankName: string; accountNumber: string; accountName: string } }) {
+  return (
+    <FormDialog
+      trigger={
+        <Button size="sm" variant="outline" className="font-bold">
+          <PencilIcon />
+          Edit
+        </Button>
+      }
+      title="School bank account"
+      description="Shown to families on the application form and fee pages for bank transfers."
+      action={updateBankDetails}
+      submitLabel="Save bank details"
+      pendingLabel="Saving…"
+    >
+      <TextField name="bankName" label="Bank" defaultValue={bank.bankName} required />
+      <TextField name="accountNumber" label="Account number" inputMode="numeric" pattern="\d{10}" maxLength={10} defaultValue={bank.accountNumber} required />
+      <TextField name="accountName" label="Account name" defaultValue={bank.accountName} required />
     </FormDialog>
   );
 }

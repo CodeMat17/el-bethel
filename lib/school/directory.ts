@@ -29,6 +29,8 @@ export interface Directory {
   teacherName(id: ID | null | undefined): string;
   termName(id: ID | null | undefined): string;
   levelName(levelId: ID | null | undefined): string;
+  /** True for JSS classes, whose learners are called students and get a more grown-up portal. */
+  isSecondaryClass(id: ID | null | undefined): boolean;
   /** Classes a teacher teaches in or is class teacher of. */
   classesForTeacher(teacherId: ID | null | undefined): SchoolClass[];
   /** Subjects a teacher teaches in a class (all of the class's subjects for its class teacher). */
@@ -89,6 +91,10 @@ function build(data: Awaited<ReturnType<typeof load>>): Directory {
     },
     termName: (id) => getTerm(id)?.name ?? "—",
     levelName: (levelId) => CLASS_LEVELS.find((l) => l.id === levelId)?.name ?? "—",
+    isSecondaryClass: (id) => {
+      const levelId = getClass(id)?.levelId;
+      return CLASS_LEVELS.find((l) => l.id === levelId)?.stage === "junior_secondary";
+    },
     classesForTeacher: (teacherId) => {
       if (!teacherId) return [];
       const t = getTeacher(teacherId);

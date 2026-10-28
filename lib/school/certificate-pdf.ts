@@ -3,7 +3,7 @@ import "server-only";
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import QRCode from "qrcode";
 
-import { SCHOOL, SITE_URL } from "./config";
+import { SCHOOL as DEFAULT_SCHOOL, SITE_URL } from "./config";
 import { formatLongDate } from "./format";
 
 /**
@@ -79,7 +79,11 @@ function drawQr(page: PDFPage, text: string, x: number, y: number, size: number)
   }
 }
 
-export async function renderCertificatePdf(c: CertificateContent): Promise<Uint8Array> {
+/** The parts of the school's identity a certificate prints. */
+export type CertificateSchool = { name: string; motto: string; city: string; headteacher: string };
+
+export async function renderCertificatePdf(c: CertificateContent, school: CertificateSchool = DEFAULT_SCHOOL): Promise<Uint8Array> {
+  const SCHOOL = { ...school, country: DEFAULT_SCHOOL.country };
   const doc = await PDFDocument.create();
   doc.setTitle(`${SCHOOL.name} certificate ${c.certificateNo}`);
   doc.setAuthor(SCHOOL.name);

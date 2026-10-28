@@ -8,7 +8,8 @@ import { ToneImage } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { SCHOOL, SITE_URL } from "@/lib/school/config";
+import { SITE_URL } from "@/lib/school/config";
+import { getSchool } from "@/lib/school/site-content";
 import { getAllEvents, getEventBySlug, getUpcomingEvents } from "@/lib/school/site-data";
 import { formatLongDate } from "@/lib/school/format";
 
@@ -44,6 +45,7 @@ export async function generateMetadata({ params }: PageProps<"/school-life/event
 }
 
 export default async function EventPage({ params }: PageProps<"/school-life/events/[slug]">) {
+  const SCHOOL = await getSchool();
   const { slug } = await params;
   const event = await getEventBySlug(slug);
   if (!event) notFound();
@@ -62,7 +64,7 @@ export default async function EventPage({ params }: PageProps<"/school-life/even
     location: {
       "@type": "Place",
       name: event.venue,
-      address: { "@type": "PostalAddress", streetAddress: SCHOOL.address, addressLocality: "Abuja", addressCountry: "NG" },
+      address: { "@type": "PostalAddress", streetAddress: SCHOOL.address, addressLocality: SCHOOL.city, addressCountry: "NG" },
     },
     organizer: { "@type": "Organization", name: SCHOOL.name, url: SITE_URL },
   };
@@ -149,14 +151,14 @@ export default async function EventPage({ params }: PageProps<"/school-life/even
                       <TicketIcon className="mt-0.5 size-4 shrink-0 text-gold" />
                       <div>
                         <dt className="text-xs font-bold text-muted-foreground uppercase">Registration</dt>
-                        <dd className="mt-0.5 font-semibold">Required — register in the Parent Portal</dd>
+                        <dd className="mt-0.5 font-semibold">Required — register with the school office</dd>
                       </div>
                     </div>
                   ) : null}
                 </dl>
                 {event.requiresRegistration ? (
-                  <Button className="mt-6 w-full font-bold" size="lg" render={<Link href="/portal/parent/calendar" />}>
-                    Register in the Parent Portal
+                  <Button className="mt-6 w-full font-bold" size="lg" render={<Link href="/contact" />}>
+                    Contact the school office
                   </Button>
                 ) : null}
               </Card>

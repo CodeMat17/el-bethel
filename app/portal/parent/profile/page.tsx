@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { ShieldCheckIcon } from "lucide-react";
 
 import { PortalPageHeader } from "@/components/portal/page-header";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ProfilePhoto } from "@/components/portal/profile-photo";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -21,9 +22,7 @@ export const metadata: Metadata = { title: "Profile" };
 
 const PREFERENCES = [
   { key: "email", label: "Email notifications", detail: "Assignment updates, results and fee reminders", on: true },
-  { key: "sms", label: "SMS alerts", detail: "Attendance alerts and urgent school notices only", on: true },
-  { key: "push", label: "Push notifications", detail: "Requires installing the app to your home screen", on: false },
-  { key: "digest", label: "Weekly summary", detail: "A Friday summary of the week's work and attendance", on: true },
+  { key: "digest", label: "Weekly summary", detail: "A Friday email summarising the week's work", on: true },
 ];
 
 export default async function ParentProfilePage() {
@@ -42,16 +41,17 @@ export default async function ParentProfilePage() {
       <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
         <div className="space-y-6">
           <Card className="gap-0 p-5 sm:p-6">
-            <div className="flex items-center gap-4">
-              <Avatar className="size-16 shrink-0">
-                <AvatarFallback className={cn("text-lg font-extrabold", avatarTone(user.avatarSeed))}>
-                  {initials(...user.name.replace(/^(Mrs|Mr|Miss|Dr)\.?\s/, "").split(" "))}
-                </AvatarFallback>
-              </Avatar>
+            <div className="flex flex-col items-center gap-5 text-center sm:flex-row sm:text-left">
+              <ProfilePhoto
+                url={parent?.photo?.url}
+                seed={parent?.avatarSeed ?? user.avatarSeed}
+                initials={initials(...user.name.replace(/^(Mrs|Mr|Miss|Dr)\.?\s/, "").split(" "))}
+                editable={Boolean(parent)}
+              />
               <div className="min-w-0">
-                <h2 className="truncate font-heading text-lg font-extrabold">{user.name}</h2>
+                <h2 className="truncate font-heading text-2xl font-extrabold">{user.name}</h2>
                 <p className="truncate text-sm text-muted-foreground">{user.email}</p>
-                <div className="mt-2 flex flex-wrap gap-1.5">
+                <div className="mt-2 flex flex-wrap justify-center gap-1.5 sm:justify-start">
                   {user.roles.map((role) => (
                     <Badge key={role} variant="secondary" className="font-bold">{ROLE_LABELS[role]}</Badge>
                   ))}
@@ -109,6 +109,7 @@ export default async function ParentProfilePage() {
               {myChildren.map((child) => (
                 <li key={child.id} className="flex items-center gap-3 rounded-xl border bg-card p-3.5">
                   <Avatar className="size-10 shrink-0">
+                    {child.photo ? <AvatarImage src={child.photo.url} alt="" /> : null}
                     <AvatarFallback className={cn("text-xs font-bold", avatarTone(child.avatarSeed))}>
                       {initials(child.firstName, child.lastName)}
                     </AvatarFallback>

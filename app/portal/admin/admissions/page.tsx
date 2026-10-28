@@ -4,22 +4,26 @@ import { EmptyState, StatCard, StatusPill } from "@/components/common";
 import { AdminFilters } from "@/components/portal/admin-filters";
 import { ApplicationDecisionDialog } from "@/components/portal/application-decision";
 import { BarChart } from "@/components/portal/charts";
+import { EnrolDialog } from "@/components/portal/enrol-dialog";
 import { PortalPageHeader } from "@/components/portal/page-header";
 import { Pager } from "@/components/portal/pager";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { requireAdmin } from "@/lib/school/auth";
-import { ADMISSION_OPEN_LEVELS, CLASS_LEVELS } from "@/lib/school/config";
+import { CLASS_LEVELS } from "@/lib/school/config";
+import { getContent } from "@/lib/school/site-content";
 import { api } from "@/convex/_generated/api";
 import { query } from "@/lib/school/convex";
 import { pageParam, param } from "@/lib/school/data";
 import { APPLICATION_STATUS, formatDate } from "@/lib/school/format";
 import type { ApplicationStatus } from "@/lib/school/types";
+import type { Id } from "@/convex/_generated/dataModel";
 
 export const metadata: Metadata = { title: "Admissions" };
 
 export default async function AdminAdmissionsPage({ searchParams }: PageProps<"/portal/admin/admissions">) {
   await requireAdmin();
+  const rules = await getContent("fees");
   const params = await searchParams;
 
   const q = param(params.q).trim();
@@ -31,6 +35,14 @@ export default async function AdminAdmissionsPage({ searchParams }: PageProps<"/
   const byStatus = Object.entries(result.statusCounts)
     .map(([key, count]) => ({ status: key, count }))
     .sort((a, b) => b.count - a.count);
+  // What enrolling would do, for each accepted applicant on this page.
+  const previews = new Map(
+    await Promise.all(
+      result.items
+        .filter((a) => a.status === "accepted" || a.status === "conditionally_accepted")
+        .map(async (a) => [a.id, await query(api.admissions.enrolmentPreview, { applicationId: a.id as Id<"applications"> })] as const),
+    ),
+  );
   const pending = result.totals.pending;
   const accepted = result.totals.accepted;
 
@@ -47,8 +59,8 @@ export default async function AdminAdmissionsPage({ searchParams }: PageProps<"/
         <StatCard label="Offers made" value={accepted} icon="BadgeCheck" tone="success" />
         <StatCard
           label="Classes open"
-          value={ADMISSION_OPEN_LEVELS.length}
-          hint="Every class level"
+          value={rules.openLevels.length}
+          hint={rules.openLevels.length === CLASS_LEVELS.length ? "Every class level" : `of ${CLASS_LEVELS.length} class levels`}
           icon="School"
           tone="gold"
         />
@@ -98,7 +110,6 @@ export default async function AdminAdmissionsPage({ searchParams }: PageProps<"/
           <ul className="mt-6 space-y-3">
             {result.items.map((application) => {
               const meta = APPLICATION_STATUS[application.status];
-              const missing = application.documents.filter((d) => d.required && !d.uploaded).length;
               return (
                 <li key={application.id}>
                   <Card className="gap-0 p-5">
@@ -118,19 +129,29 @@ export default async function AdminAdmissionsPage({ searchParams }: PageProps<"/
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
                         <StatusPill tone={meta.tone}>{meta.label}</StatusPill>
-                        <ApplicationDecisionDialog
-                          applicationId={application.id}
-                          applicationNo={application.applicationNo}
-                          pupilName={`${application.pupil.firstName} ${application.pupil.lastName}`.trim() || "Applicant"}
-                          currentStatus={application.status}
-                          feePaid={application.applicationFeePaid}
-                        />
+                        {application.status !== "enrolled" ? (
+                          <ApplicationDecisionDialog
+                            applicationId={application.id}
+                            applicationNo={application.applicationNo}
+                            pupilName={`${application.pupil.firstName} ${application.pupil.lastName}`.trim() || "Applicant"}
+                            currentStatus={application.status}
+                            feePaid={application.applicationFeePaid}
+                          />
+                        ) : null}
+                        {previews.get(application.id) ? (
+                          <EnrolDialog
+                            applicationId={application.id}
+                            applicationNo={application.applicationNo}
+                            pupilName={`${application.pupil.firstName} ${application.pupil.lastName}`.trim() || "Applicant"}
+                            preview={previews.get(application.id)!}
+                          />
+                        ) : null}
                       </div>
                     </div>
 
                     <Separator className="my-4" />
 
-                    <dl className="grid gap-4 text-sm sm:grid-cols-4">
+                    <dl className="grid gap-4 text-sm sm:grid-cols-3">
                       <div>
                         <dt className="text-xs font-bold text-muted-foreground uppercase">Parent</dt>
                         <dd className="mt-0.5 truncate font-semibold">{application.guardian.name}</dd>
@@ -144,14 +165,6 @@ export default async function AdminAdmissionsPage({ searchParams }: PageProps<"/
                         <dd className="mt-0.5">
                           <StatusPill tone={application.applicationFeePaid ? "success" : "warning"}>
                             {application.applicationFeePaid ? "Paid" : "Outstanding"}
-                          </StatusPill>
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-xs font-bold text-muted-foreground uppercase">Documents</dt>
-                        <dd className="mt-0.5">
-                          <StatusPill tone={missing === 0 ? "success" : "danger"}>
-                            {missing === 0 ? "Complete" : `${missing} missing`}
                           </StatusPill>
                         </dd>
                       </div>

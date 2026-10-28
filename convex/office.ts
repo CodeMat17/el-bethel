@@ -1,8 +1,8 @@
 import { v } from "convex/values";
 
-import { ADMISSION_OPEN_LEVELS } from "../lib/school/config";
 import { mutation, query } from "./_generated/server";
 import { fail, requireAdmin } from "./lib/access";
+import { publishedContent } from "./lib/cms";
 import { audit, nowISO, withId } from "./lib/util";
 
 /* ------------------------- public forms (no sign-in) ---------------------- */
@@ -46,7 +46,7 @@ export const bookTour = mutation({
   },
   handler: async (ctx, a) => {
     if (!EMAIL.test(a.email.trim())) fail("INVALID", "Enter a valid email address.");
-    if (!ADMISSION_OPEN_LEVELS.includes(a.intendedLevelId)) fail("INVALID", "Choose a class.");
+    if (!(await publishedContent(ctx, "fees")).openLevels.includes(a.intendedLevelId)) fail("INVALID", "Choose a class.");
     if (!Number.isInteger(a.visitors) || a.visitors < 1 || a.visitors > 8) fail("INVALID", "Between 1 and 8 visitors.");
     const count = (await ctx.db.query("tourBookings").collect()).length + 1;
     const reference = `TOUR-${new Date().getUTCFullYear()}-${String(count).padStart(4, "0")}`;

@@ -24,6 +24,7 @@ export default async function ParentDocumentsPage() {
         description="Handbooks, policies, the fee schedule, the academic calendar and termly menus."
       />
 
+      {documents.length === 0 ? <p className="text-sm text-muted-foreground">No documents have been shared yet.</p> : null}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {documents.map((doc) => (
           <Card key={doc.id} className="flex h-full flex-col gap-0 p-5">
@@ -40,10 +41,21 @@ export default async function ParentDocumentsPage() {
             <p className="mt-4 text-xs text-muted-foreground">
               PDF · {fileSize(doc.sizeBytes)} · updated {formatDate(doc.updatedAt)}
             </p>
-            <Button variant="outline" size="lg" className="mt-4 w-full font-bold" disabled>
-              <DownloadIcon />
-              Download
-            </Button>
+            {doc.storageId ? (
+              <Button
+                variant="outline"
+                size="lg"
+                className="mt-4 w-full font-bold"
+                render={<a href={`/api/documents/${doc.id}`} target="_blank" rel="noreferrer" />}
+              >
+                <DownloadIcon />
+                Download
+              </Button>
+            ) : (
+              <Button variant="outline" size="lg" className="mt-4 w-full font-bold" disabled>
+                Not uploaded yet
+              </Button>
+            )}
           </Card>
         ))}
       </div>
@@ -52,9 +64,8 @@ export default async function ParentDocumentsPage() {
         <p className="flex items-start gap-3 text-sm leading-relaxed">
           <ShieldCheckIcon className="mt-0.5 size-5 shrink-0 text-info" />
           <span>
-            Parent-only documents are never served from a public folder. In a live deployment each
-            download is authorised on the server and delivered through a short-lived signed URL, so a
-            link cannot be forwarded or guessed. Downloads are disabled in this demonstration environment.
+            Parent-only documents are never served from a public folder. Every download is checked
+            against your sign-in, so a forwarded link won&apos;t open for someone without access.
           </span>
         </p>
       </Card>

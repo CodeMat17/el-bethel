@@ -15,21 +15,14 @@ import {
 import { CtaBand, SectionHeading, StatusPill } from "@/components/common";
 import { Icon } from "@/components/icon";
 import { Counter, Reveal, ToneImage } from "@/components/motion";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import {
-  CLASS_LEVELS,
-  STAGES,
-  CORE_VALUES,
-  HEADTEACHER_MESSAGE,
-  FACILITIES,
-  SCHOOL,
-  SCHOOL_STATS,
-  WHY_EL_BETHEL,
-} from "@/lib/school/config";
+import { CLASS_LEVELS, STAGES } from "@/lib/school/config";
+import { slugify } from "@/lib/utils";
+import { getContent, getSchool } from "@/lib/school/site-content";
 import { getAchievements, getClubs, getFeaturedTeachers, getGallery, getPublishedNews, getTestimonials, getUpcomingEvents } from "@/lib/school/site-data";
 import { formatDate, initials } from "@/lib/school/format";
 
@@ -48,10 +41,16 @@ export default async function HomePage() {
   const clubs = (await getClubs()).slice(0, 8);
   const achievements = (await getAchievements()).slice(0, 4);
   const gallery = (await getGallery()).slice(0, 8);
+  const SCHOOL = await getSchool();
+  const [c, about, academics, schoolLife] = await Promise.all([getContent("home"), getContent("about"), getContent("academics"), getContent("schoolLife")]);
+  const stageMeta = Object.fromEntries(STAGES.map((st) => [st.key, st]));
+  const { hero, intro, headteacher, why, programmes, stats, facilities, cta } = c;
+  const headName = SCHOOL.headteacher.replace(/^(Mrs|Mr|Miss|Dr|Prof)\.?\s+/, "").split(/\s+/).filter(Boolean);
 
   return (
     <>
       {/* ------------------------------- Hero ------------------------------- */}
+      {hero.visible ? (
       <section className="relative overflow-hidden bg-navy text-navy-foreground">
         <div
           className="pointer-events-none absolute inset-0"
@@ -66,15 +65,15 @@ export default async function HomePage() {
             <Reveal>
               <span className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/12 px-3 py-1.5 text-[0.68rem] font-extrabold tracking-[0.16em] text-gold uppercase">
                 <SparklesIcon className="size-3.5" />
-                {SCHOOL.session} admission is open
+                {hero.badge}
               </span>
             </Reveal>
 
             <Reveal delay={0.06}>
               <h1 className="mt-6 text-balance font-heading text-[2.1rem] leading-[1.06] sm:text-5xl lg:text-[3.6rem]">
-                Where Young Minds{" "}
+                {hero.headlineBefore}{" "}
                 <span className="relative whitespace-nowrap text-gold">
-                  Discover
+                  {hero.headlineHighlight}
                   <svg
                     viewBox="0 0 200 12"
                     className="absolute -bottom-1.5 left-0 w-full text-gold/45"
@@ -84,14 +83,13 @@ export default async function HomePage() {
                     <path d="M2 9C40 3 80 3 118 6c28 2 54 3 80 1" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
                   </svg>
                 </span>{" "}
-                Their Possibilities
+                {hero.headlineAfter}
               </h1>
             </Reveal>
 
             <Reveal delay={0.12}>
               <p className="mt-6 max-w-xl text-pretty text-base leading-relaxed text-navy-foreground/75 sm:text-lg">
-                At {SCHOOL.name}, we nurture curious minds, build confident character and inspire
-                children to learn, create and thrive.
+                {hero.text}
               </p>
             </Reveal>
 
@@ -100,49 +98,36 @@ export default async function HomePage() {
                 <Button
                   size="lg"
                   className="h-12 bg-gold text-base font-bold text-gold-foreground hover:bg-gold/85"
-                  render={<Link href="/admissions/apply" />}
+                  render={<Link href={hero.primary.href} />}
                 >
-                  Apply for Admission
+                  {hero.primary.label}
                   <ArrowRightIcon />
                 </Button>
                 <Button
                   size="lg"
                   variant="outline"
                   className="h-12 border-navy-foreground/25 bg-navy-foreground/5 text-base font-bold text-navy-foreground hover:bg-navy-foreground/12 hover:text-navy-foreground"
-                  render={<Link href="/about" />}
+                  render={<Link href={hero.secondary.href} />}
                 >
                   <PlayIcon />
-                  Explore Our School
+                  {hero.secondary.label}
                 </Button>
               </div>
             </Reveal>
 
-            <Reveal delay={0.24}>
-              <dl className="mt-10 grid max-w-lg grid-cols-3 gap-4 border-t border-navy-foreground/15 pt-6">
-                {SCHOOL_STATS.slice(0, 3).map((stat) => (
-                  <div key={stat.key}>
-                    <dt className="text-[0.68rem] font-bold tracking-wide text-navy-foreground/55 uppercase">
-                      {stat.label}
-                    </dt>
-                    <dd className="mt-1 font-heading text-2xl font-extrabold text-gold sm:text-3xl">
-                      <Counter value={stat.value} suffix={stat.suffix} />
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            </Reveal>
+          
           </div>
 
           {/* Hero collage */}
-          <Reveal delay={0.15} className="relative lg:mx-auto lg:max-w-sm">
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              <div className="space-y-3 sm:space-y-4">
-                <ToneImage tone="gold" seed="hero-a" priority sizes="(max-width: 1024px) 45vw, 18vw" label="Pupils in a smart classroom" className="aspect-4/5 rounded-2xl ring-1 ring-navy-foreground/10 lg:aspect-square" />
-                <ToneImage tone="info" seed="hero-b" priority sizes="(max-width: 1024px) 45vw, 18vw" label="Science practical session" className="aspect-square rounded-2xl ring-1 ring-navy-foreground/10" />
+          <Reveal delay={0.15} className="relative md:mx-auto md:w-full md:max-w-md lg:max-w-[min(20rem,42svh)]">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-3">
+              <div className="space-y-3 sm:space-y-4 lg:space-y-3">
+                <ToneImage tone="gold" seed="hero-a" media={hero.image1 ?? undefined} priority sizes="(max-width: 768px) 45vw, (max-width: 1024px) 224px, 160px" label="Pupils in a smart classroom" className="aspect-4/5 rounded-2xl ring-1 ring-navy-foreground/10 lg:aspect-3/2" />
+                <ToneImage tone="info" seed="hero-b" media={hero.image2 ?? undefined} priority sizes="(max-width: 768px) 45vw, (max-width: 1024px) 224px, 160px" label="Science practical session" className="aspect-square lg:aspect-3/2 rounded-2xl ring-1 ring-navy-foreground/10" />
               </div>
-              <div className="space-y-3 pt-8 sm:space-y-4 sm:pt-12 lg:pt-6">
-                <ToneImage tone="plum" seed="hero-c" sizes="(max-width: 1024px) 45vw, 18vw" label="Creative arts studio" className="aspect-square rounded-2xl ring-1 ring-navy-foreground/10" />
-                <ToneImage tone="success" seed="hero-d" sizes="(max-width: 1024px) 45vw, 18vw" label="Inter-house sports day" className="aspect-4/5 rounded-2xl ring-1 ring-navy-foreground/10 lg:aspect-square" />
+              <div className="space-y-3 pt-8 sm:space-y-4 sm:pt-12 lg:space-y-3 lg:pt-5">
+                <ToneImage tone="plum" seed="hero-c" media={hero.image3 ?? undefined} sizes="(max-width: 768px) 45vw, (max-width: 1024px) 224px, 160px" label="Creative arts studio" className="aspect-square lg:aspect-3/2 rounded-2xl ring-1 ring-navy-foreground/10" />
+                <ToneImage tone="success" seed="hero-d" media={hero.image4 ?? undefined} sizes="(max-width: 768px) 45vw, (max-width: 1024px) 224px, 160px" label="Inter-house sports day" className="aspect-4/5 rounded-2xl ring-1 ring-navy-foreground/10 lg:aspect-3/2" />
               </div>
             </div>
 
@@ -155,7 +140,7 @@ export default async function HomePage() {
           <div className="flex overflow-hidden">
             <div className="flex shrink-0 animate-[eb-marquee_36s_linear_infinite] items-center gap-8 pr-8">
               {Array.from({ length: 2 }).map((_, dup) =>
-                ["Excellence", "Integrity", "Respect", "Curiosity", "Creativity", "Responsibility", "Compassion"].map(
+                hero.marquee.map(
                   (word) => (
                     <span
                       key={`${dup}-${word}`}
@@ -171,14 +156,17 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* ---------------------------- Introduction --------------------------- */}
+      {intro.visible ? (
       <section className="eb-section">
         <div className="eb-container grid gap-12 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-14">
           <Reveal className="relative">
             <ToneImage
               tone="navy"
               seed="intro"
+              media={intro.image ?? undefined}
               sizes="(max-width: 1024px) 100vw, 48vw"
               label="Pupils at El-Bethel International Academy"
               className="rounded-3xl"
@@ -193,17 +181,12 @@ export default async function HomePage() {
 
           <Reveal delay={0.1}>
             <SectionHeading
-              eyebrow={SCHOOL.motto}
-              title="A school built entirely around how children actually learn"
-              lede={`${SCHOOL.name} is a private creche, nursery, primary and junior secondary school in ${SCHOOL.city}. We combine a strong academic foundation with creativity, technology, character development and sport — because a child is never only a set of test scores.`}
+              eyebrow={intro.eyebrow}
+              title={intro.title}
+              lede={intro.lede}
             />
             <ul className="mt-8 grid gap-4 sm:grid-cols-2">
-              {[
-                "Child-centred, activity-based teaching",
-                "Continuous assessment, not one-off exams",
-                "A digital classroom for every class",
-                "Parents genuinely in the loop, every week",
-              ].map((point) => (
+              {intro.points.map((point) => (
                 <li key={point} className="flex items-start gap-3 text-sm font-medium">
                   <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-success/15 text-success">
                     <CheckIcon className="size-3" strokeWidth={3} />
@@ -213,46 +196,50 @@ export default async function HomePage() {
               ))}
             </ul>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button size="lg" className="h-11 font-bold" render={<Link href="/about" />}>
-                Our story
+              <Button size="lg" className="h-11 font-bold" render={<Link href={intro.primary.href} />}>
+                {intro.primary.label}
                 <ArrowRightIcon />
               </Button>
-              <Button size="lg" variant="outline" className="h-11 font-bold" render={<Link href="/admissions" />}>
-                Admissions
+              <Button size="lg" variant="outline" className="h-11 font-bold" render={<Link href={intro.secondary.href} />}>
+                {intro.secondary.label}
               </Button>
             </div>
           </Reveal>
         </div>
       </section>
+      ) : null}
 
       {/* -------------------------- Headteacher note ------------------------- */}
+      {headteacher.visible ? (
       <section className="border-y bg-muted/40 py-14 sm:py-20">
         <div className="eb-container grid gap-10 lg:grid-cols-[1.15fr_1fr] lg:items-center">
           <Reveal>
-            <span className="eb-eyebrow">From the Headteacher</span>
+            <span className="eb-eyebrow">{headteacher.eyebrow}</span>
             <blockquote className="mt-5">
               <QuoteIcon className="size-8 text-gold/50" />
               <p className="mt-3 text-pretty font-heading text-xl leading-snug sm:text-2xl">
-                &ldquo;{HEADTEACHER_MESSAGE[1]}&rdquo;
+                &ldquo;{headteacher.quote}&rdquo;
               </p>
               <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
-                {HEADTEACHER_MESSAGE[2]}
+                {headteacher.text}
               </p>
             </blockquote>
             <div className="mt-6 flex items-center gap-3">
               <Avatar className="size-12">
-                <AvatarFallback className="bg-navy font-bold text-navy-foreground">AO</AvatarFallback>
+                <AvatarFallback className="bg-navy font-bold text-navy-foreground">
+                  {initials(headName[0] ?? "", headName.length > 1 ? headName[headName.length - 1] : "")}
+                </AvatarFallback>
               </Avatar>
               <div>
                 <p className="font-heading text-sm font-extrabold">{SCHOOL.headteacher}</p>
-                <p className="text-xs text-muted-foreground">Headteacher</p>
+                <p className="text-xs text-muted-foreground">{headteacher.role}</p>
               </div>
               <Button
                 variant="link"
                 className="ml-auto font-bold"
-                render={<Link href="/about/headteacher" />}
+                render={<Link href={headteacher.link.href} />}
               >
-                Read the full message
+                {headteacher.link.label}
                 <ArrowRightIcon />
               </Button>
             </div>
@@ -261,6 +248,7 @@ export default async function HomePage() {
             <ToneImage
               tone="gold"
               seed="headteacher-portrait"
+              media={headteacher.image ?? undefined}
               label={SCHOOL.headteacher}
               sizes="(max-width: 1024px) 100vw, 45vw"
               className="mx-auto w-full rounded-3xl"
@@ -268,18 +256,20 @@ export default async function HomePage() {
           </Reveal>
         </div>
       </section>
+      ) : null}
 
       {/* ---------------------------- Why El-Bethel -------------------------- */}
+      {why.visible ? (
       <section className="eb-section">
         <div className="eb-container">
           <SectionHeading
-            eyebrow="Why El-Bethel"
-            title="Seven reasons families choose us"
-            lede="Every one of these is a promise we are measured against, term after term."
+            eyebrow={why.eyebrow}
+            title={why.title}
+            lede={why.lede}
             align="center"
           />
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {WHY_EL_BETHEL.map((item, i) => (
+            {why.items.map((item, i) => (
               <Reveal key={item.title} delay={i * 0.04}>
                 <Card className="group h-full gap-0 p-6 transition-all hover:-translate-y-1 hover:border-gold/40 hover:shadow-lg">
                   <span className="grid size-12 place-items-center rounded-2xl bg-navy text-gold transition-colors group-hover:bg-gold group-hover:text-gold-foreground">
@@ -290,16 +280,16 @@ export default async function HomePage() {
                 </Card>
               </Reveal>
             ))}
-            <Reveal delay={0.28}>
+            <Reveal delay={Math.min(why.items.length, 7) * 0.04}>
               <Card className="flex h-full flex-col justify-between gap-4 border-gold/30 bg-gold/10 p-6">
                 <div>
-                  <h3 className="font-heading text-lg font-extrabold">Have a question?</h3>
+                  <h3 className="font-heading text-lg font-extrabold">{why.cardTitle}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    Our school office answers enquiries within one working day, Monday to Friday.
+                    {why.cardText}
                   </p>
                 </div>
-                <Button className="w-full font-bold" size="lg" render={<Link href="/contact" />}>
-                  Contact us
+                <Button className="w-full font-bold" size="lg" render={<Link href={why.cardLink.href} />}>
+                  {why.cardLink.label}
                   <ArrowRightIcon />
                 </Button>
               </Card>
@@ -307,27 +297,29 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* -------------------------- Academic programmes ---------------------- */}
+      {programmes.visible ? (
       <section className="eb-section border-y bg-muted/40">
         <div className="eb-container">
           <SectionHeading
-            eyebrow="Academic Programmes"
-            title="From first steps to secondary-ready"
-            lede="Fourteen class levels from creche to JSS 3, each with its own curriculum, assessment rhythm and pastoral care."
+            eyebrow={programmes.eyebrow}
+            title={programmes.title}
+            lede={programmes.lede}
             action={
               <Button variant="outline" size="lg" className="font-bold" render={<Link href="/academics" />}>
-                All academics
+                {programmes.buttonLabel}
                 <ArrowRightIcon />
               </Button>
             }
           />
 
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {STAGES.map((programme, i) => (
+            {academics.stages.items.map((programme, i) => (
               <Reveal key={programme.key} delay={i * 0.06}>
                 <Card className="h-full gap-0 overflow-hidden p-0">
-                  <ToneImage tone={programme.tone} seed={programme.name} label={programme.name} className="aspect-21/9" />
+                  <ToneImage tone={stageMeta[programme.key]?.tone} seed={stageMeta[programme.key]?.name} media={programme.image ?? undefined} label={programme.name} className="aspect-21/9" />
                   <CardContent className="p-6">
                     <h3 className="font-heading text-xl font-extrabold">{programme.name}</h3>
                     <p className="text-xs font-bold tracking-wide text-muted-foreground uppercase">{programme.ages}</p>
@@ -339,7 +331,7 @@ export default async function HomePage() {
                         </Badge>
                       ))}
                     </div>
-                    <Button variant="link" className="mt-4 px-0 font-bold" render={<Link href={programme.href} />}>
+                    <Button variant="link" className="mt-4 px-0 font-bold" render={<Link href={`/academics#${programme.key}`} />}>
                       Explore the programme
                       <ArrowRightIcon />
                     </Button>
@@ -350,13 +342,15 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* ------------------------------- Stats ------------------------------- */}
+      {stats.visible && stats.items.length ? (
       <section className="bg-navy py-14 text-navy-foreground sm:py-20">
         <div className="eb-container">
           <div className="grid gap-8 md:grid-cols-4">
-            {SCHOOL_STATS.map((stat, i) => (
-              <Reveal key={stat.key} delay={i * 0.04}>
+            {stats.items.map((stat, i) => (
+              <Reveal key={`${stat.label}-${i}`} delay={i * 0.04}>
                 <div className="border-l border-gold/25 pl-5">
                   <p className="font-heading text-3xl leading-none font-extrabold text-gold sm:text-4xl">
                     <Counter value={stat.value} suffix={stat.suffix} />
@@ -370,30 +364,33 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* ----------------------------- Facilities ---------------------------- */}
+      {facilities.visible ? (
       <section className="eb-section">
         <div className="eb-container">
           <SectionHeading
-            eyebrow="Facilities"
-            title="Spaces designed around small people"
-            lede="Thirteen dedicated spaces, from a child-safe science laboratory to a soft-surface playground."
+            eyebrow={facilities.eyebrow}
+            title={facilities.title}
+            lede={facilities.lede}
             action={
-              <Button variant="outline" size="lg" className="font-bold" render={<Link href="/school-life/facilities" />}>
+              <Button variant="outline" size="lg" className="font-bold" render={<Link href="/school-life#facilities" />}>
                 All facilities
                 <ArrowRightIcon />
               </Button>
             }
           />
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {FACILITIES.slice(0, 6).map((facility, i) => (
-              <Reveal key={facility.id} delay={i * 0.04}>
-                <Link href={`/school-life/facilities#${facility.slug}`} className="group block h-full">
+            {schoolLife.facilities.items.slice(0, 6).map((facility, i) => (
+              <Reveal key={`${facility.name}-${i}`} delay={i * 0.04}>
+                <Link href={`/school-life#${slugify(facility.name)}`} className="group block h-full">
                   <Card className="h-full gap-0 overflow-hidden p-0 transition-all group-hover:-translate-y-1 group-hover:shadow-lg">
                     <div className="relative">
                       <ToneImage
                         tone={["navy", "gold", "info", "success", "plum"][i % 5]}
-                        seed={facility.slug}
+                        seed={slugify(facility.name)}
+                        media={facility.image ?? undefined}
                         label={facility.name}
                         className="aspect-16/10"
                       />
@@ -412,16 +409,18 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* -------------------------- Clubs & activities ----------------------- */}
+      {c.clubs.visible && clubs.length ? (
       <section className="eb-section border-y bg-muted/40">
         <div className="eb-container">
           <SectionHeading
-            eyebrow="Clubs & Activities"
-            title="Sixteen ways to find what you love"
-            lede="Every pupil joins at least one club. Some find a hobby; a few find a calling."
+            eyebrow={c.clubs.eyebrow}
+            title={c.clubs.title}
+            lede={c.clubs.lede}
             action={
-              <Button variant="outline" size="lg" className="font-bold" render={<Link href="/school-life/clubs" />}>
+              <Button variant="outline" size="lg" className="font-bold" render={<Link href="/school-life#clubs" />}>
                 All clubs
                 <ArrowRightIcon />
               </Button>
@@ -446,20 +445,16 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* ------------------------------ Our Stars ---------------------------- */}
+      {c.stars.visible && achievements.length ? (
       <section className="eb-section">
         <div className="eb-container">
           <SectionHeading
-            eyebrow="Our Stars"
-            title="Pupil achievements worth celebrating"
-            lede="We share what our children accomplish — and we protect their privacy while doing it."
-            action={
-              <Button variant="outline" size="lg" className="font-bold" render={<Link href="/school-life/achievements" />}>
-                All achievements
-                <ArrowRightIcon />
-              </Button>
-            }
+            eyebrow={c.stars.eyebrow}
+            title={c.stars.title}
+            lede={c.stars.lede}
           />
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {achievements.map((achievement, i) => (
@@ -484,16 +479,18 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* ------------------------------ Teachers ----------------------------- */}
+      {c.teachers.visible && teachers.length ? (
       <section className="eb-section border-y bg-muted/40">
         <div className="eb-container">
           <SectionHeading
-            eyebrow="Our Teachers"
-            title="The people who will know your child by name"
-            lede="Forty-two teaching staff, trained in the academic, emotional and developmental needs of children."
+            eyebrow={c.teachers.eyebrow}
+            title={c.teachers.title}
+            lede={c.teachers.lede}
             action={
-              <Button variant="outline" size="lg" className="font-bold" render={<Link href="/about/teachers" />}>
+              <Button variant="outline" size="lg" className="font-bold" render={<Link href="/about/team" />}>
                 Meet the team
                 <ArrowRightIcon />
               </Button>
@@ -525,14 +522,16 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* ------------------------- News and events --------------------------- */}
+      {c.news.visible ? (
       <section className="eb-section">
         <div className="eb-container grid gap-12 lg:grid-cols-[1.6fr_1fr]">
           <div>
             <SectionHeading
-              eyebrow="Latest News"
-              title="What's happening at El-Bethel"
+              eyebrow={c.news.newsEyebrow}
+              title={c.news.newsTitle}
               action={
                 <Button variant="link" className="font-bold" render={<Link href="/news" />}>
                   All news <ArrowRightIcon />
@@ -565,7 +564,7 @@ export default async function HomePage() {
           </div>
 
           <div>
-            <SectionHeading eyebrow="Upcoming" title="School events" />
+            <SectionHeading eyebrow={c.news.eventsEyebrow} title={c.news.eventsTitle} />
             <ul className="mt-8 space-y-3">
               {events.map((event, i) => (
                 <Reveal key={event.id} delay={i * 0.05} as="li">
@@ -597,13 +596,15 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* ------------------------------ Gallery ------------------------------ */}
+      {c.gallery.visible && gallery.length ? (
       <section className="eb-section border-y bg-muted/40">
         <div className="eb-container">
           <SectionHeading
-            eyebrow="Gallery"
-            title="A term in pictures"
+            eyebrow={c.gallery.eyebrow}
+            title={c.gallery.title}
             action={
               <Button variant="outline" size="lg" className="font-bold" render={<Link href="/school-life/gallery" />}>
                 Open gallery
@@ -633,13 +634,15 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* ---------------------------- Testimonials --------------------------- */}
+      {c.testimonials.visible && testimonials.length ? (
       <section className="eb-section">
         <div className="eb-container">
           <SectionHeading
-            eyebrow="Parent Voices"
-            title="What families say"
+            eyebrow={c.testimonials.eyebrow}
+            title={c.testimonials.title}
             align="center"
           />
           <div className="mt-12 grid gap-5 lg:grid-cols-3">
@@ -670,33 +673,37 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* ------------------------------- Values ------------------------------ */}
+      {c.values.visible ? (
       <section className="eb-section border-t bg-muted/40">
         <div className="eb-container">
-          <SectionHeading eyebrow="Core Values" title="Seven values, taught and lived" align="center" />
+          <SectionHeading eyebrow={c.values.eyebrow} title={c.values.title} align="center" />
           <div className="mt-10 flex flex-wrap justify-center gap-3">
-            {CORE_VALUES.map((value, i) => (
-              <Reveal key={value.name} delay={i * 0.04}>
+            {about.values.items.map((value, i) => (
+              <Reveal key={`${value.title}-${i}`} delay={i * 0.04}>
                 <div className="flex items-center gap-2.5 rounded-full border bg-card py-2.5 pr-5 pl-2.5 shadow-sm">
                   <span className="grid size-8 place-items-center rounded-full bg-gold/15 text-gold-foreground dark:text-gold">
                     <Icon name={value.icon} className="size-4" />
                   </span>
-                  <span className="text-sm font-extrabold">{value.name}</span>
+                  <span className="text-sm font-extrabold">{value.title}</span>
                 </div>
               </Reveal>
             ))}
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* ------------------------------ Contact ------------------------------ */}
+      {c.contact.visible ? (
       <section className="eb-section">
         <div className="eb-container grid gap-8 lg:grid-cols-3">
           {[
-            { icon: "MapPin", title: "Visit us", lines: [SCHOOL.address], href: "/contact", cta: "Get directions" },
-            { icon: "Phone", title: "Talk to us", lines: [SCHOOL.phone, SCHOOL.email], href: "/contact", cta: "Send an enquiry" },
-            { icon: "CalendarDays", title: "Office hours", lines: ["Monday – Friday", "7:30 AM – 4:00 PM"], href: "/contact", cta: "Contact the office" },
+            { icon: "MapPin", title: c.contact.visitTitle, lines: [SCHOOL.address], href: "/contact", cta: "Get directions" },
+            { icon: "Phone", title: c.contact.talkTitle, lines: [SCHOOL.phone, SCHOOL.email], href: "/contact", cta: "Send an enquiry" },
+            { icon: "CalendarDays", title: c.contact.hoursTitle, lines: SCHOOL.officeHours.split(/,\s*/), href: "/contact", cta: "Contact the office" },
           ].map((block, i) => (
             <Reveal key={block.title} delay={i * 0.06}>
               <Card className="h-full gap-0 p-6">
@@ -717,8 +724,9 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+      ) : null}
 
-      <CtaBand />
+      {cta.visible ? <CtaBand title={cta.title} text={cta.text} primary={cta.primary} secondary={cta.secondary} /> : null}
     </>
   );
 }

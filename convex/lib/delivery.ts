@@ -32,7 +32,7 @@ export async function enqueueEmail(
   ctx: MutationCtx,
   user: Doc<"users">,
   to: string,
-  n: { title: string; body: string; href?: string },
+  n: { title: string; body: string; href?: string; cta?: string },
   notificationId?: Id<"notifications">,
 ) {
   const deliveryId = await ctx.db.insert("deliveries", {
@@ -42,6 +42,7 @@ export async function enqueueEmail(
     title: n.title,
     body: n.body,
     href: n.href,
+    cta: n.cta,
     status: "queued",
     createdAt: new Date().toISOString(),
   });

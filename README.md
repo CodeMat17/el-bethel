@@ -28,13 +28,13 @@ sign-in buttons for the four main roles.
 
 | Role | Email | What you see |
 |---|---|---|
-| Parent | `parent@elbethel.edu.ng` | Mrs. Ada Chukwu — three children across Primary 1, Primary 3 and Primary 5 |
-| Pupil | `pupil@elbethel.edu.ng` | David Chukwu, Primary 4A, EIA-2026-00482 |
-| Teacher | `teacher@elbethel.edu.ng` | Miss Chiamaka Obi, class teacher of Primary 4A |
-| Administrator | `admin@elbethel.edu.ng` | The full school control centre |
-| Headteacher | `headteacher@elbethel.edu.ng` | Leadership view |
-| Accountant | `accounts@elbethel.edu.ng` | Finance-oriented admin access |
-| Admissions | `admissions@elbethel.edu.ng` | Admissions pipeline |
+| Parent | `parent@ebia.com.ng` | Mrs. Ada Chukwu — three children across Primary 1, Primary 3 and Primary 5 |
+| Pupil | `pupil@ebia.com.ng` | David Chukwu, Primary 4A, EIA-2026-00482 |
+| Teacher | `teacher@ebia.com.ng` | Miss Chiamaka Obi, class teacher of Primary 4A |
+| Administrator | `admin@ebia.com.ng` | The full school control centre |
+| Headteacher | `headteacher@ebia.com.ng` | Leadership view |
+| Accountant | `accounts@ebia.com.ng` | Finance-oriented admin access |
+| Admissions | `admissions@ebia.com.ng` | Admissions pipeline |
 | Applicant | `applicant@example.com` | An in-flight admission application |
 
 Every teacher, parent and pupil in the seed data also has an account, so authorisation
@@ -147,7 +147,7 @@ the Convex dashboard (Settings → Environment Variables); until they are set, n
 | Variable | Purpose |
 |---|---|
 | `RESEND_API_KEY` | API key from Resend |
-| `RESEND_FROM` | Sender on a domain verified in Resend, e.g. `El-Bethel International Academy <notifications@elbethel.edu.ng>` |
+| `RESEND_FROM` | Sender on a domain verified in Resend, e.g. `El-Bethel International Academy <notifications@ebia.com.ng>` |
 | `SITE_URL` | Optional — where links in emails point (defaults to the live site) |
 
 Every email is logged on **Admin → Notifications**, which also has a "send me a test" button.

@@ -8,7 +8,7 @@ import { Reveal, ToneImage } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { SCHOOL } from "@/lib/school/config";
+import { getContent, getSchool } from "@/lib/school/site-content";
 
 export const metadata: Metadata = {
   title: "Contact Us",
@@ -17,19 +17,15 @@ export const metadata: Metadata = {
   alternates: { canonical: "/contact" },
 };
 
-const DEPARTMENTS = [
-  { name: "Admissions", email: SCHOOL.admissionsEmail, detail: "Applications, assessments and enrolment." },
-  { name: "Accounts", email: "accounts@elbethel.edu.ng", detail: "Invoices, payments, receipts and payment plans." },
-  { name: "Academics", email: "academics@elbethel.edu.ng", detail: "Curriculum, results, report cards and learning support." },
-];
-
-export default function ContactPage() {
+export default async function ContactPage() {
+  const [SCHOOL, page] = await Promise.all([getSchool(), getContent("contact")]);
+  const { hero, map, apply, enquiry, departments } = page;
   return (
     <>
       <PageHero
-        eyebrow="Contact"
-        title="Talk to us"
-        lede="We answer enquiries within one working day. For anything urgent, please call the school office."
+        eyebrow={hero.eyebrow}
+        title={hero.title}
+        lede={hero.lede}
         breadcrumb={[{ label: "Home", href: "/" }, { label: "Contact", href: "/contact" }]}
       />
 
@@ -37,7 +33,7 @@ export default function ContactPage() {
         <div className="eb-container grid gap-10 lg:grid-cols-[1fr_1.2fr]">
           <div className="space-y-4">
             <Card className="gap-0 p-6">
-              <h2 className="font-heading text-lg font-extrabold">School office</h2>
+              <h2 className="font-heading text-lg font-extrabold">{page.officeTitle}</h2>
               <Separator className="my-5" />
               <ul className="space-y-5 text-sm">
                 <li className="flex gap-3">
@@ -87,14 +83,15 @@ export default function ContactPage() {
               </ul>
             </Card>
 
+            {map.visible ? (
             <Card className="gap-0 overflow-hidden p-0">
               <div className="relative">
-                <ToneImage tone="navy" seed="map-jabi" label="Aerial view of Abuja, where our Ushafa campus sits" className="aspect-4/3" />
+                <ToneImage tone="navy" seed="map-jabi" media={map.image ?? undefined} label="Aerial view of Abuja, where our Ushafa campus sits" className="aspect-4/3" />
                 <div className="absolute inset-0 grid place-items-center">
                   <div className="rounded-2xl bg-background/92 px-5 py-4 text-center backdrop-blur">
                     <MapPinIcon className="mx-auto size-5 text-gold" />
                     <p className="mt-2 font-heading text-sm font-extrabold">{SCHOOL.name}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">Ushafa, Abuja</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{map.place}</p>
                     <Button
                       size="sm"
                       variant="outline"
@@ -114,25 +111,24 @@ export default function ContactPage() {
                 </div>
               </div>
             </Card>
+            ) : null}
 
+            {apply.visible ? (
             <Card className="gap-0 border-gold/25 bg-gold/8 p-6">
-              <h2 className="font-heading text-base font-extrabold">Ready to apply?</h2>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Admission is open for the 2026/2027 session. Start an application online and save it as you go.
-              </p>
-              <Button className="mt-4 w-full font-bold" size="lg" render={<Link href="/admissions/apply" />}>
-                Apply for admission
+              <h2 className="font-heading text-base font-extrabold">{apply.title}</h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{apply.text}</p>
+              <Button className="mt-4 w-full font-bold" size="lg" render={<Link href={apply.link.href} />}>
+                {apply.link.label}
                 <ArrowRightIcon />
               </Button>
             </Card>
+            ) : null}
           </div>
 
           <div>
             <Card className="gap-0 p-6 sm:p-8">
-              <h2 className="font-heading text-lg font-extrabold sm:text-xl">Send us an enquiry</h2>
-              <p className="mt-1.5 text-sm text-muted-foreground">
-                Tell us what you need and the right person will come back to you.
-              </p>
+              <h2 className="font-heading text-lg font-extrabold sm:text-xl">{enquiry.title}</h2>
+              <p className="mt-1.5 text-sm text-muted-foreground">{enquiry.text}</p>
               <Separator className="my-7" />
               <EnquiryForm />
             </Card>
@@ -140,12 +136,13 @@ export default function ContactPage() {
         </div>
       </section>
 
+      {departments.visible && departments.items.length ? (
       <section className="eb-section border-t bg-muted/40">
         <div className="eb-container">
-          <SectionHeading eyebrow="Departments" title="Contact the right team directly" align="center" />
+          <SectionHeading eyebrow={departments.eyebrow} title={departments.title} align="center" />
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {DEPARTMENTS.map((dept, i) => (
-              <Reveal key={dept.name} delay={i * 0.05}>
+            {departments.items.map((dept, i) => (
+              <Reveal key={`${dept.name}-${i}`} delay={i * 0.05}>
                 <Card className="h-full gap-0 p-6">
                   <h3 className="font-heading text-base font-extrabold">{dept.name}</h3>
                   <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{dept.detail}</p>
@@ -161,6 +158,7 @@ export default function ContactPage() {
           </div>
         </div>
       </section>
+      ) : null}
     </>
   );
 }

@@ -12,7 +12,7 @@ import { fileSize } from "@/lib/school/format";
 import type { CloudMedia } from "@/lib/school/types";
 import { cn } from "@/lib/utils";
 
-const MAX_IMAGE = 10 * 1024 * 1024;
+export const MAX_IMAGE = 10 * 1024 * 1024;
 const MAX_VIDEO = 100 * 1024 * 1024;
 
 interface CloudinaryResponse {
@@ -27,7 +27,7 @@ interface CloudinaryResponse {
 }
 
 /** Upload a file straight to Cloudinary with a server-signed ticket, reporting progress. */
-function uploadWithProgress(
+export function uploadWithProgress(
   file: File,
   ticket: { cloudName: string; apiKey: string; timestamp: number; folder: string; signature: string },
   onProgress: (pct: number) => void,

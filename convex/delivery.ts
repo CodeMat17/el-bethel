@@ -1,9 +1,11 @@
 import { v } from "convex/values";
 
-import { SCHOOL, SITE_URL } from "../lib/school/config";
+import { SITE_URL } from "../lib/school/config";
+import type { SchoolIdentity } from "../lib/school/cms/schema";
 import { internal } from "./_generated/api";
 import { internalAction, internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { fail, requireAdmin } from "./lib/access";
+import { publishedContent } from "./lib/cms";
 import { emailConfigured, emailFor, enqueueEmail } from "./lib/delivery";
 import { nowISO, withId } from "./lib/util";
 
@@ -13,16 +15,23 @@ import { nowISO, withId } from "./lib/util";
  * Configure in the Convex dashboard (Settings → Environment Variables):
  *   RESEND_API_KEY  — an API key from Resend
  *   RESEND_FROM     — a sender on a domain verified in Resend,
- *                     e.g. "El-Bethel International Academy <notifications@elbethel.edu.ng>"
+ *                     e.g. "El-Bethel International Academy <notifications@ebia.com.ng>"
  *   SITE_URL        — optional; the address links in emails point to (defaults to the live site)
  */
 
 const escapeHtml = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
-function renderEmail(title: string, body: string, link: string | null) {
+function renderEmail(
+  school: Pick<SchoolIdentity, "name" | "address" | "phone">,
+  title: string,
+  body: string,
+  link: string | null,
+  cta = "Open in the portal",
+) {
+  const SCHOOL = school;
   const button = link
-    ? `<p style="margin:28px 0 0"><a href="${escapeHtml(link)}" style="display:inline-block;background:#232a3a;color:#ffffff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px">Open in the portal</a></p>`
+    ? `<p style="margin:28px 0 0"><a href="${escapeHtml(link)}" style="display:inline-block;background:#232a3a;color:#ffffff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px">${escapeHtml(cta)}</a></p>`
     : "";
   const html = `<!doctype html><html><body style="margin:0;background:#faf8f4;font-family:Arial,Helvetica,sans-serif;color:#1f2430">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px">
@@ -36,7 +45,7 @@ ${button}
 <tr><td style="padding:18px 28px;font-size:12px;color:#6b7280;border-top:1px solid #ebe6da">
 ${escapeHtml(SCHOOL.address)} · ${escapeHtml(SCHOOL.phone)}<br>You receive this because you have an account on the school portal. Every notice is also in the portal.
 </td></tr></table></td></tr></table></body></html>`;
-  const text = `${title}\n\n${body}${link ? `\n\nOpen in the portal: ${link}` : ""}\n\n${SCHOOL.name}`;
+  const text = `${title}\n\n${body}${link ? `\n\n${cta}: ${link}` : ""}\n\n${SCHOOL.name}`;
   return { html, text };
 }
 
@@ -45,6 +54,15 @@ ${escapeHtml(SCHOOL.address)} · ${escapeHtml(SCHOOL.phone)}<br>You receive this
 export const job = internalQuery({
   args: { deliveryId: v.id("deliveries") },
   handler: async (ctx, { deliveryId }) => await ctx.db.get(deliveryId),
+});
+
+/** The school name and contact line for email headers and footers, as published in the Site portal. */
+export const identity = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const s = await publishedContent(ctx, "identity");
+    return { name: s.name, address: s.address, phone: s.phone };
+  },
 });
 
 export const record = internalMutation({
@@ -68,7 +86,8 @@ export const send = internalAction({
       return;
     }
     const site = (process.env.SITE_URL ?? SITE_URL).replace(/\/$/, "");
-    const { html, text } = renderEmail(d.title, d.body, d.href ? `${site}${d.href}` : null);
+    const school = await ctx.runQuery(internal.delivery.identity, {});
+    const { html, text } = renderEmail(school, d.title, d.body, d.href ? `${site}${d.href}` : null, d.cta);
     try {
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",

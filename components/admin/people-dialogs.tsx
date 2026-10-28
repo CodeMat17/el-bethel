@@ -11,18 +11,19 @@ import type { Parent, Student, Teacher } from "@/lib/school/types";
 
 type Option = { value: string; label: string };
 
-function AddButton({ label }: { label: string }) {
+// Used as `DialogTrigger` render targets, so they must pass through the injected props (onClick, ref, aria-*).
+function AddButton({ label, ...props }: { label: string } & React.ComponentProps<typeof Button>) {
   return (
-    <Button size="lg" className="font-bold">
+    <Button size="lg" className="font-bold" {...props}>
       <PlusIcon />
       {label}
     </Button>
   );
 }
 
-function EditButton() {
+function EditButton(props: React.ComponentProps<typeof Button>) {
   return (
-    <Button size="sm" variant="outline" className="font-bold">
+    <Button size="sm" variant="outline" className="font-bold" {...props}>
       <PencilIcon />
       Edit
     </Button>
@@ -53,6 +54,7 @@ export function StudentDialog({
       title={student ? `Edit ${student.firstName} ${student.lastName}` : "Enrol a pupil"}
       description={student ? undefined : "A student number is assigned automatically."}
       action={saveStudent}
+      media={{ purpose: "people", accept: "image", initial: student?.photo, label: "Photo" }}
       wide
     >
       <Hidden name="id" value={student?.id} />
@@ -85,6 +87,7 @@ export function ParentDialog({ parent, studentId, trigger }: { parent?: Parent; 
       trigger={trigger ?? (parent ? <EditButton /> : <AddButton label="Add parent" />)}
       title={parent ? `Edit ${parent.firstName} ${parent.lastName}` : "Add a parent or guardian"}
       action={saveParent}
+      media={{ purpose: "people", accept: "image", initial: parent?.photo, label: "Photo" }}
       wide
     >
       <Hidden name="id" value={parent?.id} />

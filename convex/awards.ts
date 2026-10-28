@@ -43,7 +43,7 @@ async function tellFamily(ctx: MutationCtx, studentId: Id<"students">, n: { type
     const user = await ctx.db.get(userId);
     await notify(ctx, userId, {
       ...n,
-      href: user?.studentId ? "/portal/pupil/stars" : user?.parentId ? `/portal/parent/children/${studentId}` : undefined,
+      href: user?.studentId ? "/portal/pupil/profile" : user?.parentId ? `/portal/parent/children/${studentId}` : undefined,
     });
   }
 }

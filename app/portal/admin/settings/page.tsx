@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ShieldCheckIcon } from "lucide-react";
 
+import { BankDetailsDialog } from "@/components/admin/office-dialogs";
 import { StatCard } from "@/components/common";
 import { PortalPageHeader } from "@/components/portal/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -8,23 +9,17 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { api } from "@/convex/_generated/api";
 import { requireAdmin } from "@/lib/school/auth";
-import {
-  ADMISSION_FEES,
-  ASSESSMENT_WEIGHTING,
-  CONDUCT_TRAITS,
-  MAX_UPLOAD_BYTES,
-  SCHOOL,
-  SCHOOL_STATS,
-} from "@/lib/school/config";
+import { publicQuery } from "@/lib/school/convex";
+import { ASSESSMENT_WEIGHTING, CONDUCT_TRAITS, MAX_UPLOAD_BYTES } from "@/lib/school/config";
+import { getContent, getSchool } from "@/lib/school/site-content";
 import { fileSize, money } from "@/lib/school/format";
 
 export const metadata: Metadata = { title: "Settings" };
 
 const TOGGLES = [
   { key: "positions", label: "Show class position on report cards", detail: "Ranks pupils within their class.", on: true },
-  { key: "attendance-alerts", label: "Attendance alerts to parents", detail: "Notify a family when a child is marked absent.", on: true },
-  { key: "sms", label: "SMS notifications", detail: "Send critical alerts by SMS in addition to in-app.", on: true },
   { key: "self-service", label: "Online admission applications", detail: "Allow families to apply through the website.", on: true },
   { key: "resubmission", label: "Allow assignment resubmission by default", detail: "Teachers can still override per assignment.", on: true },
   { key: "gallery-consent", label: "Require consent before publishing a pupil image", detail: "Blocks publication until consent is recorded.", on: true },
@@ -38,6 +33,7 @@ const INTEGRATIONS = [
 
 export default async function AdminSettingsPage() {
   await requireAdmin();
+  const [SCHOOL, fees, bank] = await Promise.all([getSchool(), getContent("fees"), publicQuery(api.fees.bankDetails, {})]);
 
   return (
     <>
@@ -63,6 +59,7 @@ export default async function AdminSettingsPage() {
         <TabsContent value="school" className="mt-6 space-y-6">
           <Card className="gap-0 p-5 sm:p-6">
             <h2 className="font-heading text-base font-extrabold">School identity</h2>
+            <p className="mt-1 text-sm text-muted-foreground">As published on the website. Site administrators change it under Identity & contact in the Site portal.</p>
             <Separator className="my-5" />
             <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {[
@@ -86,24 +83,6 @@ export default async function AdminSettingsPage() {
             </dl>
           </Card>
 
-          <Card className="gap-0 p-5 sm:p-6">
-            <h2 className="font-heading text-base font-extrabold">Homepage statistics</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              The animated counters on the public homepage. Editable without a code change.
-            </p>
-            <Separator className="my-5" />
-            <div className="grid gap-3 sm:grid-cols-4">
-              {SCHOOL_STATS.map((stat) => (
-                <div key={stat.key} className="rounded-xl border bg-card p-4 text-center">
-                  <p className="font-heading text-xl font-extrabold">
-                    {stat.value}
-                    {stat.suffix}
-                  </p>
-                  <p className="mt-1 text-[0.65rem] font-bold text-muted-foreground uppercase">{stat.label}</p>
-                </div>
-              ))}
-            </div>
-          </Card>
         </TabsContent>
 
         <TabsContent value="academic" className="mt-6 space-y-6">
@@ -153,10 +132,32 @@ export default async function AdminSettingsPage() {
 
         <TabsContent value="finance" className="mt-6 space-y-6">
           <div className="grid gap-4 sm:grid-cols-3">
-            {ADMISSION_FEES.map((fee) => (
+            {fees.admissionFees.map((fee) => (
               <StatCard key={fee.label} label={fee.label} value={money(fee.amount)} icon="Receipt" tone="neutral" />
             ))}
           </div>
+          <Card className="gap-0 p-5 sm:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="font-heading text-base font-extrabold">School bank account</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Shown to families on the application form for bank transfers.</p>
+              </div>
+              <BankDetailsDialog bank={bank} />
+            </div>
+            <Separator className="my-5" />
+            <dl className="grid gap-4 sm:grid-cols-3">
+              {[
+                ["Bank", bank.bankName],
+                ["Account number", bank.accountNumber],
+                ["Account name", bank.accountName],
+              ].map(([label, value]) => (
+                <div key={label}>
+                  <dt className="text-xs font-bold text-muted-foreground uppercase">{label}</dt>
+                  <dd className="mt-0.5 text-sm font-semibold break-words">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </Card>
           <Card className="gap-0 p-5 sm:p-6">
             <h2 className="font-heading text-base font-extrabold">Payment methods</h2>
             <Separator className="my-5" />
@@ -225,8 +226,8 @@ export default async function AdminSettingsPage() {
       </Tabs>
 
       <p className="mt-8 text-xs text-muted-foreground">
-        Saving settings is disabled in this demonstration environment. Every value shown here is data,
-        not code — a live deployment edits them from this screen and records the change in the audit log.
+        The school bank account can be edited here, and every change is recorded in the audit log. The other
+        settings on this screen are shown for reference and cannot be saved yet.
       </p>
     </>
   );

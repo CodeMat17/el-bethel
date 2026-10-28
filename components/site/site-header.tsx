@@ -35,11 +35,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { SCHOOL } from "@/lib/school/config";
-import { PORTAL_LINKS, PUBLIC_NAV } from "@/lib/school/navigation";
+import type { School } from "@/lib/school/cms/tokens";
+import { PUBLIC_NAV } from "@/lib/school/navigation";
 import { cn } from "@/lib/utils";
 
-export function SiteHeader({ signedIn, portalHref }: { signedIn: boolean; portalHref: string }) {
+export function SiteHeader({ school: SCHOOL }: { school: School }) {
   const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
   const [openMenu, setOpenMenu] = React.useState<string | null>(null);
@@ -56,38 +56,7 @@ export function SiteHeader({ signedIn, portalHref }: { signedIn: boolean; portal
     href ? (href === "/" ? pathname === "/" : pathname.startsWith(href)) : false;
 
   return (
-    <header className="sticky top-0 z-50">
-      {/* Utility bar — hidden on small screens to keep the mobile header tight */}
-      <div className="hidden bg-navy text-navy-foreground lg:block">
-        <div className="eb-container flex h-9 items-center justify-between text-xs">
-          <div className="flex items-center gap-5">
-            <a href={`tel:${SCHOOL.phoneHref}`} className="flex items-center gap-1.5 opacity-90 transition-opacity hover:opacity-100">
-              <PhoneIcon className="size-3.5" /> {SCHOOL.phone}
-            </a>
-            <a href={`mailto:${SCHOOL.email}`} className="flex items-center gap-1.5 opacity-90 transition-opacity hover:opacity-100">
-              <MailIcon className="size-3.5" /> {SCHOOL.email}
-            </a>
-            <a href={SCHOOL.whatsappHref} target="_blank" rel="noreferrer noopener" className="flex items-center gap-1.5 opacity-90 transition-opacity hover:opacity-100">
-              <MessageCircleIcon className="size-3.5" /> {SCHOOL.whatsapp}
-            </a>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5 font-semibold text-gold">
-              <span className="relative flex size-1.5">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-gold opacity-75" />
-                <span className="relative inline-flex size-1.5 rounded-full bg-gold" />
-              </span>
-              {SCHOOL.session} Admission Open
-            </span>
-            <Separator orientation="vertical" className="h-4 bg-navy-foreground/25" />
-            {PORTAL_LINKS.map((l) => (
-              <Link key={l.href} href={l.href} className="opacity-90 transition-opacity hover:opacity-100">
-                {l.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
+    <header className="sticky top-0 z-50">   
 
       <div
         className={cn(
@@ -98,7 +67,7 @@ export function SiteHeader({ signedIn, portalHref }: { signedIn: boolean; portal
         )}
       >
         <div className="eb-container flex h-16 items-center gap-3 lg:h-[4.5rem]">
-          <Brand className="mr-auto" />
+          <Brand className="mr-auto" school={SCHOOL} />
 
           <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Primary">
             {PUBLIC_NAV.map((section) =>
@@ -199,9 +168,9 @@ export function SiteHeader({ signedIn, portalHref }: { signedIn: boolean; portal
             <Button
               className="ml-1 hidden font-bold sm:inline-flex"
               size="lg"
-              render={<Link href={signedIn ? portalHref : "/login"} />}
+              render={<Link href="/portal" />}
             >
-              {signedIn ? "My Portal" : "Sign in"}
+              Portal login
               <LogInIcon />
             </Button>
             <Button
@@ -268,21 +237,6 @@ export function SiteHeader({ signedIn, portalHref }: { signedIn: boolean; portal
                     )}
                   </Accordion>
 
-                  <p className="mt-5 mb-2 px-2 text-[0.68rem] font-extrabold tracking-[0.16em] text-muted-foreground uppercase">
-                    Portals
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {PORTAL_LINKS.map((l) => (
-                      <Link
-                        key={l.href}
-                        href={l.href}
-                        className="flex min-h-16 flex-col justify-center gap-1 rounded-xl border bg-card p-3 text-xs font-bold transition-colors hover:border-gold/50 hover:bg-accent"
-                      >
-                        <Icon name={l.icon ?? "Users"} className="size-4 text-gold" />
-                        {l.label}
-                      </Link>
-                    ))}
-                  </div>
                 </div>
 
                 <div className="grid gap-2 border-t bg-muted/40 p-4">
@@ -297,9 +251,9 @@ export function SiteHeader({ signedIn, portalHref }: { signedIn: boolean; portal
                     variant="outline"
                     size="lg"
                     className="h-11 w-full font-bold"
-                    render={<Link href={signedIn ? portalHref : "/login"} />}
+                    render={<Link href="/portal" />}
                   >
-                    {signedIn ? "Go to my portal" : "Sign in"}
+                    Portal login
                   </Button>
                   <a
                     href={`tel:${SCHOOL.phoneHref}`}

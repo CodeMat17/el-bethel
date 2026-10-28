@@ -6,15 +6,15 @@ import { CtaBand, PageHero, SectionHeading, StatusPill } from "@/components/comm
 import { Reveal } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ACADEMIC_CALENDAR, SCHOOL } from "@/lib/school/config";
+import { academicCalendar } from "@/lib/school/calendar";
+import { getDirectory } from "@/lib/school/directory";
 import { getAllEvents } from "@/lib/school/site-data";
 import { formatDate, formatLongDate } from "@/lib/school/format";
-import { DEMO_TODAY } from "@/lib/school/seed";
 
 export const metadata: Metadata = {
   title: "School Calendar",
   description:
-    "Term dates, breaks, examinations and key events for the 2026/2027 academic session at El-Bethel International Academy, Abuja.",
+    "Term dates, breaks, examinations and key events for the current academic session at El-Bethel International Academy, Abuja.",
   alternates: { canonical: "/calendar" },
 };
 
@@ -29,7 +29,12 @@ const CATEGORY_TONE = {
 } as const;
 
 export default async function CalendarPage() {
-  const events = await getAllEvents();
+  const [events, dir] = await Promise.all([getAllEvents(), getDirectory()]);
+  const { session, blocks } = academicCalendar(dir.sessions, dir.terms);
+  const today = new Date();
+  const isCurrent = (block: (typeof blocks)[number]) =>
+    today >= new Date(`${block.start}T00:00:00Z`) && today <= new Date(`${block.end}T23:59:59Z`);
+  const currentBlock = blocks.find(isCurrent);
   const months = events.reduce<Record<string, typeof events>>((acc, event) => {
     const key = new Date(event.date).toLocaleDateString("en-GB", {
       month: "long",
@@ -43,7 +48,7 @@ export default async function CalendarPage() {
   return (
     <>
       <PageHero
-        eyebrow={`${SCHOOL.session} session`}
+        eyebrow={session ? `${session.name} session` : "Academic calendar"}
         title="School Calendar"
         lede="Term dates, breaks, examination windows and every event in the school year — all in one place."
         breadcrumb={[{ label: "Home", href: "/" }, { label: "Calendar", href: "/calendar" }]}
@@ -53,10 +58,8 @@ export default async function CalendarPage() {
         <div className="eb-container">
           <SectionHeading eyebrow="Terms and breaks" title="How the year is divided" />
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {ACADEMIC_CALENDAR.map((block, i) => {
-              const start = new Date(block.start);
-              const end = new Date(block.end);
-              const current = DEMO_TODAY >= start && DEMO_TODAY <= end;
+            {blocks.map((block, i) => {
+              const current = isCurrent(block);
               return (
                 <Reveal key={block.name} delay={i * 0.04}>
                   <Card
@@ -140,7 +143,13 @@ export default async function CalendarPage() {
           <Card className="gap-0 border-info/30 bg-info/10 p-6">
             <h2 className="font-heading text-base font-extrabold">Today</h2>
             <p className="mt-2 text-sm leading-relaxed">
-              {formatLongDate(DEMO_TODAY)} — First Term is in progress. Signed-in parents and pupils see
+              {formatLongDate(today)}
+              {currentBlock
+                ? currentBlock.type === "term"
+                  ? ` — ${currentBlock.name} is in progress.`
+                  : ` — the school is closed for the ${currentBlock.name}.`
+                : "."}{" "}
+              Signed-in parents and pupils see
               their own class timetable and personalised calendar in the portals.
             </p>
           </Card>

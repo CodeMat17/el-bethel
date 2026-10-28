@@ -1,13 +1,18 @@
 import { EmergencyBanner } from "@/components/site/emergency-banner";
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
-import { homeForUser, getSessionUser } from "@/lib/school/auth";
+import { PreviewBanner } from "@/components/site/preview-banner";
 import { getActiveNotice } from "@/lib/school/site-data";
-import { SCHOOL, SITE_URL, MISSION } from "@/lib/school/config";
+import { getContent, getPreviewToken, getSchool } from "@/lib/school/site-content";
+import { SITE_URL } from "@/lib/school/config";
 
 export default async function SiteLayout({ children }: LayoutProps<"/">) {
-  const user = await getSessionUser();
-  const notice = await getActiveNotice();
+  const [notice, SCHOOL, about, previewing] = await Promise.all([
+    getActiveNotice(),
+    getSchool(),
+    getContent("about"),
+    getPreviewToken(),
+  ]);
 
   const schema = {
     "@context": "https://schema.org",
@@ -16,25 +21,25 @@ export default async function SiteLayout({ children }: LayoutProps<"/">) {
     alternateName: SCHOOL.shortName,
     url: SITE_URL,
     slogan: SCHOOL.motto,
-    description: MISSION,
+    description: about.vision.mission,
     email: SCHOOL.email,
     telephone: SCHOOL.phone,
     address: {
       "@type": "PostalAddress",
-      streetAddress: "No.3 Engr. Demola Oduneye Avenue, Opposite Ushafa Mini Stadium, Ushafa",
-      addressLocality: "Abuja",
-      addressRegion: "Federal Capital Territory",
+      streetAddress: SCHOOL.address,
+      addressLocality: SCHOOL.city,
+      addressRegion: SCHOOL.state,
       addressCountry: "NG",
     },
-    sameAs: Object.values(SCHOOL.social),
+    sameAs: Object.values(SCHOOL.social).filter(Boolean),
   };
 
   return (
     <>
       <script
         type="application/ld+json"
-        // Structured data for search engines — static, school-owned content only.
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        // Structured data for search engines. "<" is escaped so edited text can never close the script tag.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }}
       />
       <a
         href="#main"
@@ -42,12 +47,13 @@ export default async function SiteLayout({ children }: LayoutProps<"/">) {
       >
         Skip to content
       </a>
+      {previewing ? <PreviewBanner /> : null}
       {notice ? <EmergencyBanner notice={notice} /> : null}
-      <SiteHeader signedIn={Boolean(user)} portalHref={user ? homeForUser(user) : "/login"} />
+      <SiteHeader school={SCHOOL} />
       <main id="main" className="flex-1">
         {children}
       </main>
-      <SiteFooter />
+      <SiteFooter school={SCHOOL} />
     </>
   );
 }

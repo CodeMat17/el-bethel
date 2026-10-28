@@ -1,17 +1,11 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import {
-  ArrowRightIcon,
-  BellIcon,
-  CalendarDaysIcon,
-  ClipboardListIcon,
-  MessagesSquareIcon,
-} from "lucide-react";
+import { ArrowRightIcon, BellIcon, ClipboardListIcon } from "lucide-react";
 
 import { EmptyState, StatCard, StatusPill } from "@/components/common";
 import { ChildSwitcher } from "@/components/portal/child-switcher";
 import { PortalPageHeader } from "@/components/portal/page-header";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -20,7 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { requireParent } from "@/lib/school/auth";
 import { DAY_NAMES } from "@/lib/school/config";
 import { api } from "@/convex/_generated/api";
-import { schoolDay, slotsForDay, studentName, summariseAttendance } from "@/lib/school/data";
+import { schoolDay, slotsForDay, studentName } from "@/lib/school/data";
 import { getMyChildren, resolveActiveChild } from "@/lib/school/parent";
 import { getDirectory } from "@/lib/school/directory";
 import { query } from "@/lib/school/convex";
@@ -60,14 +54,12 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/port
     );
   }
 
-  const [assignments, attendanceRows, fees, timetable, events, notifications, inbox] = await Promise.all([
+  const [assignments, fees, timetable, events, notifications] = await Promise.all([
     query(api.assignments.forStudent, { studentId: child.id }),
-    query(api.attendance.forStudent, { studentId: child.id, limit: 120 }),
     query(api.fees.forStudent, { studentId: child.id }),
     query(api.timetable.forClass, { classId: child.classId }),
     query(api.content.events, { upcomingOnly: true, limit: 3 }),
     query(api.notifications.mine, { limit: 5 }),
-    query(api.messages.myThreads, {}),
   ]);
   const pending = assignments.filter((a) => a.progress === "not_started");
   const recentlyGraded = [...assignments]
@@ -75,11 +67,9 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/port
     .sort((a, b) => (b.submission?.gradedAt ?? "").localeCompare(a.submission?.gradedAt ?? ""))
     .slice(0, 4);
 
-  const attendance = summariseAttendance(attendanceRows);
   const invoices = fees.invoices;
   const outstanding = invoices.reduce((sum, i) => sum + (i.total - i.amountPaid), 0);
   const todaySlots = slotsForDay(timetable).filter((s) => s.subjectId);
-  const threads = inbox.threads.slice(0, 3);
   const term = dir.activeTerm;
   const dayLabel = DAY_NAMES[schoolDay()];
 
@@ -97,6 +87,7 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/port
               name: studentName(c),
               className: dir.className(c.classId),
               avatarSeed: c.avatarSeed,
+              photoUrl: c.photo?.url,
             }))}
           />
         }
@@ -106,6 +97,7 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/port
       <Card className="mb-6 gap-0 overflow-hidden p-0">
         <div className="flex flex-col gap-5 bg-navy p-5 text-navy-foreground sm:flex-row sm:items-center sm:p-6">
           <Avatar className="size-16 shrink-0 ring-2 ring-gold/40">
+            {child.photo ? <AvatarImage src={child.photo.url} alt="" /> : null}
             <AvatarFallback className={cn("text-lg font-extrabold", avatarTone(child.avatarSeed))}>
               {initials(child.firstName, child.lastName)}
             </AvatarFallback>
@@ -133,7 +125,7 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/port
       </Card>
 
       {/* Key metrics */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         <StatCard
           label="Pending work"
           value={pending.length}
@@ -143,28 +135,12 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/port
           href={`/portal/parent/assignments?child=${child.id}`}
         />
         <StatCard
-          label="Attendance"
-          value={`${attendance.rate}%`}
-          hint={`${attendance.present} present · ${attendance.absent} absent · ${attendance.late} late`}
-          icon="CalendarCheck"
-          tone={attendance.rate >= 95 ? "success" : attendance.rate >= 90 ? "warning" : "danger"}
-          href={`/portal/parent/attendance?child=${child.id}`}
-        />
-        <StatCard
           label="Outstanding fees"
           value={money(outstanding)}
           hint={outstanding === 0 ? "Fully paid — thank you" : `${term?.name ?? "Current"} invoice`}
           icon="Receipt"
           tone={outstanding === 0 ? "success" : "warning"}
           href={`/portal/parent/fees?child=${child.id}`}
-        />
-        <StatCard
-          label="Unread messages"
-          value={threads.filter((t) => t.messages.some((m) => !m.readBy.includes(user.id))).length}
-          hint="From teachers and the school office"
-          icon="MessagesSquare"
-          tone="info"
-          href="/portal/parent/messages"
         />
       </div>
 
@@ -331,47 +307,11 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/port
             )}
           </Card>
 
-          {/* Messages */}
-          <Card className="gap-0 p-5 sm:p-6">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="font-heading text-base font-extrabold">Messages</h2>
-              <Button variant="link" size="sm" className="font-bold" render={<Link href="/portal/parent/messages" />}>
-                Inbox <ArrowRightIcon />
-              </Button>
-            </div>
-            <Separator className="my-4" />
-            {threads.length === 0 ? (
-              <div className="py-8 text-center">
-                <MessagesSquareIcon className="mx-auto size-8 text-muted-foreground/50" />
-                <p className="mt-3 text-sm text-muted-foreground">No messages yet.</p>
-              </div>
-            ) : (
-              <ul className="space-y-2">
-                {threads.map((thread) => {
-                  const last = thread.messages[thread.messages.length - 1];
-                  return (
-                    <li key={thread.id}>
-                      <Link href={`/portal/parent/messages/${thread.id}`} className="block">
-                        <div className="rounded-xl border bg-card p-3.5 transition-colors hover:border-gold/40">
-                          <p className="truncate text-sm font-bold">{thread.subject}</p>
-                          <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{last?.body}</p>
-                          <p className="mt-1.5 text-[0.68rem] text-muted-foreground">
-                            {relativeTime(thread.updatedAt)}
-                          </p>
-                        </div>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </Card>
-
           {/* Events */}
           <Card className="gap-0 p-5 sm:p-6">
             <div className="flex items-center justify-between gap-3">
               <h2 className="font-heading text-base font-extrabold">Upcoming events</h2>
-              <Button variant="link" size="sm" className="font-bold" render={<Link href="/portal/parent/calendar" />}>
+              <Button variant="link" size="sm" className="font-bold" render={<Link href="/calendar" />}>
                 Calendar <ArrowRightIcon />
               </Button>
             </div>
@@ -394,10 +334,6 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/port
                 </li>
               ))}
             </ul>
-            <Button variant="outline" size="lg" className="mt-4 w-full font-bold" render={<Link href="/portal/parent/appointments" />}>
-              <CalendarDaysIcon />
-              Book a parent-teacher meeting
-            </Button>
           </Card>
         </div>
       </div>

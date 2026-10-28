@@ -4,28 +4,25 @@ import { ClockIcon, MailIcon, MapPinIcon, MessageCircleIcon, PhoneIcon } from "l
 import { Brand } from "@/components/site/brand";
 import { NewsletterForm } from "@/components/site/newsletter-form";
 import { Separator } from "@/components/ui/separator";
-import { SCHOOL } from "@/lib/school/config";
+import type { School } from "@/lib/school/cms/tokens";
 
 const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "About",
     links: [
       { label: "Our Story", href: "/about" },
-      { label: "Vision & Mission", href: "/about/vision-mission" },
-      { label: "Core Values", href: "/about/core-values" },
-      { label: "School Anthem", href: "/about/anthem" },
-      { label: "Headteacher's Message", href: "/about/headteacher" },
-      { label: "Leadership", href: "/about/leadership" },
-      { label: "Our Teachers", href: "/about/teachers" },
+      { label: "Our Team", href: "/about/team" },
+      { label: "Academics", href: "/academics" },
+      { label: "Alumni", href: "/alumni" },
     ],
   },
   {
     title: "Admissions",
     links: [
-      { label: "Why El-Bethel", href: "/admissions/why-el-bethel" },
-      { label: "Admission Process", href: "/admissions/process" },
-      { label: "Requirements", href: "/admissions/requirements" },
-      { label: "Fees", href: "/admissions/fees" },
+      { label: "Admission Process", href: "/admissions#process" },
+      { label: "Requirements", href: "/admissions#requirements" },
+      { label: "Fees", href: "/admissions#fees" },
+      { label: "FAQs", href: "/admissions#faqs" },
       { label: "Apply Online", href: "/admissions/apply" },
       { label: "Check Status", href: "/admissions/status" },
     ],
@@ -33,12 +30,10 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "School Life",
     links: [
-      { label: "Clubs & Activities", href: "/school-life/clubs" },
-      { label: "Sports", href: "/school-life/sports" },
-      { label: "Facilities", href: "/school-life/facilities" },
+      { label: "Clubs & Sports", href: "/school-life" },
+      { label: "Facilities", href: "/school-life#facilities" },
       { label: "Events", href: "/school-life/events" },
       { label: "Gallery", href: "/school-life/gallery" },
-      { label: "Our Stars", href: "/school-life/achievements" },
     ],
   },
   {
@@ -52,23 +47,23 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   },
 ];
 
-const SOCIALS: { label: string; href: string; path: string }[] = [
-  { label: "Facebook", href: SCHOOL.social.facebook, path: "M14 9h3V6h-3c-2.2 0-4 1.8-4 4v2H8v3h2v7h3v-7h3l1-3h-4v-2c0-.6.4-1 1-1Z" },
-  { label: "Instagram", href: SCHOOL.social.instagram, path: "M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4Zm5 5.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm5.5-1.2a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8Z" },
-  { label: "YouTube", href: SCHOOL.social.youtube, path: "M21.6 7.2c-.2-1-.9-1.7-1.9-2C18 4.8 12 4.8 12 4.8s-6 0-7.7.4c-1 .3-1.7 1-1.9 2C2 9 2 12 2 12s0 3 .4 4.8c.2 1 .9 1.7 1.9 2 1.7.4 7.7.4 7.7.4s6 0 7.7-.4c1-.3 1.7-1 1.9-2 .4-1.8.4-4.8.4-4.8s0-3-.4-4.8ZM10 15.2V8.8L15.5 12 10 15.2Z" },
-  { label: "X", href: SCHOOL.social.x, path: "M17.5 3h3l-6.6 7.6L21.8 21h-5.9l-4.3-5.7L6.4 21H3.3l7-8L2.6 3h6l3.9 5.2L17.5 3Z" },
+const SOCIALS: { label: string; key: keyof School["social"]; path: string }[] = [
+  { label: "Facebook", key: "facebook", path: "M14 9h3V6h-3c-2.2 0-4 1.8-4 4v2H8v3h2v7h3v-7h3l1-3h-4v-2c0-.6.4-1 1-1Z" },
+  { label: "Instagram", key: "instagram", path: "M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4Zm5 5.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm5.5-1.2a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8Z" },
+  { label: "YouTube", key: "youtube", path: "M21.6 7.2c-.2-1-.9-1.7-1.9-2C18 4.8 12 4.8 12 4.8s-6 0-7.7.4c-1 .3-1.7 1-1.9 2C2 9 2 12 2 12s0 3 .4 4.8c.2 1 .9 1.7 1.9 2 1.7.4 7.7.4 7.7.4s6 0 7.7-.4c1-.3 1.7-1 1.9-2 .4-1.8.4-4.8.4-4.8s0-3-.4-4.8ZM10 15.2V8.8L15.5 12 10 15.2Z" },
+  { label: "X", key: "x", path: "M17.5 3h3l-6.6 7.6L21.8 21h-5.9l-4.3-5.7L6.4 21H3.3l7-8L2.6 3h6l3.9 5.2L17.5 3Z" },
 ];
 
-export function SiteFooter() {
+export function SiteFooter({ school: SCHOOL }: { school: School }) {
+  const socials = SOCIALS.filter((s) => SCHOOL.social[s.key]);
   return (
     <footer className="mt-auto bg-navy text-navy-foreground">
       <div className="eb-container py-12 sm:py-16">
         <div className="grid gap-10 lg:grid-cols-[1.4fr_2.6fr]">
           <div>
-            <Brand className="[&_span]:text-navy-foreground" />
+            <Brand className="[&_span]:text-navy-foreground" school={SCHOOL} />
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-navy-foreground/70">
-              A private creche, nursery, primary and junior secondary school in Abuja providing quality, child-centred education
-              in a safe, stimulating and technology-enabled environment.
+              {SCHOOL.footerBlurb}
             </p>
 
             <ul className="mt-6 space-y-3 text-sm text-navy-foreground/80">
@@ -80,8 +75,12 @@ export function SiteFooter() {
                 <PhoneIcon className="size-4 shrink-0 text-gold" />
                 <span className="flex flex-wrap gap-x-2">
                   <a href={`tel:${SCHOOL.phoneHref}`} className="hover:text-navy-foreground">{SCHOOL.phone}</a>
-                  <span aria-hidden>·</span>
-                  <a href={`tel:${SCHOOL.phoneAltHref}`} className="hover:text-navy-foreground">{SCHOOL.phoneAlt}</a>
+                  {SCHOOL.phoneAlt ? (
+                    <>
+                      <span aria-hidden>·</span>
+                      <a href={`tel:${SCHOOL.phoneAltHref}`} className="hover:text-navy-foreground">{SCHOOL.phoneAlt}</a>
+                    </>
+                  ) : null}
                 </span>
               </li>
               <li className="flex items-center gap-3">
@@ -99,10 +98,10 @@ export function SiteFooter() {
             </ul>
 
             <div className="mt-6 flex gap-2">
-              {SOCIALS.map((s) => (
+              {socials.map((s) => (
                 <a
                   key={s.label}
-                  href={s.href}
+                  href={SCHOOL.social[s.key]}
                   target="_blank"
                   rel="noreferrer noopener"
                   aria-label={s.label}
@@ -154,12 +153,12 @@ export function SiteFooter() {
         <div className="flex flex-col items-center justify-between gap-4 text-xs text-navy-foreground/60 sm:flex-row">
           <p>
             © {new Date().getFullYear()} {SCHOOL.name}. All rights reserved.
-            <span className="ml-2 rounded-full bg-gold/15 px-2 py-0.5 font-semibold text-gold">Demo data</span>
+       
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
             <Link href="/privacy" className="hover:text-navy-foreground">Privacy & Child Protection</Link>
             <Link href="/terms" className="hover:text-navy-foreground">Terms of Use</Link>
-            <Link href="/sitemap.xml" className="hover:text-navy-foreground">Sitemap</Link>
+          
           </div>
         </div>
       </div>

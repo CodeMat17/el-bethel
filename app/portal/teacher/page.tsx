@@ -30,12 +30,11 @@ export default async function TeacherDashboard() {
     );
   }
 
-  const [mine, pendingGrading, timetable, notifications, inbox, events, sizes, dir] = await Promise.all([
+  const [mine, pendingGrading, timetable, notifications, events, sizes, dir] = await Promise.all([
     query(api.assignments.forTeacher, {}),
     query(api.assignments.pendingForTeacher, {}),
     query(api.timetable.forTeacher, {}),
     query(api.notifications.mine, { limit: 4 }),
-    query(api.messages.myThreads, {}),
     query(api.content.events, { upcomingOnly: true, limit: 3 }),
     query(api.people.classSizes, {}),
     getDirectory(),
@@ -43,7 +42,6 @@ export default async function TeacherDashboard() {
   const classes = dir.classesForTeacher(user.teacherId);
   const assignments = mine.map((m) => m.assignment);
   const todaySlots = slotsForDay(timetable);
-  const threads = inbox.threads.slice(0, 3);
   const term = dir.activeTerm;
   const pupilCount = classes.reduce((sum, c) => sum + (sizes[c.id] ?? 0), 0);
   const now = new Date();
@@ -195,10 +193,8 @@ export default async function TeacherDashboard() {
             <Separator className="my-4" />
             <div className="grid gap-2">
               {[
-                { label: "Take the register", href: "/portal/teacher/attendance", icon: "CalendarCheck" },
                 { label: "Create an assignment", href: "/portal/teacher/assignments/create", icon: "PlusIcon" },
                 { label: "Enter results", href: "/portal/teacher/results", icon: "Trophy" },
-                { label: "Upload material", href: "/portal/teacher/materials", icon: "FolderOpen" },
               ].map((item) => (
                 <Button
                   key={item.href}
@@ -249,21 +245,9 @@ export default async function TeacherDashboard() {
           </Card>
 
           <Card className="gap-0 p-5 sm:p-6">
-            <h2 className="font-heading text-base font-extrabold">Messages & events</h2>
+            <h2 className="font-heading text-base font-extrabold">Upcoming events</h2>
             <Separator className="my-4" />
             <ul className="space-y-2">
-              {threads.map((thread) => (
-                <li key={thread.id}>
-                  <Link href={`/portal/teacher/messages/${thread.id}`} className="block">
-                    <div className="rounded-xl border bg-card p-3 transition-colors hover:border-gold/40">
-                      <p className="truncate text-sm font-bold">{thread.subject}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {relativeTime(thread.updatedAt)}
-                      </p>
-                    </div>
-                  </Link>
-                </li>
-              ))}
               {events.map((event) => (
                 <li key={event.id} className="rounded-xl border bg-card p-3">
                   <p className="truncate text-sm font-bold">{event.title}</p>

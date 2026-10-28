@@ -1,7 +1,7 @@
 import "server-only";
 
 import { cache } from "react";
-import { forbidden, unauthorized } from "next/navigation";
+import { forbidden, redirect, unauthorized } from "next/navigation";
 
 import { api } from "@/convex/_generated/api";
 import { getConvexToken, query } from "./convex";
@@ -42,17 +42,32 @@ export async function requireRole(...roles: Role[]): Promise<SessionUser> {
   return user;
 }
 
-export const requireAdmin = () => requireRole(...ADMIN_ROLES);
+/**
+ * Each portal belongs to one role; only the super admin may enter every portal.
+ * Anyone else who wanders into the wrong portal is sent back to their own.
+ */
+async function requirePortal(...roles: Role[]): Promise<SessionUser> {
+  const user = await requireUser();
+  if (!hasRole(user, "super_admin", ...roles)) redirect(homeForUser(user));
+  return user;
+}
+
+export const requireAdmin = () => requirePortal("admin");
+export const requireSiteAdmin = () => requirePortal("site_admin");
 export const requireSuperAdmin = () => requireRole("super_admin");
-export const requireTeacher = () => requireRole("teacher", ...ADMIN_ROLES);
-export const requireParent = () => requireRole("parent");
-export const requirePupil = () => requireRole("pupil");
+export const requireTeacher = () => requirePortal("teacher");
+export const requireParent = () => requirePortal("parent");
+export const requirePupil = () => requirePortal("pupil");
+
+/** Where a signed-in person with no portal role, or no linked active account, is sent. */
+export const NO_ACCESS = "/portal/no-access";
 
 /** Portal a user should land on after signing in. */
 export function homeForUser(user: SessionUser): string {
   if (user.roles.some((r) => ADMIN_ROLES.includes(r))) return "/portal/admin";
+  if (user.roles.includes("site_admin")) return "/portal/site";
   if (user.roles.includes("teacher")) return "/portal/teacher";
   if (user.roles.includes("parent")) return "/portal/parent";
   if (user.roles.includes("pupil")) return "/portal/pupil";
-  return "/";
+  return NO_ACCESS;
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
-import { SCHOOL } from "@/lib/school/config";
+import { SCHOOL as DEFAULT_SCHOOL } from "@/lib/school/config";
+import type { CmsImage } from "@/lib/school/cms/schema";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
@@ -38,11 +39,16 @@ export function Brand({
   className,
   compact = false,
   href = "/",
+  school,
 }: {
   className?: string;
   compact?: boolean;
   href?: string;
+  /** The edited identity on the public site; the portals use the built-in one. */
+  school?: { name: string; shortName: string; motto: string; logo?: CmsImage };
 }) {
+  const SCHOOL = school ?? DEFAULT_SCHOOL;
+  const logo = school?.logo;
   return (
     <Link
       href={href}
@@ -54,7 +60,7 @@ export function Brand({
       <Image
         alt='School logo'
         priority
-        src='/logo.webp'
+        src={logo?.url ?? '/logo.webp'}
         width={40}
         height={40}
         className='rounded object-cover'

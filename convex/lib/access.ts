@@ -56,6 +56,24 @@ export const requireAdmin = (ctx: Ctx) => requireRole(ctx, ...ADMIN_ROLES);
 export const requireSuperAdmin = (ctx: Ctx) => requireRole(ctx, "super_admin");
 export const requireStaff = (ctx: Ctx) => requireRole(ctx, "teacher", ...ADMIN_ROLES);
 
+/** Website content editors. Ordinary administrators are deliberately not included. */
+export const SITE_ROLES: RoleValue[] = ["super_admin", "site_admin"];
+export const requireSiteAdmin = (ctx: Ctx) => requireRole(ctx, ...SITE_ROLES);
+
+/** The school calendar is run by the office as well as the website team. */
+export const requireEventEditor = (ctx: Ctx) => requireRole(ctx, ...SITE_ROLES, ...ADMIN_ROLES);
+
+/** Website documents administrators also edit from their own portal: the fee table and admission rules. */
+export const ADMIN_CMS_KEYS: readonly string[] = ["fees"];
+
+/** Site editors may edit every website document; administrators only the ones in ADMIN_CMS_KEYS. */
+export async function requireCmsEditor(ctx: Ctx, key: string): Promise<Viewer> {
+  const user = await requireViewer(ctx);
+  if (hasRole(user, ...SITE_ROLES)) return user;
+  if (isAdmin(user) && ADMIN_CMS_KEYS.includes(key)) return user;
+  return fail("FORBIDDEN", "You do not have permission to do that.");
+}
+
 /* ------------------------------ relationships ----------------------------- */
 
 /** Classes a teacher teaches a subject in, or is class teacher of. */

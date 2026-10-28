@@ -9,7 +9,7 @@ import type { Id } from "../../convex/_generated/dataModel";
 
 export type ID = string;
 
-export type Role = "super_admin" | "admin" | "teacher" | "parent" | "pupil" | "transport";
+export type Role = "super_admin" | "admin" | "site_admin" | "teacher" | "parent" | "pupil" | "transport";
 
 export type Portal = "admin" | "teacher" | "parent" | "pupil" | "transport";
 
@@ -154,6 +154,7 @@ export interface Parent {
   /** Derived from guardianships. */
   studentIds: ID[];
   avatarSeed: string;
+  photo?: CloudMedia;
 }
 
 export interface AcademicSession {
@@ -751,6 +752,8 @@ export interface SchoolDocument {
   description: string;
   fileName: string;
   sizeBytes: number;
+  /** Set once a PDF has been uploaded. */
+  storageId?: string;
   visibility: "public" | "parents" | "staff";
   updatedAt: string;
   category: string;
@@ -807,6 +810,8 @@ export interface SessionUser {
   username?: string;
   roles: Role[];
   avatarSeed: string;
+  /** The linked teacher, parent or pupil record's profile photo. */
+  photoUrl?: string;
   teacherId?: Id<"teachers">;
   parentId?: Id<"parents">;
   studentId?: Id<"students">;

@@ -4,7 +4,6 @@
  * Change this list to change what is emailed.
  */
 export const EMAILED_TYPES: Record<string, string> = {
-  attendance_alert: "Attendance alerts",
   result_published: "Results and report cards",
   fee_reminder: "Fee reminders",
   payment_confirmation: "Payment receipts",

@@ -1,12 +1,9 @@
 import {
-  ACADEMIC_CALENDAR,
   APPLICATION_DOCUMENT_REQUIREMENTS,
   ASSESSMENT_WEIGHTING,
   CLASS_LEVELS,
   CONDUCT_TRAITS,
   FEE_STRUCTURE,
-  LEVEL_POPULATION,
-  LEVEL_SECTIONS,
   PERIODS,
   gradeFor,
 } from "./config";
@@ -88,6 +85,55 @@ function addDays(base: Date, days: number): Date {
 }
 const iso = (d: Date) => d.toISOString();
 const dayKey = (d: Date) => d.toISOString().slice(0, 10);
+
+/*
+ * Demo-only shape of the school. The live site reads classes, pupils, sessions
+ * and terms from Convex; these only decide what the seed creates.
+ */
+
+/** Sections per level. */
+const LEVEL_SECTIONS: Record<string, string[]> = {
+  "lvl-cre": ["A"],
+  "lvl-pre": ["A"],
+  "lvl-n1": ["A", "B"],
+  "lvl-n2": ["A", "B"],
+  "lvl-n3": ["A", "B"],
+  "lvl-p1": ["A", "B", "C"],
+  "lvl-p2": ["A", "B", "C"],
+  "lvl-p3": ["A", "B", "C"],
+  "lvl-p4": ["A", "B"],
+  "lvl-p5": ["A", "B"],
+  "lvl-p6": ["A", "B"],
+  "lvl-j1": ["A", "B"],
+  "lvl-j2": ["A", "B"],
+  "lvl-j3": ["A", "B"],
+};
+
+const LEVEL_POPULATION: Record<string, number> = {
+  "lvl-cre": 18,
+  "lvl-pre": 22,
+  "lvl-n1": 40,
+  "lvl-n2": 42,
+  "lvl-n3": 44,
+  "lvl-p1": 72,
+  "lvl-p2": 75,
+  "lvl-p3": 78,
+  "lvl-p4": 58,
+  "lvl-p5": 55,
+  "lvl-p6": 52,
+  "lvl-j1": 48,
+  "lvl-j2": 44,
+  "lvl-j3": 40,
+};
+
+const ACADEMIC_CALENDAR = [
+  { name: "First Term", start: "2026-09-07", end: "2026-12-18", type: "term" as const },
+  { name: "Christmas Break", start: "2026-12-19", end: "2027-01-10", type: "break" as const },
+  { name: "Second Term", start: "2027-01-11", end: "2027-04-02", type: "term" as const },
+  { name: "Easter Break", start: "2027-04-03", end: "2027-04-18", type: "break" as const },
+  { name: "Third Term", start: "2027-04-19", end: "2027-07-23", type: "term" as const },
+  { name: "Long Vacation", start: "2027-07-24", end: "2027-09-05", type: "break" as const },
+];
 
 /* -------------------------------------------------------------------------- */
 /* Name pools                                                                  */
@@ -288,7 +334,7 @@ for (let i = 0; i < 58; i++) {
     title,
     position: named ? named.position : pick(["Class Teacher", "Subject Teacher", "Assistant Teacher", "Learning Support Teacher"]),
     department: named ? named.department : pick(["Early Years", "Nursery", "Lower Primary", "Upper Primary", "Junior Secondary", "Languages", "Mathematics", "Sciences", "Creative Arts", "Sports", "Technology"]),
-    email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@elbethel.edu.ng`,
+    email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@ebia.com.ng`,
     phone: phone(),
     qualifications: [pick(QUALIFICATIONS), ...(chance(0.4) ? [pick(QUALIFICATIONS)] : [])],
     experienceYears: int(2, 21),
@@ -395,7 +441,7 @@ const demoParent = makeParent("Chukwu", [], {
   title: "Mrs.",
   firstName: "Ada",
   relationship: "Mother",
-  email: "parent@elbethel.edu.ng",
+  email: "parent@ebia.com.ng",
 });
 parents.push(demoParent);
 
@@ -1325,7 +1371,7 @@ const testimonials: Testimonial[] = [
 
 const FAQ_DEFS: { category: string; question: string; answer: string }[] = [
   { category: "Admissions", question: "When does admission open for the 2026/2027 session?", answer: "Admission for the 2026/2027 session is currently OPEN for every class — Creche, Pre-School, Nursery 1 to Nursery 3, Primary 1 to Primary 6 and JSS 1 to JSS 3. Limited spaces are available in some classes, so early application is encouraged." },
-  { category: "Admissions", question: "How do I apply?", answer: "Create a parent account, complete the online application form, upload the required documents, pay the application fee and submit. You will receive an application number to track your progress." },
+  { category: "Admissions", question: "How do I apply?", answer: "Create a parent account, complete the online application form, pay the application fee and submit. You will receive an application number to track your progress. Bring the required documents with you to the screening — nothing is uploaded online." },
   { category: "Admissions", question: "Is there an entrance assessment?", answer: "Yes, from Nursery 1 upwards. All applicants take a short, age-appropriate assessment: a gentle readiness activity in the nursery and early primary years, and written English and mathematics papers for Primary 4 and above. Creche and Pre-School places need only a settling visit." },
   { category: "Admissions", question: "What documents are required?", answer: "A birth certificate or declaration of age, a passport photograph, medical information and parent identification are required. A previous school report and transfer document are needed where applicable." },
   { category: "Fees", question: "What are the school fees?", answer: "Fees range from ₦248,000 per term in Creche and Pre-School to ₦460,000 per term in JSS 1 to 3, covering tuition, learning resources, activities and technology. Meals are an optional extra." },
@@ -1503,13 +1549,13 @@ function addUser(u: Omit<User, "createdAt" | "active" | "avatarSeed"> & { avatar
 
 // Named demo accounts. They are imported without a Clerk login; an administrator
 // enables sign-in for any of them from the Users page.
-addUser({ id: "usr-admin", name: "Ngozi Adeleke", username: "ngozi_adeleke", email: "admin@elbethel.edu.ng", roles: ["super_admin"], phone: phone() });
-addUser({ id: "usr-head", name: "Dr. Amaka N. Okafor", username: "amaka_okafor", email: "headteacher@elbethel.edu.ng", roles: ["admin", "teacher"], teacherId: "tch-001", phone: phone() });
-addUser({ id: "usr-teacher", name: "Miss Chiamaka Obi", username: "chiamaka_obi", email: "teacher@elbethel.edu.ng", roles: ["teacher"], teacherId: "tch-013", phone: phone() });
-addUser({ id: "usr-maths", name: "Mr. Samuel Yusuf", username: "samuel_yusuf", email: "s.yusuf@elbethel.edu.ng", roles: ["teacher"], teacherId: "tch-019", phone: phone() });
-addUser({ id: "usr-parent", name: "Mrs. Ada Chukwu", username: "ada_chukwu", email: "parent@elbethel.edu.ng", roles: ["parent"], parentId: DEMO_PARENT_ID, phone: phone() });
-addUser({ id: "usr-pupil", name: "David Chukwu", username: "david_chukwu", email: "pupil@elbethel.edu.ng", roles: ["pupil"], studentId: DEMO_STUDENT_ID });
-addUser({ id: "usr-accountant", name: "Mr. Bola Ogunleye", username: "bola_ogunleye", email: "accounts@elbethel.edu.ng", roles: ["admin"], phone: phone() });
+addUser({ id: "usr-admin", name: "Ngozi Adeleke", username: "ngozi_adeleke", email: "admin@ebia.com.ng", roles: ["super_admin"], phone: phone() });
+addUser({ id: "usr-head", name: "Dr. Amaka N. Okafor", username: "amaka_okafor", email: "headteacher@ebia.com.ng", roles: ["admin", "teacher"], teacherId: "tch-001", phone: phone() });
+addUser({ id: "usr-teacher", name: "Miss Chiamaka Obi", username: "chiamaka_obi", email: "teacher@ebia.com.ng", roles: ["teacher"], teacherId: "tch-013", phone: phone() });
+addUser({ id: "usr-maths", name: "Mr. Samuel Yusuf", username: "samuel_yusuf", email: "s.yusuf@ebia.com.ng", roles: ["teacher"], teacherId: "tch-019", phone: phone() });
+addUser({ id: "usr-parent", name: "Mrs. Ada Chukwu", username: "ada_chukwu", email: "parent@ebia.com.ng", roles: ["parent"], parentId: DEMO_PARENT_ID, phone: phone() });
+addUser({ id: "usr-pupil", name: "David Chukwu", username: "david_chukwu", email: "pupil@ebia.com.ng", roles: ["pupil"], studentId: DEMO_STUDENT_ID });
+addUser({ id: "usr-accountant", name: "Mr. Bola Ogunleye", username: "bola_ogunleye", email: "accounts@ebia.com.ng", roles: ["admin"], phone: phone() });
 
 const notifications: AppNotification[] = [];
 let notificationCounter = 0;
@@ -1526,10 +1572,9 @@ function notify(userId: string, type: AppNotification["type"], title: string, bo
 notify("usr-parent", "assignment_graded", "David's Mathematics assignment has been graded", "Fractions Around Us — 18/20. Tap to read Mr. Yusuf's feedback.", "/portal/parent/assignments", 1);
 notify("usr-parent", "assignment_published", "New Mathematics assignment posted", "Multiplication Tables 6–9 is due next Tuesday.", "/portal/parent/assignments", 2);
 notify("usr-parent", "fee_reminder", "First term fees are due", "An outstanding balance remains on invoice INV-2026-00001.", "/portal/parent/fees", 3, true);
-notify("usr-parent", "event_reminder", "PTA meeting scheduled for Saturday", "The termly PTA general meeting holds at 10:00 AM in the auditorium.", "/portal/parent/calendar", 4, true);
+notify("usr-parent", "event_reminder", "PTA meeting scheduled for Saturday", "The termly PTA general meeting holds at 10:00 AM in the auditorium.", "/calendar", 4, true);
 notify("usr-parent", "attendance_alert", "Mary was marked absent today", "Please contact the class teacher if this is unexpected.", "/portal/parent/attendance", 5, true);
 notify("usr-parent", "payment_confirmation", "Your fee payment was successful", "We have received your payment and a receipt is available to download.", "/portal/parent/payments", 12, true);
-notify("usr-parent", "appointment", "Parent-teacher appointment confirmed", "Monday 10:00 AM with Miss Chiamaka Obi.", "/portal/parent/appointments", 6, true);
 
 notify("usr-pupil", "assignment_published", "New Mathematics assignment posted", "Multiplication Tables 6–9 — due next Tuesday.", "/portal/pupil/assignments", 2);
 notify("usr-pupil", "assignment_due", "English assignment is due tomorrow", "Parts of Speech closes at 6:00 PM tomorrow.", "/portal/pupil/assignments", 1);
@@ -1537,13 +1582,11 @@ notify("usr-pupil", "assignment_graded", "Your Mathematics assignment was graded
 notify("usr-pupil", "announcement", "School resumes Monday", "Please arrive by 7:30 AM in full uniform.", "/portal/pupil/dashboard", 8, true);
 notify("usr-pupil", "event_reminder", "Cultural Day registration is open", "Sign up with your class teacher before Friday.", "/portal/pupil/dashboard", 3, true);
 
-notify("usr-teacher", "message", "New message from Mrs. Ada Chukwu", "Regarding David's reading practice at home.", "/portal/teacher/messages", 1);
 notify("usr-teacher", "assignment_published", "7 submissions await grading", "Primary 4A — Fractions Around Us.", "/portal/teacher/grading", 1);
 notify("usr-teacher", "announcement", "Staff briefing moved to 7:15 AM", "Tomorrow's briefing starts fifteen minutes earlier.", "/portal/teacher/dashboard", 2, true);
 
 notify("usr-admin", "admission_update", "27 new applications this month", "Nine applications are awaiting review.", "/portal/admin/admissions", 1);
 notify("usr-admin", "fee_reminder", "Outstanding fees report ready", "Termly fee collection now stands at 68 percent.", "/portal/admin/fees", 2, true);
-notify("usr-admin", "announcement", "Audit log export completed", "Last month's administrative actions have been archived.", "/portal/admin/audit-logs", 5, true);
 
 
 const messageThreads: MessageThread[] = [

@@ -1,10 +1,13 @@
+import Link from "next/link";
 import type { Metadata } from "next";
+import { PencilIcon } from "lucide-react";
 
 import { EmptyState, StatCard, StatusPill } from "@/components/common";
 import { AdminFilters } from "@/components/portal/admin-filters";
 import { BarChart, HeroFigure } from "@/components/portal/charts";
 import { PortalPageHeader } from "@/components/portal/page-header";
 import { Pager } from "@/components/portal/pager";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -16,7 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { requireAdmin } from "@/lib/school/auth";
-import { CLASS_LEVELS, FEE_STRUCTURE } from "@/lib/school/config";
+import { getContent } from "@/lib/school/site-content";
 import { RecordPaymentDialog } from "@/components/admin/office-dialogs";
 import { api } from "@/convex/_generated/api";
 import { query } from "@/lib/school/convex";
@@ -28,6 +31,7 @@ export const metadata: Metadata = { title: "Fees & invoices" };
 
 export default async function AdminFeesPage({ searchParams }: PageProps<"/portal/admin/fees">) {
   await requireAdmin();
+  const fees = await getContent("fees");
   const params = await searchParams;
 
   const q = param(params.q).trim();
@@ -81,21 +85,29 @@ export default async function AdminFeesPage({ searchParams }: PageProps<"/portal
       </div>
 
       <Card className="mb-6 gap-0 p-5 sm:p-6">
-        <h2 className="font-heading text-base font-extrabold">Fee structure</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Configurable per session, term, class band and fee category.
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="font-heading text-base font-extrabold">Fee structure</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              The published fee table, as shown on the website and the application form.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" className="font-bold" render={<Link href="/portal/admin/fees/structure" />}>
+            <PencilIcon />
+            Edit fees
+          </Button>
+        </div>
         <Separator className="my-5" />
         <div className="grid gap-4 lg:grid-cols-3">
-          {FEE_STRUCTURE.map((band) => {
+          {fees.bands.map((band) => {
             const total = band.lines.reduce((sum, l) => sum + l.amount, 0);
             return (
               <div key={band.band} className="rounded-xl border bg-card p-4">
                 <p className="text-sm font-extrabold">{band.band}</p>
                 <p className="mt-2 font-heading text-xl font-extrabold">{money(total)}</p>
                 <ul className="mt-3 space-y-1.5 text-xs">
-                  {band.lines.map((line) => (
-                    <li key={line.category} className="flex items-center justify-between gap-3">
+                  {band.lines.map((line, i) => (
+                    <li key={`${line.label}-${i}`} className="flex items-center justify-between gap-3">
                       <span className="text-muted-foreground">{line.label}</span>
                       <span className="font-bold tabular-nums">{money(line.amount)}</span>
                     </li>
@@ -104,6 +116,28 @@ export default async function AdminFeesPage({ searchParams }: PageProps<"/portal
               </div>
             );
           })}
+        </div>
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          {[
+            { title: "Admission fees (one-off)", lines: fees.admissionFees },
+            { title: "Optional services", lines: fees.optionalFees },
+          ].map((group) => (
+            <div key={group.title} className="rounded-xl border bg-card p-4">
+              <p className="text-sm font-extrabold">{group.title}</p>
+              {group.lines.length === 0 ? (
+                <p className="mt-2 text-xs text-muted-foreground">None.</p>
+              ) : (
+                <ul className="mt-3 space-y-1.5 text-xs">
+                  {group.lines.map((line, i) => (
+                    <li key={`${line.label}-${i}`} className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground">{line.label}</span>
+                      <span className="font-bold tabular-nums">{money(line.amount)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
         </div>
       </Card>
 

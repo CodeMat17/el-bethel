@@ -5,8 +5,7 @@ import { ArrowLeftIcon } from "lucide-react";
 
 import { StatCard, StatusPill } from "@/components/common";
 import { PortalPageHeader } from "@/components/portal/page-header";
-import { AttendanceLegend, AttendanceStrip } from "@/components/portal/shared";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ProfilePhoto } from "@/components/portal/profile-photo";
 import { Badge } from "@/components/ui/badge";
 import { StarsSummary } from "@/components/portal/stars";
 import { Button } from "@/components/ui/button";
@@ -14,11 +13,10 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { requireParent } from "@/lib/school/auth";
 import { api } from "@/convex/_generated/api";
-import { studentName, summariseAttendance } from "@/lib/school/data";
+import { studentName } from "@/lib/school/data";
 import { getDirectory } from "@/lib/school/directory";
 import { query } from "@/lib/school/convex";
-import { avatarTone, formatDate, initials, money } from "@/lib/school/format";
-import { cn } from "@/lib/utils";
+import { formatDate, initials, money } from "@/lib/school/format";
 
 export const metadata: Metadata = { title: "Child profile" };
 
@@ -32,8 +30,7 @@ export default async function ChildProfilePage({ params }: PageProps<"/portal/pa
   const child = record.student;
   const guardians = record.parents;
 
-  const [attendanceRows, assignments, fees, reportCards, certificates, stars] = await Promise.all([
-    query(api.attendance.forStudent, { studentId: child.id }),
+  const [assignments, fees, reportCards, certificates, stars] = await Promise.all([
     query(api.assignments.forStudent, { studentId: child.id }),
     query(api.fees.forStudent, { studentId: child.id }),
     query(api.results.historyForStudent, { studentId: child.id }),
@@ -41,7 +38,6 @@ export default async function ChildProfilePage({ params }: PageProps<"/portal/pa
     query(api.gamification.forStudent, { studentId: child.id }),
   ]);
   const cls = dir.getClass(child.classId);
-  const attendance = summariseAttendance(attendanceRows);
   const graded = assignments.filter((a) => a.progress === "graded");
   const average = graded.length
     ? Math.round(
@@ -67,11 +63,12 @@ export default async function ChildProfilePage({ params }: PageProps<"/portal/pa
 
       <Card className="mb-6 gap-0 overflow-hidden p-0">
         <div className="flex flex-col gap-5 bg-navy p-5 text-navy-foreground sm:flex-row sm:items-center sm:p-6">
-          <Avatar className="size-20 shrink-0 ring-2 ring-gold/40">
-            <AvatarFallback className={cn("text-xl font-extrabold", avatarTone(child.avatarSeed))}>
-              {initials(child.firstName, child.lastName)}
-            </AvatarFallback>
-          </Avatar>
+          <ProfilePhoto
+            url={child.photo?.url}
+            seed={child.avatarSeed}
+            initials={initials(child.firstName, child.lastName)}
+            className="mx-auto sm:mx-0"
+          />
           <dl className="grid flex-1 gap-4 sm:grid-cols-3">
             {[
               ["Admission number", child.admissionNo],
@@ -92,8 +89,7 @@ export default async function ChildProfilePage({ params }: PageProps<"/portal/pa
         </div>
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Attendance" value={`${attendance.rate}%`} icon="CalendarCheck" tone={attendance.rate >= 95 ? "success" : "warning"} />
+      <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Assignment average" value={graded.length ? `${average}%` : "—"} icon="Trophy" tone={average >= 70 ? "success" : "warning"} />
         <StatCard label="Subjects" value={subjects.length} icon="Library" tone="info" />
         <StatCard label="Fee balance" value={money(balance)} icon="Wallet" tone={balance > 0 ? "warning" : "success"} />
@@ -130,15 +126,6 @@ export default async function ChildProfilePage({ params }: PageProps<"/portal/pa
             <Button variant="outline" size="lg" className="mt-4 w-full font-bold" render={<Link href={`/portal/parent/results?child=${child.id}`} />}>
               Open full results
             </Button>
-          </Card>
-
-          <Card className="gap-0 p-5 sm:p-6">
-            <h2 className="font-heading text-base font-extrabold">Attendance pattern</h2>
-            <Separator className="my-4" />
-            <AttendanceStrip records={attendanceRows} />
-            <div className="mt-5">
-              <AttendanceLegend />
-            </div>
           </Card>
 
           <Card className="gap-0 p-5 sm:p-6">

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { ArrowRightIcon } from "lucide-react";
 
 import { StatCard, StatusPill } from "@/components/common";
-import { BarChart, ColumnChart, HeroFigure, TrendChart } from "@/components/portal/charts";
+import { BarChart, ColumnChart, HeroFigure } from "@/components/portal/charts";
 import { PortalPageHeader } from "@/components/portal/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -20,17 +20,14 @@ export const metadata: Metadata = { title: "Dashboard" };
 export default async function AdminDashboard() {
   await requireAdmin();
 
-  const [metrics, attendance, academics, events, recentAudit, dir] = await Promise.all([
+  const [metrics, academics, events, dir] = await Promise.all([
     query(api.dashboard.metrics, {}),
-    query(api.attendance.schoolOverview, { days: 10 }),
     query(api.dashboard.academics, {}),
     query(api.content.events, { upcomingOnly: true, limit: 4 }),
-    query(api.dashboard.recentAudit, { limit: 6 }),
     getDirectory(),
   ]);
   const enrolment = metrics.enrolment;
   const applications = metrics.applicationsByStatus;
-  const trend = attendance.trend;
   const grades = academics.grades;
   const term = dir.activeTerm;
   const expected = metrics.submissions.total;
@@ -40,13 +37,7 @@ export default async function AdminDashboard() {
       <PortalPageHeader
         eyebrow={`${term?.name ?? "No current term set"} · ${formatDate(new Date())}`}
         title="School control centre"
-        description="Enrolment, admissions, attendance, academics and finance at a glance."
-        action={
-          <Button size="lg" className="font-bold" render={<Link href="/portal/admin/reports" />}>
-            Full reports
-            <ArrowRightIcon />
-          </Button>
-        }
+        description="Enrolment, admissions, academics and finance at a glance."
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -63,12 +54,12 @@ export default async function AdminDashboard() {
           href="/portal/admin/admissions"
         />
         <StatCard
-          label="Today's attendance"
-          value={`${attendance.day.rate}%`}
-          hint={`Present or late · ${formatDate(attendance.date)}`}
-          icon="CalendarCheck"
-          tone={attendance.day.rate >= 95 ? "success" : "warning"}
-          href="/portal/admin/attendance"
+          label="Outstanding fees"
+          value={compactMoney(metrics.outstanding)}
+          hint="Still to be paid this term"
+          icon="Receipt"
+          tone={metrics.outstanding > 0 ? "warning" : "success"}
+          href="/portal/admin/fees"
         />
         <StatCard label="Assignments" value={metrics.assignments} hint="Published this term" icon="ClipboardList" tone="neutral" href="/portal/admin/assignments" />
         <StatCard label="Upcoming events" value={metrics.upcomingEvents} hint="On the school calendar" icon="CalendarDays" tone="neutral" href="/portal/admin/events" />
@@ -90,24 +81,6 @@ export default async function AdminDashboard() {
           </Button>
         </Card>
 
-        <Card className="gap-0 p-5 sm:p-6 lg:col-span-2">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="font-heading text-base font-extrabold">School attendance rate</h2>
-            <Button variant="link" size="sm" className="font-bold" render={<Link href="/portal/admin/attendance" />}>
-              Detail <ArrowRightIcon />
-            </Button>
-          </div>
-          <Separator className="my-5" />
-          <TrendChart
-            data={trend.map((point) => ({ label: formatDate(point.date), value: point.rate }))}
-            caption="Percentage of pupils present or late, last ten school days."
-            min={80}
-            max={100}
-          />
-        </Card>
-      </div>
-
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Card className="gap-0 p-5 sm:p-6">
           <div className="flex items-center justify-between gap-3">
             <h2 className="font-heading text-base font-extrabold">Enrolment by class level</h2>
@@ -169,28 +142,7 @@ export default async function AdminDashboard() {
         </Card>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <Card className="gap-0 p-5 sm:p-6">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="font-heading text-base font-extrabold">Recent administrative activity</h2>
-            <Button variant="link" size="sm" className="font-bold" render={<Link href="/portal/admin/audit-logs" />}>
-              Audit log <ArrowRightIcon />
-            </Button>
-          </div>
-          <Separator className="my-5" />
-          <ul className="space-y-3">
-            {recentAudit.map((entry) => (
-              <li key={entry.id} className="rounded-xl border bg-card p-3.5">
-                <p className="text-sm font-bold">{entry.action}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {entry.actorName} · {entry.entity}
-                  {entry.previousValue ? ` · ${entry.previousValue} → ${entry.newValue}` : ""}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </Card>
-
+      <div className="mt-6">
         <Card className="gap-0 p-5 sm:p-6">
           <div className="flex items-center justify-between gap-3">
             <h2 className="font-heading text-base font-extrabold">Upcoming events</h2>
@@ -199,6 +151,9 @@ export default async function AdminDashboard() {
             </Button>
           </div>
           <Separator className="my-5" />
+          {events.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No upcoming events. Add one under Events.</p>
+          ) : null}
           <ul className="space-y-2">
             {events.map((event) => (
               <li key={event.id} className="flex items-center gap-3 rounded-xl border bg-card p-3">

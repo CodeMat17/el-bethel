@@ -40,13 +40,12 @@ export default async function PupilSubjectsPage() {
   const user = await requirePupil();
   const student = user.studentId ? await query(api.people.myStudent, {}) : null;
   if (!student) {
-    return <EmptyState icon="Backpack" title="No pupil record" description="Please ask your class teacher." />;
+    return <EmptyState icon="Backpack" title="No school record" description="Please ask your class teacher." />;
   }
 
-  const [assignments, timetable, materials, dir] = await Promise.all([
+  const [assignments, timetable, dir] = await Promise.all([
     query(api.assignments.forStudent, { studentId: student.id }),
     query(api.timetable.forClass, { classId: student.classId }),
-    query(api.learning.materialsForClass, { classId: student.classId }),
     getDirectory(),
   ]);
   const subjects = dir.subjectsForClass(student.classId);
@@ -64,7 +63,6 @@ export default async function PupilSubjectsPage() {
           const teacherId = dir.teacherFor(student.classId, subject.id)?.id ?? timetable.find((s) => s.subjectId === subject.id)?.teacherId;
           const subjectAssignments = assignments.filter((a) => a.assignment.subjectId === subject.id);
           const todo = subjectAssignments.filter((a) => a.progress === "not_started").length;
-          const subjectMaterials = materials.filter((m) => m.subjectId === subject.id).length;
           const lessonsPerWeek = timetable.filter((s) => s.subjectId === subject.id).length;
 
           return (
@@ -83,7 +81,7 @@ export default async function PupilSubjectsPage() {
               <h2 className="mt-4 font-heading text-base font-extrabold">{subject.name}</h2>
               <p className="mt-1 text-sm text-muted-foreground">{dir.teacherName(teacherId)}</p>
 
-              <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
+              <dl className="mt-4 grid grid-cols-2 gap-2 text-center">
                 <div className="rounded-lg bg-muted/70 p-2">
                   <dt className="text-[0.6rem] font-bold text-muted-foreground uppercase">Lessons</dt>
                   <dd className="mt-0.5 text-sm font-extrabold">{lessonsPerWeek}</dd>
@@ -92,19 +90,15 @@ export default async function PupilSubjectsPage() {
                   <dt className="text-[0.6rem] font-bold text-muted-foreground uppercase">Work</dt>
                   <dd className="mt-0.5 text-sm font-extrabold">{subjectAssignments.length}</dd>
                 </div>
-                <div className="rounded-lg bg-muted/70 p-2">
-                  <dt className="text-[0.6rem] font-bold text-muted-foreground uppercase">Files</dt>
-                  <dd className="mt-0.5 text-sm font-extrabold">{subjectMaterials}</dd>
-                </div>
               </dl>
 
               <Button
                 variant="outline"
                 size="lg"
                 className="mt-5 w-full font-bold"
-                render={<Link href="/portal/pupil/materials" />}
+                render={<Link href="/portal/pupil/assignments" />}
               >
-                Learning materials
+                My assignments
                 <ArrowRightIcon />
               </Button>
             </Card>

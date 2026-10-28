@@ -7,15 +7,19 @@ import { query } from "@/lib/school/convex";
 import { getDirectory } from "@/lib/school/directory";
 import { PUPIL_NAV } from "@/lib/school/navigation";
 
-export const metadata: Metadata = {
-  title: { default: "Pupil Portal", template: "%s | Pupil Portal" },
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const [shell, dir] = await Promise.all([query(api.dashboard.shell, {}), getDirectory()]);
+  const portal = dir.isSecondaryClass(shell?.pupilClassId) ? "Student Portal" : "Pupil Portal";
+  return {
+    title: { default: portal, template: `%s | ${portal}` },
+    robots: { index: false, follow: false },
+  };
+}
 
 const QUICK_NAV = [
   { label: "Home", href: "/portal/pupil", icon: "House" },
   { label: "Work", href: "/portal/pupil/assignments", icon: "ClipboardList" },
-  { label: "Learn", href: "/portal/pupil/materials", icon: "FolderOpen" },
+  { label: "Timetable", href: "/portal/pupil/timetable", icon: "Clock" },
   { label: "Results", href: "/portal/pupil/results", icon: "Trophy" },
   { label: "Me", href: "/portal/pupil/profile", icon: "UserRound" },
 ];
@@ -23,10 +27,11 @@ const QUICK_NAV = [
 export default async function PupilLayout({ children }: LayoutProps<"/portal/pupil">) {
   const user = await requirePupil();
   const [shell, dir] = await Promise.all([query(api.dashboard.shell, {}), getDirectory()]);
+  const secondary = dir.isSecondaryClass(shell?.pupilClassId);
 
   return (
     <PortalShell
-      portalName="My School"
+      portalName={secondary ? "Student Portal" : "My School"}
       portalHome="/portal/pupil"
       nav={PUPIL_NAV}
       unread={shell?.unread ?? 0}
@@ -35,8 +40,9 @@ export default async function PupilLayout({ children }: LayoutProps<"/portal/pup
       user={{
         name: user.name,
         email: user.username ? `@${user.username}` : undefined,
-        roleLabel: shell?.pupilClassId ? dir.className(shell.pupilClassId) : "Pupil",
+        roleLabel: shell?.pupilClassId ? dir.className(shell.pupilClassId) : "Learner",
         avatarSeed: user.avatarSeed,
+        photoUrl: user.photoUrl,
       }}
     >
       {children}

@@ -15,7 +15,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { api } from "@/convex/_generated/api";
-import { ADMISSION_FEES, CLASS_LEVELS, SCHOOL } from "@/lib/school/config";
+import { CLASS_LEVELS } from "@/lib/school/config";
+import { getContent, getSchool } from "@/lib/school/site-content";
 import { publicQuery } from "@/lib/school/convex";
 import { APPLICATION_STATUS, formatDate, formatDateTime, money } from "@/lib/school/format";
 import type { Application } from "@/lib/school/types";
@@ -65,6 +66,8 @@ function trackerIndex(application: Application): number {
 
 export default async function StatusPage({ searchParams }: PageProps<"/admissions/status">) {
   const params = await searchParams;
+  const [SCHOOL, rules] = await Promise.all([getSchool(), getContent("fees")]);
+  const applicationFee = rules.admissionFees[0]?.amount ?? 0;
   const ref = typeof params.ref === "string" ? params.ref : "";
   const email = typeof params.email === "string" ? params.email : "";
 
@@ -144,7 +147,6 @@ export default async function StatusPage({ searchParams }: PageProps<"/admission
             {applications.map((application) => {
               const status = APPLICATION_STATUS[application.status];
               const index = trackerIndex(application);
-              const missing = application.documents.filter((d) => d.required && !d.uploaded);
 
               return (
                 <div key={application.id} className="space-y-6">
@@ -203,23 +205,6 @@ export default async function StatusPage({ searchParams }: PageProps<"/admission
 
                   <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
                     <div className="space-y-6">
-                      {missing.length > 0 ? (
-                        <Card className="gap-0 border-warning/40 bg-warning/10 p-5">
-                          <h3 className="flex items-center gap-2 font-heading text-base font-extrabold">
-                            <CircleAlertIcon className="size-4" />
-                            Documents required
-                          </h3>
-                          <ul className="mt-3 space-y-1.5 text-sm">
-                            {missing.map((d) => (
-                              <li key={d.key} className="font-semibold">· {d.label}</li>
-                            ))}
-                          </ul>
-                          <Button size="sm" className="mt-4 w-fit font-bold" render={<Link href="/admissions/apply?step=documents" />}>
-                            Upload documents
-                          </Button>
-                        </Card>
-                      ) : null}
-
                       {application.assessment ? (
                         <Card className="gap-0 p-6">
                           <h3 className="flex items-center gap-2 font-heading text-base font-extrabold">
@@ -299,7 +284,7 @@ export default async function StatusPage({ searchParams }: PageProps<"/admission
                         <dl className="space-y-3 text-sm">
                           <div className="flex items-center justify-between gap-3">
                             <dt className="text-muted-foreground">Application fee</dt>
-                            <dd className="font-bold">{money(ADMISSION_FEES[0].amount)}</dd>
+                            <dd className="font-bold">{money(applicationFee)}</dd>
                           </div>
                           <div className="flex items-center justify-between gap-3">
                             <dt className="text-muted-foreground">Status</dt>
@@ -319,7 +304,8 @@ export default async function StatusPage({ searchParams }: PageProps<"/admission
                       </Card>
 
                       <Card className="gap-0 p-6">
-                        <h3 className="font-heading text-base font-extrabold">Documents</h3>
+                        <h3 className="font-heading text-base font-extrabold">Bring to screening</h3>
+                        <p className="mt-1 text-xs text-muted-foreground">Originals and one photocopy of each.</p>
                         <Separator className="my-4" />
                         <ul className="space-y-2.5 text-sm">
                           {application.documents.map((doc) => (
@@ -328,11 +314,9 @@ export default async function StatusPage({ searchParams }: PageProps<"/admission
                                 <FileTextIcon className="size-3.5 shrink-0 text-muted-foreground" />
                                 <span className="truncate">{doc.label}</span>
                               </span>
-                              {doc.uploaded ? (
-                                <CheckCircle2Icon className="size-4 shrink-0 text-success" />
-                              ) : (
-                                <span className="shrink-0 text-xs font-bold text-muted-foreground">—</span>
-                              )}
+                              <span className="shrink-0 text-xs font-bold text-muted-foreground">
+                                {doc.required ? "Required" : "Optional"}
+                              </span>
                             </li>
                           ))}
                         </ul>
@@ -346,7 +330,7 @@ export default async function StatusPage({ searchParams }: PageProps<"/admission
                             <DownloadIcon />
                             Admission requirements
                           </Button>
-                          <Button variant="outline" size="sm" className="justify-start font-bold" render={<Link href="/admissions/fees" />}>
+                          <Button variant="outline" size="sm" className="justify-start font-bold" render={<Link href="/admissions#fees" />}>
                             <DownloadIcon />
                             Fee schedule
                           </Button>

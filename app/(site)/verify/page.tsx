@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { SCHOOL } from "@/lib/school/config";
+import { getSchool } from "@/lib/school/site-content";
 import { formatDate } from "@/lib/school/format";
 import { verifyCertificate } from "@/lib/school/site-data";
 
@@ -18,6 +18,7 @@ export const metadata: Metadata = {
 };
 
 export default async function VerifyPage({ searchParams }: PageProps<"/verify">) {
+  const SCHOOL = await getSchool();
   const params = await searchParams;
   const certificateNo = typeof params.no === "string" ? params.no.trim() : "";
 

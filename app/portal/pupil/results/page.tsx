@@ -18,7 +18,7 @@ export const metadata: Metadata = { title: "My results" };
 export default async function PupilResultsPage() {
   const user = await requirePupil();
   if (!user.studentId) {
-    return <EmptyState icon="Backpack" title="No pupil record" description="Please ask your class teacher." />;
+    return <EmptyState icon="Backpack" title="No school record" description="Please ask your class teacher." />;
   }
 
   const [reports, assignments, dir] = await Promise.all([
@@ -108,7 +108,7 @@ export default async function PupilResultsPage() {
                 <TabsContent key={term.id} value={term.id} className="mt-5 space-y-5">
                   {report ? (
                     <Card className="gap-0 border-gold/30 bg-gold/8 p-5">
-                      <div className="grid gap-4 sm:grid-cols-3">
+                      <div className="grid gap-4 sm:grid-cols-2">
                         <div className="text-center">
                           <p className="font-heading text-2xl font-extrabold">{report.average}%</p>
                           <p className="mt-1 text-xs font-bold text-muted-foreground uppercase">Average</p>
@@ -118,12 +118,6 @@ export default async function PupilResultsPage() {
                           <p className="mt-1 text-xs font-bold text-muted-foreground uppercase">
                             of {report.classSize} in class
                           </p>
-                        </div>
-                        <div className="text-center">
-                          <p className="font-heading text-2xl font-extrabold">
-                            {report.attendancePresent}/{report.attendanceTotal}
-                          </p>
-                          <p className="mt-1 text-xs font-bold text-muted-foreground uppercase">Days present</p>
                         </div>
                       </div>
                       <Separator className="my-5" />

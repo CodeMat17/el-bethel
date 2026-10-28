@@ -8,7 +8,7 @@ import { createHash } from "node:crypto";
  * minted here, so the API secret never leaves the server.
  */
 
-export type MediaPurpose = "gallery" | "news" | "events" | "materials" | "people" | "tour" | "library" | "shop" | "alumni";
+export type MediaPurpose = "gallery" | "news" | "events" | "materials" | "people" | "tour" | "library" | "shop" | "alumni" | "site";
 
 const FOLDERS: Record<MediaPurpose, string> = {
   gallery: "elbethel/gallery",
@@ -20,6 +20,7 @@ const FOLDERS: Record<MediaPurpose, string> = {
   library: "elbethel/library",
   shop: "elbethel/shop",
   alumni: "elbethel/alumni",
+  site: "elbethel/site",
 };
 
 function config() {

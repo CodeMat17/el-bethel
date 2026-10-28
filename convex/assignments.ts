@@ -395,7 +395,7 @@ export const getForStaff = query({
       .map((s) => {
         const sub = bySubmitter.get(s._id) ?? null;
         return {
-          student: { id: s._id, firstName: s.firstName, lastName: s.lastName, studentNo: s.studentNo, avatarSeed: s.avatarSeed },
+          student: { id: s._id, firstName: s.firstName, lastName: s.lastName, studentNo: s.studentNo, avatarSeed: s.avatarSeed, photo: s.photo },
           submission: sub ? withId(sub) : null,
           progress: progressOf(assignment, sub, Date.now()),
         };
@@ -426,7 +426,7 @@ export const pendingForTeacher = query({
         out.push({
           assignment: withId(a),
           submission: withId(s),
-          student: { id: student._id, firstName: student.firstName, lastName: student.lastName, avatarSeed: student.avatarSeed },
+          student: { id: student._id, firstName: student.firstName, lastName: student.lastName, avatarSeed: student.avatarSeed, photo: student.photo },
         });
       }
     }

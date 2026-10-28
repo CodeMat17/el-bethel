@@ -46,8 +46,8 @@ export default async function AlumniStoryPage({ params }: PageProps<"/alumni/sto
       </article>
       <CtaBand
         title="Have a story to share?"
-        text="We love hearing where El-Bethel pupils have gone. Register as alumni and tell us."
-        primary={{ label: "Register as alumni", href: "/alumni/register" }}
+        text="We love hearing where El-Bethel pupils have gone. Get in touch with the school office and tell us."
+        primary={{ label: "Contact the school", href: "/contact" }}
         secondary={{ label: "Back to alumni", href: "/alumni" }}
       />
     </>

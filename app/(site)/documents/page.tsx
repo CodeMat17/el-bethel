@@ -49,19 +49,25 @@ export default async function DocumentsPage() {
                   <p className="mt-4 text-xs text-muted-foreground">
                     PDF · {fileSize(doc.sizeBytes)} · updated {formatDate(doc.updatedAt)}
                   </p>
-                  <Button variant="outline" size="lg" className="mt-4 w-full font-bold" disabled>
-                    <DownloadIcon />
-                    Download
-                  </Button>
+                  {doc.storageId ? (
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="mt-4 w-full font-bold"
+                      render={<a href={`/api/documents/${doc.id}`} target="_blank" rel="noreferrer" />}
+                    >
+                      <DownloadIcon />
+                      Download
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="lg" className="mt-4 w-full font-bold" disabled>
+                      Coming soon
+                    </Button>
+                  )}
                 </Card>
               </Reveal>
             ))}
           </div>
-          <p className="mt-6 text-sm text-muted-foreground">
-            Downloads are disabled in this demonstration environment — no document files are bundled with
-            the build. In a live deployment each file is served from private object storage behind a
-            signed, short-lived URL.
-          </p>
         </div>
       </section>
 
@@ -84,7 +90,7 @@ export default async function DocumentsPage() {
                   </div>
                   <h3 className="mt-4 font-heading text-base font-extrabold">{doc.title}</h3>
                   <p className="mt-1.5 flex-1 text-sm leading-relaxed text-muted-foreground">{doc.description}</p>
-                  <Button size="lg" className="mt-4 w-full font-bold" render={<Link href="/login" />}>
+                  <Button size="lg" className="mt-4 w-full font-bold" render={<Link href="/portal" />}>
                     Sign in to access
                   </Button>
                 </Card>

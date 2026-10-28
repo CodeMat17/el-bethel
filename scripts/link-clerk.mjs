@@ -47,7 +47,7 @@ async function clerk(path, init = {}) {
 }
 
 // Seeded before sign-in moved to email; give them the address the README lists.
-const FALLBACK_EMAILS = { david_chukwu: "pupil@elbethel.edu.ng" };
+const FALLBACK_EMAILS = { david_chukwu: "pupil@ebia.com.ng" };
 
 async function clerkUserFor(user) {
   const [existing] = await clerk(`/users?email_address=${encodeURIComponent(user.email)}`);

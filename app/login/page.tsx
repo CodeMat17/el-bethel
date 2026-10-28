@@ -4,14 +4,14 @@ import { redirect } from "next/navigation";
 import { ArrowLeftIcon, ShieldCheckIcon } from "lucide-react";
 
 import { LoginForm } from "@/components/auth/login-form";
+import { ResetPasswordForm } from "@/components/auth/reset-password-form";
 import { Brand } from "@/components/site/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { auth } from "@clerk/nextjs/server";
 
-import { SignOutButton } from "@/components/auth/sign-out-button";
-import { getSessionUser, homeForUser } from "@/lib/school/auth";
-import { SCHOOL } from "@/lib/school/config";
+import { getSessionUser, homeForUser, NO_ACCESS } from "@/lib/school/auth";
+import { getSchool } from "@/lib/school/site-content";
 
 export const metadata: Metadata = {
   title: "Sign in",
@@ -20,12 +20,19 @@ export const metadata: Metadata = {
 };
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
+  const SCHOOL = await getSchool();
   const user = await getSessionUser();
   if (user) redirect(homeForUser(user));
   // Signed in with Clerk, but no active school account is linked to this sign-in.
   const { userId } = await auth();
+  if (userId) redirect(NO_ACCESS);
   const params = await searchParams;
   const signedOut = params.signedOut === "1";
+  const passwordSet = params.passwordSet === "1";
+  // ?setup=1 comes from the invite email for a new account; ?reset=1 from "Forgot password?".
+  const setup = params.setup === "1";
+  const resetting = setup || params.reset === "1";
+  const inviteEmail = typeof params.email === "string" ? params.email : "";
 
   return (
     <div className="grid min-h-dvh lg:grid-cols-2">
@@ -84,9 +91,15 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
               <Brand />
             </div>
 
-            <h2 className="mt-8 font-heading text-2xl sm:text-3xl">Welcome back</h2>
+            <h2 className="mt-8 font-heading text-2xl sm:text-3xl">
+              {setup ? "Set your password" : resetting ? "Reset your password" : "Welcome back"}
+            </h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Sign in to your parent, pupil, teacher or administrator account.
+              {setup
+                ? "Your school portal account is ready. Choose a password to finish setting it up."
+                : resetting
+                  ? "We'll email you a code, then you can choose a new password."
+                  : "Sign in to your parent, pupil, teacher or administrator account."}
             </p>
 
             {signedOut ? (
@@ -95,26 +108,24 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
               </div>
             ) : null}
 
-            {userId ? (
-              <div className="mt-6 space-y-4">
-                <div className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm leading-relaxed">
-                  <p className="font-extrabold">Your sign-in isn&apos;t linked to a school account</p>
-                  <p className="mt-1 text-muted-foreground">
-                    You are signed in, but this sign-in has not been set up for the portal, or the account has been
-                    disabled. Please contact the school office.
-                  </p>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Reference: <code className="rounded bg-muted px-1.5 py-0.5 font-semibold">{userId}</code>
-                  </p>
-                </div>
-                <SignOutButton />
+            {passwordSet ? (
+              <div className="mt-5 rounded-xl border border-success/30 bg-success/10 px-4 py-3 text-sm font-semibold text-success">
+                Your password is saved. Sign in with it below.
               </div>
-            ) : (
-              <LoginForm />
-            )}
+            ) : null}
+
+            {resetting ? <ResetPasswordForm initialEmail={inviteEmail} /> : <LoginForm />}
+
+            {!resetting ? (
+              <p className="mt-4 text-center text-sm">
+                <Link href="/login?reset=1" className="font-bold text-primary underline-offset-4 hover:underline dark:text-gold">
+                  Forgot your password? Reset it by email
+                </Link>
+              </p>
+            ) : null}
 
             <p className="mt-8 text-center text-sm text-muted-foreground">
-              Accounts are created by the school. Forgotten your password? Ask the school office to reset it.
+              Accounts are created by the school. Forgotten your password? Ask the school office for a new one.
             </p>
 
             <p className="mt-4 text-center text-sm text-muted-foreground">

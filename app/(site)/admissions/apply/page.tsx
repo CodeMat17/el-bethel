@@ -17,9 +17,10 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { api } from "@/convex/_generated/api";
 import { draftTokenHash } from "@/lib/school/admissions";
-import { ADMISSION_FEES, ADMISSION_OPEN_LEVELS, CLASS_LEVELS } from "@/lib/school/config";
+import { CLASS_LEVELS } from "@/lib/school/config";
 import { publicQuery } from "@/lib/school/convex";
 import { formatDate } from "@/lib/school/format";
+import { getContent } from "@/lib/school/site-content";
 
 export const metadata: Metadata = {
   title: "Apply Online",
@@ -28,18 +29,13 @@ export const metadata: Metadata = {
   alternates: { canonical: "/admissions/apply" },
 };
 
-const OPEN_LEVELS = CLASS_LEVELS.filter((l) => ADMISSION_OPEN_LEVELS.includes(l.id)).map((l) => ({
-  id: l.id,
-  name: l.name,
-}));
-
 const STEP_COPY: Record<ApplyStepKey, { title: string; lede: string }> = {
   account: { title: "Start your application", lede: "Tell us who you are and which class you are applying for. Your progress is saved in this browser." },
   pupil: { title: "Pupil information", lede: "Tell us about the child you are applying for." },
   guardian: { title: "Parent or guardian information", lede: "Who should we contact about this application?" },
-  documents: { title: "Upload documents", lede: "Upload the documents required to complete your application." },
+  documents: { title: "Documents for screening", lede: "Bring these documents with you when you come in for screening. Nothing is uploaded online." },
   review: { title: "Review your application", lede: "Check everything carefully. You can still go back and edit any step." },
-  payment: { title: "Application fee", lede: "How to pay the application fee." },
+  payment: { title: "Application fee", lede: "Pay at the school bursary or by bank transfer to the account below." },
   submit: { title: "Submit your application", lede: "One last confirmation and your application goes to our admissions team." },
 };
 
@@ -55,10 +51,12 @@ export default async function ApplyPage({ searchParams }: PageProps<"/admissions
   const step: ApplyStepKey = !draft ? "account" : (requested && APPLY_STEPS.some((s) => s.key === requested) ? requested : "pupil");
 
   const reachable: ApplyStepKey[] = draft
-    ? ["pupil", "guardian", "documents", "review", ...(draft.documents.every((d) => !d.required || d.uploaded) ? (["payment", "submit"] as ApplyStepKey[]) : [])]
+    ? ["pupil", "guardian", "documents", "review", "payment", "submit"]
     : ["account"];
 
-  const applicationFee = ADMISSION_FEES[0].amount;
+  const [rules, bank] = await Promise.all([getContent("fees"), publicQuery(api.fees.bankDetails, {})]);
+  const applicationFee = rules.admissionFees[0]?.amount ?? 0;
+  const OPEN_LEVELS = CLASS_LEVELS.filter((l) => rules.openLevels.includes(l.id)).map((l) => ({ id: l.id, name: l.name }));
 
   return (
     <>
@@ -131,25 +129,15 @@ export default async function ApplyPage({ searchParams }: PageProps<"/admissions
                 />
                 <div>
                   <div className="flex items-center justify-between gap-3">
-                    <h3 className="font-heading text-base font-extrabold">Documents</h3>
-                    <Button variant="ghost" size="sm" className="font-bold" render={<Link href="/admissions/apply?step=documents" />}>
-                      <PencilIcon />
-                      Edit
-                    </Button>
+                    <h3 className="font-heading text-base font-extrabold">Documents to bring for screening</h3>
                   </div>
                   <ul className="mt-3 grid gap-2">
                     {draft.documents.map((doc) => (
                       <li key={doc.key} className="flex items-center justify-between gap-3 rounded-xl border bg-card px-4 py-3 text-sm">
                         <span className="font-semibold">{doc.label}</span>
-                        {doc.uploaded ? (
-                          <span className="flex items-center gap-1.5 text-xs font-bold text-success">
-                            <CheckCircle2Icon className="size-3.5" /> Uploaded
-                          </span>
-                        ) : (
-                          <span className={`text-xs font-bold ${doc.required ? "text-destructive" : "text-muted-foreground"}`}>
-                            {doc.required ? "Required" : "Not provided"}
-                          </span>
-                        )}
+                        <span className={`text-xs font-bold ${doc.required ? "text-foreground" : "text-muted-foreground"}`}>
+                          {doc.required ? "Required" : "Optional"}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -176,7 +164,7 @@ export default async function ApplyPage({ searchParams }: PageProps<"/admissions
                   </Button>
                 </div>
               ) : (
-                <PaymentStep amount={applicationFee} />
+                <PaymentStep amount={applicationFee} applicationNo={draft.applicationNo} bank={bank} />
               )
             ) : null}
 

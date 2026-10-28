@@ -4,10 +4,9 @@ import { ArrowRightIcon } from "lucide-react";
 
 import { EmptyState, StatusPill } from "@/components/common";
 import { PortalPageHeader } from "@/components/portal/page-header";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { requireParent } from "@/lib/school/auth";
 import { api } from "@/convex/_generated/api";
@@ -47,7 +46,6 @@ export default async function ParentChildrenPage() {
       <div className="grid gap-5 lg:grid-cols-2">
         {myChildren.map((child) => {
           const summary = summaries.find((x) => x.studentId === child.id);
-          const attendance = { rate: summary?.attendanceRate ?? 0 };
           const pending = summary?.pendingAssignments ?? 0;
           const balance = summary?.balance ?? 0;
 
@@ -55,6 +53,7 @@ export default async function ParentChildrenPage() {
             <Card key={child.id} className="gap-0 overflow-hidden p-0">
               <div className="flex items-center gap-4 bg-navy p-5 text-navy-foreground">
                 <Avatar className="size-14 shrink-0 ring-2 ring-gold/40">
+                  {child.photo ? <AvatarImage src={child.photo.url} alt="" /> : null}
                   <AvatarFallback className={cn("font-extrabold", avatarTone(child.avatarSeed))}>
                     {initials(child.firstName, child.lastName)}
                   </AvatarFallback>
@@ -68,11 +67,7 @@ export default async function ParentChildrenPage() {
               </div>
 
               <div className="p-5">
-                <dl className="grid grid-cols-3 gap-3 text-center">
-                  <div className="rounded-xl border bg-card p-3">
-                    <dt className="text-[0.65rem] font-bold text-muted-foreground uppercase">Attendance</dt>
-                    <dd className="mt-1 font-heading text-lg font-extrabold">{attendance.rate}%</dd>
-                  </div>
+                <dl className="grid grid-cols-2 gap-3 text-center">
                   <div className="rounded-xl border bg-card p-3">
                     <dt className="text-[0.65rem] font-bold text-muted-foreground uppercase">To do</dt>
                     <dd className="mt-1 font-heading text-lg font-extrabold">{pending}</dd>
@@ -82,8 +77,6 @@ export default async function ParentChildrenPage() {
                     <dd className="mt-1 font-heading text-sm font-extrabold">{money(balance)}</dd>
                   </div>
                 </dl>
-
-                <Progress value={attendance.rate} className="mt-4" />
 
                 <Separator className="my-5" />
 

@@ -3,6 +3,8 @@ import { v, type Infer } from "convex/values";
 export const role = v.union(
   v.literal("super_admin"),
   v.literal("admin"),
+  /** Manages the public website's content only — no access to school records. */
+  v.literal("site_admin"),
   v.literal("teacher"),
   v.literal("parent"),
   v.literal("pupil"),

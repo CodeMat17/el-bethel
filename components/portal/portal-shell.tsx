@@ -9,11 +9,12 @@ import { BellIcon, LogOutIcon, MenuIcon } from "lucide-react";
 import { Icon } from "@/components/icon";
 import { BrandMark } from "@/components/site/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -38,6 +39,7 @@ export interface PortalUser {
   email?: string;
   roleLabel: string;
   avatarSeed: string;
+  photoUrl?: string;
 }
 
 export function PortalShell({
@@ -45,7 +47,7 @@ export function PortalShell({
   portalHome,
   nav,
   user,
-  unread,
+  unread = 0,
   notificationsHref,
   quickNav,
   headerExtra,
@@ -55,8 +57,9 @@ export function PortalShell({
   portalHome: string;
   nav: PortalNavGroup[];
   user: PortalUser;
-  unread: number;
-  notificationsHref: string;
+  unread?: number;
+  /** Omit for portals without notifications; the bell is then hidden. */
+  notificationsHref?: string;
   quickNav?: { label: string; href: string; icon: string }[];
   headerExtra?: React.ReactNode;
   children: React.ReactNode;
@@ -113,6 +116,7 @@ export function PortalShell({
     <div className="border-t border-sidebar-border p-3">
       <div className="flex items-center gap-3 rounded-lg px-2 py-2">
         <Avatar className="size-9 shrink-0">
+          {user.photoUrl ? <AvatarImage src={user.photoUrl} alt="" /> : null}
           <AvatarFallback className={cn("text-xs font-bold", avatarTone(user.avatarSeed))}>
             {initials(...user.name.replace(/^(Mrs|Mr|Miss|Dr|Mme)\.?\s/, "").split(" "))}
           </AvatarFallback>
@@ -194,6 +198,7 @@ export function PortalShell({
 
             <div className="ml-auto flex items-center gap-1">
               {headerExtra}
+              {notificationsHref ? (
               <Button
                 variant="ghost"
                 size="icon-lg"
@@ -208,25 +213,29 @@ export function PortalShell({
                   </span>
                 ) : null}
               </Button>
+              ) : null}
               <ThemeToggle />
               <DropdownMenu>
                 <DropdownMenuTrigger
                   render={<Button variant="ghost" size="icon-lg" className="ml-0.5" aria-label="Account menu" />}
                 >
                   <Avatar className="size-8">
+                    {user.photoUrl ? <AvatarImage src={user.photoUrl} alt="" /> : null}
                     <AvatarFallback className={cn("text-[0.7rem] font-bold", avatarTone(user.avatarSeed))}>
                       {initials(...user.name.replace(/^(Mrs|Mr|Miss|Dr|Mme)\.?\s/, "").split(" "))}
                     </AvatarFallback>
                   </Avatar>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-60">
-                  <DropdownMenuLabel>
-                    <p className="truncate text-sm font-bold">{user.name}</p>
-                    <p className="truncate text-xs font-normal text-muted-foreground">{user.email ?? user.roleLabel}</p>
-                  </DropdownMenuLabel>
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel>
+                      <p className="truncate text-sm font-bold">{user.name}</p>
+                      <p className="truncate text-xs font-normal text-muted-foreground">{user.email ?? user.roleLabel}</p>
+                    </DropdownMenuLabel>
+                  </DropdownMenuGroup>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem render={<Link href="/" />}>Public website</DropdownMenuItem>
-                  <DropdownMenuItem render={<Link href={notificationsHref} />}>Notifications</DropdownMenuItem>
+                  {notificationsHref ? <DropdownMenuItem render={<Link href={notificationsHref} />}>Notifications</DropdownMenuItem> : null}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem disabled={signingOut} onClick={signOut}>
                     {signingOut ? <Spinner /> : null}

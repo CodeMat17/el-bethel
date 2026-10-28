@@ -8,6 +8,7 @@ import { ParentDialog, StudentDialog } from "@/components/admin/people-dialogs";
 import { SignInCard } from "@/components/admin/sign-in-card";
 import { ConfirmAction } from "@/components/portal/confirm-action";
 import { PortalPageHeader } from "@/components/portal/page-header";
+import { ProfilePhoto } from "@/components/portal/profile-photo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -17,6 +18,7 @@ import { isSuperAdmin, requireAdmin } from "@/lib/school/auth";
 import { query } from "@/lib/school/convex";
 import { studentName } from "@/lib/school/data";
 import { getDirectory } from "@/lib/school/directory";
+import { initials } from "@/lib/school/format";
 
 export const metadata: Metadata = { title: "Parent" };
 
@@ -43,6 +45,9 @@ export default async function AdminParentPage({ params }: PageProps<"/portal/adm
           <Card className="gap-0 p-5 sm:p-6">
             <h2 className="font-heading text-base font-extrabold">Details</h2>
             <Separator className="my-4" />
+            <div className="mb-5 flex justify-center sm:justify-start">
+              <ProfilePhoto url={parent.photo?.url} seed={parent.avatarSeed} initials={initials(parent.firstName, parent.lastName)} />
+            </div>
             <dl className="grid gap-3 text-sm sm:grid-cols-2">
               {[
                 ["Occupation", parent.occupation || "—"],

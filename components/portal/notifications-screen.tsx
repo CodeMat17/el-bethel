@@ -13,7 +13,7 @@ export async function NotificationsScreen({ children, showEmailNote = true }: { 
 
   return (
     <>
-      <PortalPageHeader title="Notifications" description="Assignments, results, attendance, fees, messages and school announcements." />
+      <PortalPageHeader title="Notifications" description="Assignments, results, fees and school announcements." />
       {children}
       <NotificationList notifications={notifications} />
       {showEmailNote && adult ? (

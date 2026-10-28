@@ -40,7 +40,6 @@ const STATUSES = [
   { value: "waitlisted", label: "Waitlisted" },
   { value: "not_accepted", label: "Not accepted" },
   { value: "withdrawn", label: "Withdrawn" },
-  { value: "enrolled", label: "Enrolled" },
 ];
 
 function SubmitButton() {

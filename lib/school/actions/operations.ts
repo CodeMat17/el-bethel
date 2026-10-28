@@ -7,7 +7,7 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { tryMutation } from "@/lib/school/convex";
 
 /**
- * Library, certificate and achievement actions. Each forwards to a
+ * Certificate and achievement actions. Each forwards to a
  * Convex mutation that checks the caller is an administrator.
  */
 
@@ -24,52 +24,6 @@ const bool = (f: FormData, key: string) => f.get(key) === "on" || f.get(key) ===
 function done(message: string, ...paths: string[]): OpsResult {
   for (const path of paths) revalidatePath(path);
   return { ok: true, message };
-}
-
-/* --------------------------------- library -------------------------------- */
-
-export async function saveBook(formData: FormData): Promise<OpsResult> {
-  const result = await tryMutation(api.library.saveBook, {
-    id: opt(formData, "id") as Id<"books"> | undefined,
-    title: str(formData, "title"),
-    author: str(formData, "author"),
-    isbn: str(formData, "isbn"),
-    category: str(formData, "category"),
-    ageRange: str(formData, "ageRange"),
-    copiesTotal: Number(str(formData, "copiesTotal")),
-  });
-  if (!result.ok) return { ok: false, message: result.message };
-  return done("Book saved.", "/portal/admin/library", "/school-life/library");
-}
-
-export async function removeBook(id: string): Promise<OpsResult> {
-  const result = await tryMutation(api.library.removeBook, { id: id as Id<"books"> });
-  if (!result.ok) return { ok: false, message: result.message };
-  return done("Book removed.", "/portal/admin/library");
-}
-
-export async function issueBook(formData: FormData): Promise<OpsResult> {
-  const studentId = str(formData, "studentId");
-  if (!studentId) return { ok: false, message: "Choose the pupil borrowing the book." };
-  const result = await tryMutation(api.library.issue, {
-    bookId: str(formData, "bookId") as Id<"books">,
-    studentId: studentId as Id<"students">,
-    dueDate: opt(formData, "dueDate"),
-  });
-  if (!result.ok) return { ok: false, message: result.message };
-  return done(`Book issued. Due back ${result.data.dueDate}.`, "/portal/admin/library");
-}
-
-export async function returnBook(id: string): Promise<OpsResult> {
-  const result = await tryMutation(api.library.returnLoan, { id: id as Id<"borrowings"> });
-  if (!result.ok) return { ok: false, message: result.message };
-  return done("Book returned.", "/portal/admin/library");
-}
-
-export async function renewLoan(id: string): Promise<OpsResult> {
-  const result = await tryMutation(api.library.renew, { id: id as Id<"borrowings"> });
-  if (!result.ok) return { ok: false, message: result.message };
-  return done(`Renewed until ${result.data.dueDate}.`, "/portal/admin/library");
 }
 
 /* ------------------------------ certificates ------------------------------ */
@@ -113,7 +67,7 @@ export async function saveAchievement(formData: FormData): Promise<OpsResult> {
     issueCertificate: bool(formData, "issueCertificate"),
   });
   if (!result.ok) return { ok: false, message: result.message };
-  revalidatePath("/school-life/achievements");
+  revalidatePath("/");
   return done(
     result.data.certificateNo ? `Saved, and certificate ${result.data.certificateNo} issued.` : "Achievement saved.",
     "/portal/admin/achievements",
@@ -124,7 +78,7 @@ export async function saveAchievement(formData: FormData): Promise<OpsResult> {
 export async function removeAchievement(id: string): Promise<OpsResult> {
   const result = await tryMutation(api.awards.removeAchievement, { id: id as Id<"achievements"> });
   if (!result.ok) return { ok: false, message: result.message };
-  revalidatePath("/school-life/achievements");
+  revalidatePath("/");
   return done("Achievement removed.", "/portal/admin/achievements");
 }
 

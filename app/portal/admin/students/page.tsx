@@ -6,7 +6,7 @@ import { EmptyState, StatCard, StatusPill } from "@/components/common";
 import { AdminFilters } from "@/components/portal/admin-filters";
 import { PortalPageHeader } from "@/components/portal/page-header";
 import { Pager } from "@/components/portal/pager";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -90,6 +90,7 @@ export default async function AdminStudentsPage({ searchParams }: PageProps<"/po
                     <TableCell>
                       <Link href={`/portal/admin/students/${student.id}`} className="flex items-center gap-3 hover:underline">
                         <Avatar className="size-8 shrink-0">
+                          {student.photo ? <AvatarImage src={student.photo.url} alt="" /> : null}
                           <AvatarFallback className={cn("text-[0.65rem] font-bold", avatarTone(student.avatarSeed))}>
                             {initials(student.firstName, student.lastName)}
                           </AvatarFallback>

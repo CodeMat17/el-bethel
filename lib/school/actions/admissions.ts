@@ -8,7 +8,8 @@ import { z } from "zod";
 
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { ADMISSION_OPEN_LEVELS } from "@/lib/school/config";
+// Which classes are open is checked by Convex against the published admission rules.
+import { CLASS_LEVELS } from "@/lib/school/config";
 import { convexErrorMessage, publicMutation, tryMutation } from "@/lib/school/convex";
 import type { ApplicationStatus } from "@/lib/school/types";
 
@@ -49,7 +50,7 @@ const startSchema = z.object({
   fullName: z.string().trim().min(3, "Enter your full name"),
   email: z.string().trim().toLowerCase().email("Enter a valid email address"),
   phone: z.string().trim().min(7, "Enter a valid phone number"),
-  intendedLevelId: z.string().refine((v) => ADMISSION_OPEN_LEVELS.includes(v), "Choose a class that is open for admission"),
+  intendedLevelId: z.string().refine((v) => CLASS_LEVELS.some((l) => l.id === v), "Choose a class"),
 });
 
 export async function createApplicantAccount(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -91,7 +92,7 @@ const pupilSchema = z.object({
   previousSchool: z.string().trim().optional().default(""),
   currentClass: z.string().trim().optional().default(""),
   address: z.string().trim().min(6, "Enter a home address"),
-  intendedLevelId: z.string().refine((v) => ADMISSION_OPEN_LEVELS.includes(v), "Choose a class that is open"),
+  intendedLevelId: z.string().refine((v) => CLASS_LEVELS.some((l) => l.id === v), "Choose a class"),
 });
 
 export async function savePupilStep(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -142,49 +143,7 @@ export async function saveGuardianStep(_prev: FormState, formData: FormData): Pr
 
 /* ---------------------------- step 4: documents --------------------------- */
 
-const MAX_BYTES = 5 * 1024 * 1024;
-const ALLOWED = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-]);
-
-/**
- * Records that a document is ready. Validation happens here; the files
- * themselves are brought to the school for verification, so only the file
- * name is kept with the application.
- */
-export async function uploadDocument(_prev: FormState, formData: FormData): Promise<FormState> {
-  const tokenHash = await requireToken();
-  if (!tokenHash) return { ok: false, message: "We couldn't find your application. Please start again." };
-  const key = String(formData.get("key") ?? "");
-  const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) return { ok: false, message: "Please choose a file to upload." };
-  if (file.size > MAX_BYTES) return { ok: false, message: "This file is too large. Please choose a file smaller than 5 MB." };
-  if (!ALLOWED.has(file.type)) return { ok: false, message: "Please upload a JPG, PNG, WEBP, PDF or DOCX file." };
-  try {
-    const label = await publicMutation(api.admissions.setDocument, { tokenHash, key, fileName: file.name });
-    revalidatePath("/admissions/apply");
-    return { ok: true, message: `${label} added.` };
-  } catch (error) {
-    return { ok: false, message: convexErrorMessage(error) };
-  }
-}
-
-export async function removeDocument(_prev: FormState, formData: FormData): Promise<FormState> {
-  const tokenHash = await requireToken();
-  if (!tokenHash) return { ok: false, message: "We couldn't find your application." };
-  try {
-    const label = await publicMutation(api.admissions.setDocument, { tokenHash, key: String(formData.get("key") ?? "") });
-    revalidatePath("/admissions/apply");
-    return { ok: true, message: `${label} removed.` };
-  } catch (error) {
-    return { ok: false, message: convexErrorMessage(error) };
-  }
-}
-
+// Nothing is uploaded: the step only lists what to bring to the screening.
 export async function continueToReview(): Promise<void> {
   redirect("/admissions/apply?step=review");
 }
@@ -222,7 +181,7 @@ export async function submitApplication(_prev: FormState, formData: FormData): P
 const DECISION_STATUSES: ApplicationStatus[] = [
   "under_review", "documents_required", "assessment_scheduled", "assessment_completed",
   "interview_scheduled", "accepted", "conditionally_accepted", "waitlisted", "not_accepted",
-  "withdrawn", "enrolled",
+  "withdrawn",
 ];
 
 export async function updateApplicationStatus(_prev: FormState, formData: FormData): Promise<FormState> {

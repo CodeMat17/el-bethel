@@ -25,6 +25,25 @@ export const classStats = query({
   },
 });
 
+/** Sections and active pupils per class level, for the public Academics page. Totals only. */
+export const levelSummary = query({
+  args: {},
+  handler: async (ctx) => {
+    const [classes, students] = await Promise.all([
+      ctx.db.query("classes").collect(),
+      ctx.db.query("students").withIndex("by_status", (q) => q.eq("status", "active")).collect(),
+    ]);
+    const levelOf = new Map(classes.map((c) => [c._id as string, c.levelId]));
+    const summary: Record<string, { sections: number; pupils: number }> = {};
+    for (const c of classes) (summary[c.levelId] ??= { sections: 0, pupils: 0 }).sections++;
+    for (const s of students) {
+      const levelId = levelOf.get(s.classId);
+      if (levelId) summary[levelId].pupils++;
+    }
+    return summary;
+  },
+});
+
 export const saveClass = mutation({
   args: {
     id: v.optional(v.id("classes")),
@@ -195,6 +214,45 @@ export const saveTerm = mutation({
     const newId = await ctx.db.insert("terms", { ...doc, active: false });
     await audit(ctx, viewer, { action: "Created term", entity: "Term", entityId: newId, newValue: doc.name });
     return newId;
+  },
+});
+
+/** Delete a term that nothing has been recorded against yet. */
+export const removeTerm = mutation({
+  args: { id: v.id("terms") },
+  handler: async (ctx, { id }) => {
+    const viewer = await requireAdmin(ctx);
+    const term = await ctx.db.get(id);
+    if (!term) return;
+    if (term.active) fail("INVALID", "Make another term current before deleting this one.");
+    const [result, report, assignment, invoice] = await Promise.all([
+      ctx.db.query("results").withIndex("by_term", (q) => q.eq("termId", id)).first(),
+      ctx.db.query("reportCards").withIndex("by_term", (q) => q.eq("termId", id)).first(),
+      ctx.db.query("assignments").filter((q) => q.eq(q.field("termId"), id)).first(),
+      ctx.db.query("invoices").filter((q) => q.eq(q.field("termId"), id)).first(),
+    ]);
+    if (result || report) fail("INVALID", "This term has results on record and can't be deleted. Edit its dates instead.");
+    if (assignment) fail("INVALID", "This term has assignments on record and can't be deleted. Edit its dates instead.");
+    if (invoice) fail("INVALID", "This term has invoices on record and can't be deleted. Edit its dates instead.");
+    await ctx.db.delete(id);
+    await audit(ctx, viewer, { action: "Deleted term", entity: "Term", entityId: id, previousValue: term.name });
+  },
+});
+
+/** Delete a session with no terms or applications. */
+export const removeSession = mutation({
+  args: { id: v.id("academicSessions") },
+  handler: async (ctx, { id }) => {
+    const viewer = await requireAdmin(ctx);
+    const session = await ctx.db.get(id);
+    if (!session) return;
+    if (session.active) fail("INVALID", "This is the current session. Make a term in another session current first.");
+    const term = await ctx.db.query("terms").withIndex("by_session", (q) => q.eq("sessionId", id)).first();
+    if (term) fail("INVALID", "Delete this session's terms first.");
+    const application = await ctx.db.query("applications").filter((q) => q.eq(q.field("sessionId"), id)).first();
+    if (application) fail("INVALID", "Applications have been made for this session, so it can't be deleted.");
+    await ctx.db.delete(id);
+    await audit(ctx, viewer, { action: "Deleted session", entity: "Session", entityId: id, previousValue: session.name });
   },
 });
 

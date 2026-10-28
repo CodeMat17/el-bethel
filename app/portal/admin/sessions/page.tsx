@@ -6,13 +6,14 @@ import { PortalPageHeader } from "@/components/portal/page-header";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { requireAdmin } from "@/lib/school/auth";
-import { ACADEMIC_CALENDAR, CLASS_LEVELS } from "@/lib/school/config";
+import { academicCalendar } from "@/lib/school/calendar";
+import { CLASS_LEVELS } from "@/lib/school/config";
 import { formatDate } from "@/lib/school/format";
-import { CircleCheckIcon } from "lucide-react";
+import { CircleCheckIcon, TrashIcon } from "lucide-react";
 
 import { SessionDialog, TermDialog } from "@/components/admin/academic-dialogs";
 import { ConfirmAction } from "@/components/portal/confirm-action";
-import { setActiveTerm } from "@/lib/school/actions/admin";
+import { removeSession, removeTerm, setActiveTerm } from "@/lib/school/actions/admin";
 import { getDirectory } from "@/lib/school/directory";
 
 export const metadata: Metadata = { title: "Sessions & terms" };
@@ -23,13 +24,14 @@ export default async function AdminSessionsPage() {
   const db = { sessions: dir.sessions, terms: dir.terms };
   const activeSession = db.sessions.find((s) => s.active);
   const sessionOptions = [...db.sessions].reverse().map((s) => ({ value: s.id, label: s.name }));
+  const { blocks: calendar } = academicCalendar(db.sessions, db.terms);
   const now = new Date();
 
   return (
     <>
       <PortalPageHeader
         title="Academic sessions & terms"
-        description="Session dates, term dates and examination windows. The current term is used for new assignments and results."
+        description="Session dates, term dates and examination windows. These drive the public school calendar; the current term is used for new assignments and results."
         action={<SessionDialog />}
       />
 
@@ -61,6 +63,19 @@ export default async function AdminSessionsPage() {
                       <StatusPill tone={session.active ? "gold" : "neutral"}>{session.active ? "Current" : "Not current"}</StatusPill>
                       <SessionDialog session={session} />
                       <TermDialog sessions={sessionOptions} sessionId={session.id} />
+                      {!session.active && terms.length === 0 ? (
+                        <ConfirmAction
+                          action={removeSession.bind(null, session.id)}
+                          icon={<TrashIcon />}
+                          variant="ghost"
+                          className="font-bold text-destructive"
+                          pendingText="Deleting…"
+                          destructive
+                          confirm={{ title: `Delete ${session.name}?`, description: "The session will be removed from the calendar.", confirmLabel: "Delete" }}
+                        >
+                          Delete
+                        </ConfirmAction>
+                      ) : null}
                     </div>
                   </div>
 
@@ -87,6 +102,19 @@ export default async function AdminSessionsPage() {
                                   </ConfirmAction>
                                 )}
                                 <TermDialog term={term} sessions={sessionOptions} />
+                                {!term.active ? (
+                                  <ConfirmAction
+                                    action={removeTerm.bind(null, term.id)}
+                                    icon={<TrashIcon />}
+                                    variant="ghost"
+                                    className="font-bold text-destructive"
+                                    pendingText="Deleting…"
+                                    destructive
+                                    confirm={{ title: `Delete ${term.name}?`, description: "Only terms with no results, assignments or invoices can be deleted.", confirmLabel: "Delete" }}
+                                  >
+                                    Delete
+                                  </ConfirmAction>
+                                ) : null}
                               </div>
                             </div>
                             <dl className="mt-3 grid gap-3 text-xs sm:grid-cols-3">
@@ -122,8 +150,8 @@ export default async function AdminSessionsPage() {
             <h2 className="font-heading text-base font-extrabold">Calendar blocks</h2>
             <Separator className="my-4" />
             <ul className="space-y-2.5">
-              {ACADEMIC_CALENDAR.map((block) => {
-                const current = now >= new Date(block.start) && now <= new Date(block.end);
+              {calendar.map((block) => {
+                const current = now >= new Date(`${block.start}T00:00:00Z`) && now <= new Date(`${block.end}T23:59:59Z`);
                 return (
                   <li
                     key={block.name}

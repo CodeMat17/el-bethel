@@ -1,14 +1,15 @@
 import { v } from "convex/values";
 
-import type { Doc } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx } from "./_generated/server";
-import { fail, hasRole, requireAdmin, requireViewer } from "./lib/access";
+import { fail, getViewer, hasRole, requireAdmin, requireEventEditor, requireSiteAdmin, requireViewer } from "./lib/access";
 import { audit, getByLooseId, nowISO, slugify, withId } from "./lib/util";
 import { cloudMedia } from "./validators";
 
 /**
- * Website content. Reads are public (only published/visible items); every write
- * requires an administrator.
+ * Website content. Reads are public (only published/visible items). News, events,
+ * the gallery, testimonials, clubs and FAQs are written from the Site portal by
+ * site or super administrators; emergency notices and documents stay with administrators.
  */
 
 /* ------------------------------ public reads ------------------------------ */
@@ -130,6 +131,31 @@ export const portalDocuments = query({
   },
 });
 
+const STAFF_ROLES = ["super_admin", "admin", "teacher"] as const;
+
+/** Who may open a document: public ones are open to all, parent ones to parents and staff, staff ones to staff. */
+function canOpen(viewer: Doc<"users"> | null, visibility: Doc<"documents">["visibility"]) {
+  if (visibility === "public") return true;
+  if (hasRole(viewer, ...STAFF_ROLES)) return true;
+  return visibility === "parents" && hasRole(viewer, "parent");
+}
+
+/** A short-lived lookup for the download route: the file URL never reaches the browser. */
+export const documentFile = query({
+  args: { id: v.string() },
+  handler: async (ctx, { id }) => {
+    const doc = await getByLooseId(ctx, "documents", id);
+    if (!doc) return null;
+    const viewer = await getViewer(ctx);
+    if (!canOpen(viewer, doc.visibility)) {
+      fail(viewer ? "FORBIDDEN" : "UNAUTHENTICATED", "Please sign in with an account that can see this document.");
+    }
+    const url = doc.storageId ? await ctx.storage.getUrl(doc.storageId) : null;
+    if (!url) return null;
+    return { url, fileName: doc.fileName, visibility: doc.visibility };
+  },
+});
+
 export const search = query({
   args: { q: v.string() },
   handler: async (ctx, { q }) => {
@@ -160,7 +186,7 @@ export const search = query({
 export const adminNews = query({
   args: {},
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    await requireSiteAdmin(ctx);
     const rows = await ctx.db.query("news").collect();
     return rows.map(withId).sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
   },
@@ -169,7 +195,7 @@ export const adminNews = query({
 export const adminNewsPost = query({
   args: { id: v.string() },
   handler: async (ctx, { id }) => {
-    await requireAdmin(ctx);
+    await requireSiteAdmin(ctx);
     const post = await getByLooseId(ctx, "news", id);
     return post ? withId(post) : null;
   },
@@ -178,7 +204,7 @@ export const adminNewsPost = query({
 export const adminGallery = query({
   args: {},
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    await requireSiteAdmin(ctx);
     const rows = await ctx.db.query("gallery").withIndex("by_taken_at").order("desc").collect();
     return rows.map(withId);
   },
@@ -237,7 +263,7 @@ function checkNews(a: { title: string; excerpt: string; content: string; categor
 export const saveNews = mutation({
   args: { id: v.optional(v.id("news")), ...newsFields },
   handler: async (ctx, { id, ...a }) => {
-    const viewer = await requireAdmin(ctx);
+    const viewer = await requireSiteAdmin(ctx);
     checkNews(a);
     const doc = {
       title: a.title.trim(),
@@ -269,7 +295,7 @@ export const saveNews = mutation({
 export const removeNews = mutation({
   args: { id: v.id("news") },
   handler: async (ctx, { id }) => {
-    const viewer = await requireAdmin(ctx);
+    const viewer = await requireSiteAdmin(ctx);
     const post = await ctx.db.get(id);
     if (!post) return null;
     await ctx.db.delete(id);
@@ -303,7 +329,7 @@ const eventFields = {
 export const saveEvent = mutation({
   args: { id: v.optional(v.id("events")), ...eventFields },
   handler: async (ctx, { id, cancelled, ...a }) => {
-    const viewer = await requireAdmin(ctx);
+    const viewer = await requireEventEditor(ctx);
     if (a.title.trim().length < 3) fail("INVALID", "Give the event a title.");
     if (!/^\d{4}-\d{2}-\d{2}/.test(a.date)) fail("INVALID", "Choose a date.");
     if (a.endDate && a.endDate < a.date) fail("INVALID", "The end date can't be before the start date.");
@@ -332,7 +358,7 @@ export const saveEvent = mutation({
 export const removeEvent = mutation({
   args: { id: v.id("events") },
   handler: async (ctx, { id }) => {
-    const viewer = await requireAdmin(ctx);
+    const viewer = await requireEventEditor(ctx);
     const e = await ctx.db.get(id);
     if (!e) return null;
     await ctx.db.delete(id);
@@ -351,7 +377,7 @@ export const addGalleryItem = mutation({
     media: cloudMedia,
   },
   handler: async (ctx, a) => {
-    const viewer = await requireAdmin(ctx);
+    const viewer = await requireSiteAdmin(ctx);
     if (!a.title.trim()) fail("INVALID", "Give the photo or video a title.");
     const id = await ctx.db.insert("gallery", {
       ...a,
@@ -369,7 +395,7 @@ export const addGalleryItem = mutation({
 export const updateGalleryItem = mutation({
   args: { id: v.id("gallery"), title: v.string(), caption: v.string(), category: v.string(), consentCleared: v.boolean() },
   handler: async (ctx, { id, ...a }) => {
-    const viewer = await requireAdmin(ctx);
+    const viewer = await requireSiteAdmin(ctx);
     if (!(await ctx.db.get(id))) fail("NOT_FOUND", "Item not found.");
     await ctx.db.patch(id, { ...a, title: a.title.trim(), caption: a.caption.trim() });
     await audit(ctx, viewer, { action: "Edited gallery item", entity: "Gallery", entityId: id, newValue: a.title });
@@ -379,7 +405,7 @@ export const updateGalleryItem = mutation({
 export const removeGalleryItem = mutation({
   args: { id: v.id("gallery") },
   handler: async (ctx, { id }) => {
-    const viewer = await requireAdmin(ctx);
+    const viewer = await requireSiteAdmin(ctx);
     const g = await ctx.db.get(id);
     if (!g) return null;
     await ctx.db.delete(id);
@@ -416,6 +442,89 @@ export const removeNotice = mutation({
     const viewer = await requireAdmin(ctx);
     await ctx.db.delete(id);
     await audit(ctx, viewer, { action: "Deleted notice", entity: "Notice", entityId: id });
+  },
+});
+
+/* -------------------------------- documents ------------------------------- */
+
+const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
+
+/** A one-time URL the admin's browser uploads the PDF to. */
+export const documentUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+/** Delete an upload whose document never saved, so failed saves don't leave files behind. */
+export const discardDocumentUpload = mutation({
+  args: { storageId: v.id("_storage") },
+  handler: async (ctx, { storageId }) => {
+    await requireAdmin(ctx);
+    const used = await ctx.db.query("documents").filter((q) => q.eq(q.field("storageId"), storageId)).first();
+    if (!used && (await ctx.db.system.get(storageId))) await ctx.storage.delete(storageId);
+  },
+});
+
+export const saveDocument = mutation({
+  args: {
+    id: v.optional(v.id("documents")),
+    title: v.string(),
+    description: v.string(),
+    category: v.string(),
+    visibility: v.union(v.literal("public"), v.literal("parents"), v.literal("staff")),
+    file: v.optional(v.object({ storageId: v.id("_storage"), fileName: v.string() })),
+  },
+  handler: async (ctx, { id, file, ...a }) => {
+    const viewer = await requireAdmin(ctx);
+    if (a.title.trim().length < 3) fail("INVALID", "Give the document a title.");
+    if (!a.category.trim()) fail("INVALID", "Choose a category.");
+    const before = id ? await ctx.db.get(id) : null;
+    if (id && !before) fail("NOT_FOUND", "Document not found.");
+    if (!before && !file) fail("INVALID", "Choose the PDF to upload.");
+
+    let upload: { storageId: Id<"_storage">; fileName: string; sizeBytes: number } | undefined;
+    if (file) {
+      // Trust what storage recorded, not what the browser said.
+      const meta = await ctx.db.system.get(file.storageId);
+      if (!meta) fail("INVALID", "The upload didn't finish. Please choose the file again.");
+      if (meta.contentType !== "application/pdf") fail("INVALID", "Only PDF files can be uploaded.");
+      if (meta.size > MAX_DOCUMENT_BYTES) fail("INVALID", "The PDF must be 10 MB or smaller.");
+      const name = file.fileName.replace(/[^\w.\- ]+/g, "").trim().slice(0, 120) || "document";
+      upload = { storageId: file.storageId, fileName: name.toLowerCase().endsWith(".pdf") ? name : `${name}.pdf`, sizeBytes: meta.size };
+    }
+
+    const doc = {
+      title: a.title.trim(),
+      description: a.description.trim(),
+      category: a.category.trim(),
+      visibility: a.visibility,
+      updatedAt: nowISO(),
+      ...upload,
+    };
+    if (before) {
+      await ctx.db.patch(before._id, doc);
+      if (upload && before.storageId && before.storageId !== upload.storageId) await ctx.storage.delete(before.storageId);
+      await audit(ctx, viewer, { action: "Edited document", entity: "Document", entityId: before._id, newValue: doc.title });
+      return before._id;
+    }
+    const newId = await ctx.db.insert("documents", { ...doc, fileName: upload!.fileName, sizeBytes: upload!.sizeBytes });
+    await audit(ctx, viewer, { action: "Added document", entity: "Document", entityId: newId, newValue: doc.title });
+    return newId;
+  },
+});
+
+export const removeDocument = mutation({
+  args: { id: v.id("documents") },
+  handler: async (ctx, { id }) => {
+    const viewer = await requireAdmin(ctx);
+    const doc = await ctx.db.get(id);
+    if (!doc) return;
+    if (doc.storageId) await ctx.storage.delete(doc.storageId);
+    await ctx.db.delete(id);
+    await audit(ctx, viewer, { action: "Deleted document", entity: "Document", entityId: id, previousValue: doc.title });
   },
 });
 

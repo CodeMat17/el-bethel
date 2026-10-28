@@ -1,6 +1,4 @@
-import { FlameIcon, LockIcon } from "lucide-react";
 
-import { Icon } from "@/components/icon";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
@@ -23,7 +21,7 @@ const HOUSE_COLOUR: Record<string, string> = {
   Amber: "bg-amber-500",
 };
 
-/** Level, points and streak at a glance. */
+/** Level and points at a glance. */
 export function StarsSummary({ data, compact = false }: { data: StarsData; compact?: boolean }) {
   return (
     <Card className={cn("gap-0 border-gold/30 bg-gold/8", compact ? "p-4" : "p-5 sm:p-6")}>
@@ -47,43 +45,7 @@ export function StarsSummary({ data, compact = false }: { data: StarsData; compa
       ) : (
         <p className="mt-3 text-sm font-bold">Top level reached — amazing!</p>
       )}
-      <p className="mt-3 flex items-center gap-1.5 text-sm">
-        <FlameIcon className="size-4 text-warning" />
-        <span className="font-bold">{data.streak}-day</span> attendance streak
-        <span className="text-muted-foreground">· best {data.bestStreak}</span>
-      </p>
     </Card>
-  );
-}
-
-export function BadgeGrid({ badges }: { badges: StarsData["badges"] }) {
-  return (
-    <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {badges.map((b) => (
-        <li key={b.key} className={cn("flex items-start gap-3 rounded-2xl border p-4", b.earned ? "border-gold/40 bg-gold/8" : "bg-card")}>
-          <span
-            className={cn(
-              "grid size-11 shrink-0 place-items-center rounded-xl",
-              b.earned ? "bg-gold text-gold-foreground" : "bg-muted text-muted-foreground",
-            )}
-          >
-            {b.earned ? <Icon name={b.icon} className="size-5" /> : <LockIcon className="size-4" />}
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-extrabold">{b.label}</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">{b.description}</p>
-            {!b.earned ? (
-              <>
-                <Progress value={(b.current / b.target) * 100} className="mt-2" />
-                <p className="mt-1 text-[0.7rem] font-bold text-muted-foreground tabular-nums">
-                  {b.current} / {b.target}
-                </p>
-              </>
-            ) : null}
-          </div>
-        </li>
-      ))}
-    </ul>
   );
 }
 

@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -18,6 +18,7 @@ export interface SwitchableChild {
   name: string;
   className: string;
   avatarSeed: string;
+  photoUrl?: string;
 }
 
 export function ChildSwitcher({
@@ -51,6 +52,7 @@ export function ChildSwitcher({
           <SelectItem key={child.id} value={child.id}>
             <span className="flex items-center gap-2.5">
               <Avatar className="size-6">
+                {child.photoUrl ? <AvatarImage src={child.photoUrl} alt="" /> : null}
                 <AvatarFallback className={cn("text-[0.6rem] font-bold", avatarTone(child.avatarSeed))}>
                   {initials(...child.name.split(" "))}
                 </AvatarFallback>

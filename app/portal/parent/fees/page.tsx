@@ -52,6 +52,7 @@ export default async function ParentFeesPage({ searchParams }: PageProps<"/porta
               name: studentName(c),
               className: dir.className(c.classId),
               avatarSeed: c.avatarSeed,
+              photoUrl: c.photo?.url,
             }))}
           />
         }
@@ -147,8 +148,8 @@ export default async function ParentFeesPage({ searchParams }: PageProps<"/porta
               Instalment plans are available on request. Contact the school accountant before the start of
               term and we will agree a schedule that works for your family.
             </p>
-            <Button variant="outline" size="lg" className="mt-4 w-full font-bold" render={<Link href="/portal/parent/messages" />}>
-              Message the accounts office
+            <Button variant="outline" size="lg" className="mt-4 w-full font-bold" render={<Link href="/contact" />}>
+              Contact the school office
             </Button>
           </Card>
         </div>

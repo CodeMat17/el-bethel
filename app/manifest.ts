@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
 
-import { SCHOOL } from "@/lib/school/config";
+import { getSchool } from "@/lib/school/site-content";
 
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const SCHOOL = await getSchool();
   return {
     name: `${SCHOOL.name} — Digital School`,
     short_name: SCHOOL.shortName,
@@ -21,8 +22,7 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "maskable" },
     ],
     shortcuts: [
-      { name: "Parent Portal", url: "/portal/parent" },
-      { name: "Pupil Portal", url: "/portal/pupil" },
+      { name: "Portal", url: "/portal" },
       { name: "Apply for Admission", url: "/admissions/apply" },
     ],
   };

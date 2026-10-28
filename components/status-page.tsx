@@ -10,12 +10,14 @@ export function StatusPage({
   title,
   description,
   actions,
+  children,
 }: {
   code?: string;
   icon?: string;
   title: string;
   description: string;
   actions: { label: string; href: string; variant?: "default" | "outline" }[];
+  children?: React.ReactNode;
 }) {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center px-4 py-16 text-center">
@@ -45,6 +47,7 @@ export function StatusPage({
           </Button>
         ))}
       </div>
+      {children}
     </div>
   );
 }

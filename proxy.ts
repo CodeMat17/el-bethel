@@ -3,6 +3,9 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 /**
  * Optimistic gate only: signed-out visitors to the portals are sent to sign in.
  * Real authorization happens in Convex on every query and mutation.
+ *
+ * Clerk runs only where it is needed — sign-in, the portals and the certificate and
+ * document downloads. The public website never touches Clerk.
  */
 const isPortal = createRouteMatcher(["/portal(.*)"]);
 
@@ -14,10 +17,5 @@ export default clerkMiddleware(
 );
 
 export const config = {
-  matcher: [
-    // Skip Next.js internals and static files, unless found in search params
-    "/((?!_next|[^?]*\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    // Always run for API routes
-    "/(api|trpc)(.*)",
-  ],
+  matcher: ["/login", "/portal/:path*", "/api/certificates/:path*", "/api/documents/:path*"],
 };

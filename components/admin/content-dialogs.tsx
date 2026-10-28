@@ -6,8 +6,17 @@ import { ImagePlusIcon, PencilIcon, PlusIcon } from "lucide-react";
 import { CheckField, Hidden, SelectField, TextField, TextareaField } from "@/components/admin/fields";
 import { FormDialog } from "@/components/admin/form-dialog";
 import { Button } from "@/components/ui/button";
-import { addGalleryItem, saveEvent, saveNews, saveNotice, updateGalleryItem } from "@/lib/school/actions/admin";
-import type { EmergencyNotice, GalleryItem, NewsPost, SchoolEvent } from "@/lib/school/types";
+import {
+  addGalleryItem,
+  discardDocumentUpload,
+  requestDocumentUploadUrl,
+  saveDocument,
+  saveEvent,
+  saveNews,
+  saveNotice,
+  updateGalleryItem,
+} from "@/lib/school/actions/admin";
+import type { EmergencyNotice, GalleryItem, NewsPost, SchoolDocument, SchoolEvent } from "@/lib/school/types";
 
 function toLocal(iso?: string) {
   if (!iso) return "";
@@ -199,6 +208,77 @@ export function NoticeDialog({ notice }: { notice?: EmergencyNotice }) {
         <TextField name="endsAt" type="datetime-local" label="Ends" defaultValue={toLocal(end)} />
       </div>
       <CheckField name="active" label="Active" defaultChecked={notice?.active ?? true} />
+    </FormDialog>
+  );
+}
+
+const MAX_PDF_BYTES = 10 * 1024 * 1024;
+
+/** Upload the chosen PDF straight to Convex storage, then save the record. */
+async function uploadAndSaveDocument(formData: FormData) {
+  const file = formData.get("file");
+  formData.delete("file");
+  if (file instanceof File && file.size > 0) {
+    if (file.type !== "application/pdf") return { ok: false, message: "Choose a PDF file." };
+    if (file.size > MAX_PDF_BYTES) return { ok: false, message: "The PDF must be 10 MB or smaller." };
+    const ticket = await requestDocumentUploadUrl();
+    if (!ticket.ok) return { ok: false, message: ticket.message };
+    let storageId: string;
+    try {
+      const res = await fetch(ticket.url, { method: "POST", headers: { "Content-Type": file.type }, body: file });
+      if (!res.ok) throw new Error();
+      storageId = ((await res.json()) as { storageId: string }).storageId;
+    } catch {
+      return { ok: false, message: "The upload failed. Check your connection and try again." };
+    }
+    formData.set("storageId", storageId);
+    formData.set("fileName", file.name);
+    const result = await saveDocument(formData);
+    if (!result.ok) await discardDocumentUpload(storageId);
+    return result;
+  }
+  return saveDocument(formData);
+}
+
+export function DocumentDialog({ doc, categories }: { doc?: SchoolDocument; categories: string[] }) {
+  return (
+    <FormDialog
+      trigger={<Trigger editing={Boolean(doc)} label="Add document" />}
+      title={doc ? "Edit document" : "Add a document"}
+      description="PDF only, up to 10 MB. Public documents appear on the website; parent documents in the parent portal."
+      action={uploadAndSaveDocument}
+      pendingLabel="Uploading and saving…"
+    >
+      <Hidden name="id" value={doc?.id} />
+      <TextField name="title" label="Title" defaultValue={doc?.title} required />
+      <TextareaField name="description" label="Description" rows={2} defaultValue={doc?.description} />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <TextField name="category" label="Category" list="document-categories" defaultValue={doc?.category ?? categories[0]} required />
+        <datalist id="document-categories">
+          {categories.map((c) => (
+            <option key={c} value={c} />
+          ))}
+        </datalist>
+        <SelectField
+          name="visibility"
+          label="Who can see it"
+          options={[
+            { value: "public", label: "Everyone (website)" },
+            { value: "parents", label: "Parents and staff" },
+            { value: "staff", label: "Staff only" },
+          ]}
+          defaultValue={doc?.visibility ?? "parents"}
+        />
+      </div>
+      <TextField
+        name="file"
+        type="file"
+        accept="application/pdf"
+        label={doc?.storageId ? "Replace the PDF (optional)" : "PDF file"}
+        description={doc?.storageId ? `Current file: ${doc.fileName}` : undefined}
+        className="[&_input]:pt-2.5"
+        required={!doc}
+      />
     </FormDialog>
   );
 }

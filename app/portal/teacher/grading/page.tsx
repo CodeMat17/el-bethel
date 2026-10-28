@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { EmptyState, StatCard, StatusPill } from "@/components/common";
 import { GradeDialog } from "@/components/portal/grade-dialog";
 import { PortalPageHeader } from "@/components/portal/page-header";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
@@ -60,6 +60,7 @@ export default async function TeacherGradingPage() {
               <Card className="gap-0 p-4">
                 <div className="flex flex-wrap items-center gap-3">
                   <Avatar className="size-11 shrink-0">
+                    {student.photo ? <AvatarImage src={student.photo.url} alt="" /> : null}
                     <AvatarFallback className={cn("text-xs font-bold", avatarTone(student.avatarSeed))}>
                       {initials(student.firstName, student.lastName)}
                     </AvatarFallback>

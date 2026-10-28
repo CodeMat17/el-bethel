@@ -1,4 +1,4 @@
-import type { ApplicationStatus, AssignmentProgress, AttendanceStatus, InvoiceStatus } from "./types";
+import type { ApplicationStatus, AssignmentProgress, InvoiceStatus } from "./types";
 
 const NAIRA = new Intl.NumberFormat("en-NG", {
   style: "currency",
@@ -94,13 +94,6 @@ export const APPLICATION_STATUS: Record<ApplicationStatus, { label: string; tone
   not_accepted: { label: "Not accepted", tone: "danger" },
   withdrawn: { label: "Withdrawn", tone: "neutral" },
   enrolled: { label: "Enrolled", tone: "success" },
-};
-
-export const ATTENDANCE_STATUS: Record<AttendanceStatus, { label: string; tone: ToneName }> = {
-  present: { label: "Present", tone: "success" },
-  absent: { label: "Absent", tone: "danger" },
-  late: { label: "Late", tone: "warning" },
-  excused: { label: "Excused", tone: "info" },
 };
 
 export const INVOICE_STATUS: Record<InvoiceStatus, { label: string; tone: ToneName }> = {

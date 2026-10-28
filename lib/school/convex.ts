@@ -22,11 +22,31 @@ export const getConvexToken = cache(async (): Promise<string | undefined> => {
   if (!session.userId) return undefined;
   // With Clerk's native Convex integration the session token already targets Convex;
   // older instances use a JWT template named "convex".
-  const token =
-    session.sessionClaims?.aud === "convex"
-      ? await session.getToken()
-      : await session.getToken({ template: "convex" });
-  return token ?? undefined;
+  if (session.sessionClaims?.aud === "convex") return (await session.getToken()) ?? undefined;
+  // Minting a template token is a network call to Clerk; retry brief connection drops.
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return (await session.getToken({ template: "convex" })) ?? undefined;
+    } catch (error) {
+      // Clerk's API errors often arrive with an empty message; surface what it actually said.
+      const e = error as { status?: number; errors?: { code?: string; message?: string; longMessage?: string }[] };
+      const detail = e.errors?.map((x) => x.longMessage ?? x.message ?? x.code).join("; ") || "no details";
+      if (!e.status) {
+        if (attempt < 3) {
+          await new Promise((r) => setTimeout(r, 300 * attempt));
+          continue;
+        }
+        throw new Error(`Could not reach Clerk to mint a Convex token (${detail}). Check this server's internet connection.`, {
+          cause: error,
+        });
+      }
+      throw new Error(
+        `Clerk could not mint a Convex token (status ${e.status}: ${detail}). ` +
+          `Enable Clerk Dashboard → Integrations → Convex, or create a JWT template named "convex".`,
+        { cause: error },
+      );
+    }
+  }
 });
 
 function client(token: string | undefined): ConvexHttpClient {

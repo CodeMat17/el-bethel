@@ -64,7 +64,7 @@ function Row({ item, dir }: { item: FamilyAssignment; dir: Directory }) {
 export default async function PupilAssignmentsPage() {
   const user = await requirePupil();
   if (!user.studentId) {
-    return <EmptyState icon="Backpack" title="No pupil record" description="Please ask your class teacher for help." />;
+    return <EmptyState icon="Backpack" title="No school record" description="Please ask your class teacher for help." />;
   }
 
   const [all, dir] = await Promise.all([

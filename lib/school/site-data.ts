@@ -24,6 +24,7 @@ export const getFaqs = async () => (await siteContent()).faqs;
 export const getPublicDocuments = async () => (await siteContent()).documents;
 export const getActiveNotice = cache(() => publicQuery(api.content.activeNotice, {}));
 export const getSubjects = async () => (await getDirectory()).subjects;
+export const getLevelSummary = cache(() => publicQuery(api.academics.levelSummary, {}));
 export const getTeachers = async () => (await getDirectory()).teachers.filter((t) => t.active);
 export const getFeaturedTeachers = async () => (await getTeachers()).filter((t) => t.featured);
 export const globalSearch = (q: string) => publicQuery(api.content.search, { q });

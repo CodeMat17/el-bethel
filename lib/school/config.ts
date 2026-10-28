@@ -21,9 +21,9 @@ export const SCHOOL = {
   phoneAltHref: "+2348035672400",
   whatsapp: "0812 390 8499",
   whatsappHref: "https://wa.me/2348123908499",
-  email: "info@elbethel.edu.ng",
-  admissionsEmail: "admissions@elbethel.edu.ng",
-  website: "www.elbethel.edu.ng",
+  email: "info@ebia.com.ng",
+  admissionsEmail: "info@ebia.com.ng",
+  website: "ebia.com.ng",
   motto: "Knowledge and the fear of God",
   calendar: "September – July",
   session: "2026/2027",
@@ -37,7 +37,7 @@ export const SCHOOL = {
   },
 } as const;
 
-export const SITE_URL = "https://www.elbethel.edu.ng";
+export const SITE_URL = "https://ebia.com.ng";
 
 export const VISION =
   "To be a leading school — from creche to junior secondary — recognised for academic excellence, character development and the holistic growth of every child.";
@@ -130,7 +130,7 @@ export const STAGES: {
     key: "early_years",
     name: "Creche & Pre-School",
     shortName: "Early Years",
-    href: "/academics/early-years",
+    href: "/academics#early_years",
     tone: "success",
     ages: "6 months – 3 years",
     text: "A warm, safe first step away from home — care, play, language and the routines that make a confident learner.",
@@ -139,7 +139,7 @@ export const STAGES: {
     key: "nursery",
     name: "Nursery",
     shortName: "Nursery",
-    href: "/academics/early-years",
+    href: "/academics#nursery",
     tone: "gold",
     ages: "3 – 6 years",
     text: "Nursery 1 to Nursery 3. Phonics, number work, rhymes and discovery play — the years reading is born in.",
@@ -148,7 +148,7 @@ export const STAGES: {
     key: "lower_primary",
     name: "Lower Primary",
     shortName: "Lower Primary",
-    href: "/academics/primary",
+    href: "/academics#lower_primary",
     tone: "gold",
     ages: "6 – 9 years",
     text: "Primary 1 to Primary 3. Structured literacy and numeracy, taught actively — the years where a reader and a mathematician are made.",
@@ -157,7 +157,7 @@ export const STAGES: {
     key: "upper_primary",
     name: "Upper Primary",
     shortName: "Upper Primary",
-    href: "/academics/primary",
+    href: "/academics#upper_primary",
     tone: "info",
     ages: "9 – 12 years",
     text: "Primary 4 to Primary 6. Deeper science, reasoning, technology and the arts, with the study habits secondary school will demand.",
@@ -166,7 +166,7 @@ export const STAGES: {
     key: "junior_secondary",
     name: "Junior Secondary",
     shortName: "Junior Secondary",
-    href: "/academics/junior-secondary",
+    href: "/academics#junior_secondary",
     tone: "info",
     ages: "12 – 15 years",
     text: "JSS 1 to JSS 3. The full junior secondary curriculum, subject specialists and the study discipline the BECE demands.",
@@ -201,41 +201,6 @@ export const CLASS_LEVELS: ClassLevel[] = [
 export function levelsForStage(stage: StageKey): ClassLevel[] {
   return CLASS_LEVELS.filter((l) => l.stage === stage);
 }
-
-/** Sections per level. */
-export const LEVEL_SECTIONS: Record<string, string[]> = {
-  "lvl-cre": ["A"],
-  "lvl-pre": ["A"],
-  "lvl-n1": ["A", "B"],
-  "lvl-n2": ["A", "B"],
-  "lvl-n3": ["A", "B"],
-  "lvl-p1": ["A", "B", "C"],
-  "lvl-p2": ["A", "B", "C"],
-  "lvl-p3": ["A", "B", "C"],
-  "lvl-p4": ["A", "B"],
-  "lvl-p5": ["A", "B"],
-  "lvl-p6": ["A", "B"],
-  "lvl-j1": ["A", "B"],
-  "lvl-j2": ["A", "B"],
-  "lvl-j3": ["A", "B"],
-};
-
-export const LEVEL_POPULATION: Record<string, number> = {
-  "lvl-cre": 18,
-  "lvl-pre": 22,
-  "lvl-n1": 40,
-  "lvl-n2": 42,
-  "lvl-n3": 44,
-  "lvl-p1": 72,
-  "lvl-p2": 75,
-  "lvl-p3": 78,
-  "lvl-p4": 58,
-  "lvl-p5": 55,
-  "lvl-p6": 52,
-  "lvl-j1": 48,
-  "lvl-j2": 44,
-  "lvl-j3": 40,
-};
 
 /** Admission is open for every class level this session. */
 export const ADMISSION_OPEN_LEVELS: string[] = CLASS_LEVELS.map((l) => l.id);
@@ -518,15 +483,6 @@ export function gradeFor(total: number): { grade: string; remark: string } {
   return { grade: band.grade, remark: band.remark };
 }
 
-export const ACADEMIC_CALENDAR = [
-  { name: "First Term", start: "2026-09-07", end: "2026-12-18", type: "term" as const },
-  { name: "Christmas Break", start: "2026-12-19", end: "2027-01-10", type: "break" as const },
-  { name: "Second Term", start: "2027-01-11", end: "2027-04-02", type: "term" as const },
-  { name: "Easter Break", start: "2027-04-03", end: "2027-04-18", type: "break" as const },
-  { name: "Third Term", start: "2027-04-19", end: "2027-07-23", type: "term" as const },
-  { name: "Long Vacation", start: "2027-07-24", end: "2027-09-05", type: "break" as const },
-];
-
 export const CONDUCT_TRAITS = [
   "Punctuality",
   "Neatness",
@@ -540,6 +496,7 @@ export const CONDUCT_TRAITS = [
 export const ROLE_LABELS: Record<Role, string> = {
   super_admin: "Super Administrator",
   admin: "Administrator",
+  site_admin: "Site Administrator",
   teacher: "Teacher",
   parent: "Parent",
   pupil: "Pupil",
@@ -558,6 +515,13 @@ export const APPLICATION_DOCUMENT_REQUIREMENTS = [
   { key: "guardian_id", label: "Parent/guardian identification", required: true },
   { key: "other", label: "Other supporting documents", required: false },
 ];
+
+/** The school account shown to families paying by transfer, until an administrator saves their own. */
+export const DEFAULT_BANK_DETAILS = {
+  bankName: "GTB",
+  accountNumber: "0123456789",
+  accountName: "El-Bethel International School",
+};
 
 export const PERIODS = [
   { period: 1, startTime: "08:00", endTime: "08:40" },

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { BanIcon, CircleCheckIcon, ShieldCheckIcon } from "lucide-react";
 
-import { CreateLoginDialog, ResetPasswordDialog, RolesDialog } from "@/components/admin/account-dialogs";
+import { CreateLoginDialog, ResetPasswordDialog, RolesDialog, SendInviteButton } from "@/components/admin/account-dialogs";
 import { EmptyState, StatCard, StatusPill } from "@/components/common";
 import { AdminFilters } from "@/components/portal/admin-filters";
 import { ConfirmAction } from "@/components/portal/confirm-action";
@@ -32,8 +32,13 @@ const PERMISSIONS: { role: Role; can: string[]; cannot: string[] }[] = [
   },
   {
     role: "admin",
-    can: ["Create sign-ins for pupils, parents and teachers", "Manage classes, subjects, terms and teachers", "Edit website content", "See every assignment and result"],
-    cannot: ["Create or change administrator accounts"],
+    can: ["Create sign-ins for pupils, parents and teachers", "Manage classes, subjects, terms and teachers", "See every assignment and result"],
+    cannot: ["Create or change administrator accounts", "Edit the public website (that is the Site portal)"],
+  },
+  {
+    role: "site_admin",
+    can: ["Edit every website page, the school's identity and the published fees", "Manage news, events, the gallery, testimonials, clubs and FAQs", "Preview and publish website changes"],
+    cannot: ["See pupils, parents, results, invoices or payments", "Manage accounts"],
   },
   {
     role: "teacher",
@@ -172,7 +177,12 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/porta
                                 canGrantAdmin={superAdmin}
                               />
                             ) : (
-                              <ResetPasswordDialog userId={user.id} name={user.name} />
+                              <>
+                                {!user.lastLoginAt && user.roles.some((r) => r !== "pupil") ? (
+                                  <SendInviteButton userId={user.id} name={user.name} />
+                                ) : null}
+                                <ResetPasswordDialog userId={user.id} name={user.name} />
+                              </>
                             )}
                             <RolesDialog
                               userId={user.id}

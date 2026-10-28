@@ -15,7 +15,7 @@ const QUICK_NAV = [
   { label: "Home", href: "/portal/teacher", icon: "House" },
   { label: "Classes", href: "/portal/teacher/classes", icon: "School" },
   { label: "Marking", href: "/portal/teacher/grading", icon: "PenSquare" },
-  { label: "Register", href: "/portal/teacher/attendance", icon: "CalendarCheck" },
+  { label: "Assignments", href: "/portal/teacher/assignments", icon: "ClipboardList" },
   { label: "Results", href: "/portal/teacher/results", icon: "Trophy" },
 ];
 
@@ -37,6 +37,7 @@ export default async function TeacherLayout({ children }: LayoutProps<"/portal/t
         email: user.email,
         roleLabel: `${classes} ${classes === 1 ? "class" : "classes"}`,
         avatarSeed: user.avatarSeed,
+        photoUrl: user.photoUrl,
       }}
     >
       {children}

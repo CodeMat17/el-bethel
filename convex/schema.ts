@@ -176,6 +176,7 @@ export default defineSchema({
     emergencyContactName: v.string(),
     emergencyContactPhone: v.string(),
     avatarSeed: v.string(),
+    photo: v.optional(cloudMedia),
     legacyId: v.optional(v.string()),
   })
     .index("by_email", ["email"])
@@ -349,6 +350,14 @@ export default defineSchema({
     .index("by_reference", ["reference"])
     .index("by_paid_at", ["paidAt"]),
 
+  /** A single row: the school account families pay into by transfer. */
+  bankDetails: defineTable({
+    bankName: v.string(),
+    accountNumber: v.string(),
+    accountName: v.string(),
+    updatedAt: v.string(),
+  }),
+
   /* ------------------------------- admissions ----------------------------- */
 
   applications: defineTable({
@@ -402,6 +411,8 @@ export default defineSchema({
       v.object({ at: v.string(), status: applicationStatus, note: v.string(), actor: v.string() }),
     ),
     ownerEmail: v.string(),
+    /** The pupil record created when the applicant was enrolled. */
+    studentId: v.optional(v.id("students")),
     /** SHA-256 of the secret kept in the applicant's browser cookie while the draft is open. */
     accessTokenHash: v.optional(v.string()),
   })
@@ -523,6 +534,8 @@ export default defineSchema({
     description: v.string(),
     fileName: v.string(),
     sizeBytes: v.number(),
+    /** The PDF in Convex file storage. Older records may not have a file yet. */
+    storageId: v.optional(v.id("_storage")),
     visibility: v.union(v.literal("public"), v.literal("parents"), v.literal("staff")),
     updatedAt: v.string(),
     category: v.string(),
@@ -683,6 +696,8 @@ export default defineSchema({
     title: v.string(),
     body: v.string(),
     href: v.optional(v.string()),
+    /** Button label for the link; defaults to "Open in the portal". */
+    cta: v.optional(v.string()),
     status: v.union(v.literal("queued"), v.literal("sent"), v.literal("failed"), v.literal("skipped")),
     detail: v.optional(v.string()),
     createdAt: v.string(),
@@ -1099,6 +1114,37 @@ export default defineSchema({
     .index("by_order_no", ["orderNo"]),
 
   /* --------------------------------- audit -------------------------------- */
+
+  /* ------------------------------ website CMS ------------------------------ */
+
+  /** One row per editable website document (identity, homepage, …). Values are validated by `lib/school/cms/schema.ts`. */
+  cmsDocuments: defineTable({
+    key: v.string(),
+    published: v.optional(v.any()),
+    publishedAt: v.optional(v.string()),
+    publishedBy: v.optional(v.string()),
+    draft: v.optional(v.any()),
+    draftUpdatedAt: v.optional(v.string()),
+    draftUpdatedBy: v.optional(v.string()),
+  }).index("by_key", ["key"]),
+
+  /** Every published version, newest first, so an earlier one can be restored. */
+  cmsVersions: defineTable({
+    key: v.string(),
+    data: v.any(),
+    publishedAt: v.string(),
+    publishedBy: v.string(),
+    note: v.optional(v.string()),
+  }).index("by_key", ["key", "publishedAt"]),
+
+  /** Short-lived tokens that let an editor's browser read drafts on the public website. */
+  cmsPreviewTokens: defineTable({
+    token: v.string(),
+    userId: v.id("users"),
+    expiresAt: v.string(),
+  })
+    .index("by_token", ["token"])
+    .index("by_user", ["userId"]),
 
   auditLogs: defineTable({
     actorId: v.optional(v.id("users")),

@@ -31,3 +31,6 @@ export function Icon({ name, className }: { name: string; className?: string }) 
   const Component = ICONS[name] ?? Sparkles;
   return <Component className={className} aria-hidden />;
 }
+
+/** Every icon name `<Icon />` understands, for icon pickers. */
+export const ICON_NAMES = Object.keys(ICONS).sort();

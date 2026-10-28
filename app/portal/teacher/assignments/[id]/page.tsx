@@ -7,7 +7,7 @@ import { StatCard, StatusPill } from "@/components/common";
 import { AssignmentActions } from "@/components/portal/assignment-actions";
 import { GradeDialog } from "@/components/portal/grade-dialog";
 import { PortalPageHeader } from "@/components/portal/page-header";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -56,6 +56,7 @@ export default async function TeacherAssignmentPage({ params }: PageProps<"/port
         <Card className="gap-0 p-4">
           <div className="flex flex-wrap items-center gap-3">
             <Avatar className="size-10 shrink-0">
+              {student.photo ? <AvatarImage src={student.photo.url} alt="" /> : null}
               <AvatarFallback className={cn("text-xs font-bold", avatarTone(student.avatarSeed))}>
                 {initials(student.firstName, student.lastName)}
               </AvatarFallback>

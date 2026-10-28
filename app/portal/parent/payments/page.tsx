@@ -52,6 +52,7 @@ export default async function ParentPaymentsPage({ searchParams }: PageProps<"/p
               name: studentName(c),
               className: dir.className(c.classId),
               avatarSeed: c.avatarSeed,
+              photoUrl: c.photo?.url,
             }))}
           />
         }

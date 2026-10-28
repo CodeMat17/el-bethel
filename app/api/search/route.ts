@@ -26,13 +26,13 @@ export async function GET(request: Request) {
       group: "Staff",
       label: `${t.title} ${t.firstName} ${t.lastName}`,
       sub: t.position,
-      href: "/about/teachers",
+      href: "/about/team#teachers",
     })),
     ...found.faqs.map((f) => ({
       group: "Questions & Answers",
       label: f.question,
       sub: f.category,
-      href: "/admissions/faqs",
+      href: "/admissions#faqs",
     })),
     ...found.documents.map((d) => ({
       group: "Documents",

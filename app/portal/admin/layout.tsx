@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { PortalShell } from "@/components/portal/portal-shell";
-import { requireAdmin } from "@/lib/school/auth";
+import { isSuperAdmin, requireAdmin } from "@/lib/school/auth";
 import { api } from "@/convex/_generated/api";
 import { query } from "@/lib/school/convex";
 import { ROLE_LABELS } from "@/lib/school/config";
@@ -17,7 +17,7 @@ const QUICK_NAV = [
   { label: "Pupils", href: "/portal/admin/students", icon: "Backpack" },
   { label: "Admissions", href: "/portal/admin/admissions", icon: "FileCheck" },
   { label: "Fees", href: "/portal/admin/fees", icon: "Receipt" },
-  { label: "Reports", href: "/portal/admin/reports", icon: "ChartColumn" },
+  { label: "Results", href: "/portal/admin/results", icon: "Trophy" },
 ];
 
 export default async function AdminLayout({ children }: LayoutProps<"/portal/admin">) {
@@ -28,7 +28,11 @@ export default async function AdminLayout({ children }: LayoutProps<"/portal/adm
     <PortalShell
       portalName="Administration"
       portalHome="/portal/admin"
-      nav={ADMIN_NAV}
+      nav={
+        isSuperAdmin(user)
+          ? [...ADMIN_NAV, { label: "Website", items: [{ label: "Site portal", href: "/portal/site", icon: "Newspaper" }] }]
+          : ADMIN_NAV
+      }
       unread={shell?.unread ?? 0}
       notificationsHref="/portal/admin/notifications"
       quickNav={QUICK_NAV}
@@ -37,6 +41,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/portal/adm
         email: user.email,
         roleLabel: user.roles.map((role) => ROLE_LABELS[role]).join(" · "),
         avatarSeed: user.avatarSeed,
+        photoUrl: user.photoUrl,
       }}
     >
       {children}

@@ -1,21 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { AwardIcon, BanIcon, BookUpIcon, PencilIcon, PlusIcon } from "lucide-react";
+import { AwardIcon, BanIcon, PencilIcon, PlusIcon } from "lucide-react";
 
 import { CheckField, Hidden, SelectField, TextField, TextareaField } from "@/components/admin/fields";
 import { FormDialog } from "@/components/admin/form-dialog";
 import { StudentPicker } from "@/components/admin/student-picker";
 import { Button } from "@/components/ui/button";
-import {
-  issueBook,
-  issueCertificate,
-  revokeCertificate,
-  saveAchievement,
-  saveBook,
-} from "@/lib/school/actions/operations";
+import { issueCertificate, revokeCertificate, saveAchievement } from "@/lib/school/actions/operations";
 import { AWARD_CATEGORIES } from "@/lib/school/awards";
-import type { Achievement, Book } from "@/lib/school/types";
+import type { Achievement } from "@/lib/school/types";
 
 const CATEGORY_OPTIONS = AWARD_CATEGORIES.map((c) => ({ value: c, label: c }));
 
@@ -30,67 +24,6 @@ function Trigger({ editing, label }: { editing: boolean; label: string }) {
       <PlusIcon />
       {label}
     </Button>
-  );
-}
-
-/* --------------------------------- library -------------------------------- */
-
-export function BookDialog({ book, categories }: { book?: Book; categories: string[] }) {
-  const onLoan = book ? book.copiesTotal - book.copiesAvailable : 0;
-  return (
-    <FormDialog trigger={<Trigger editing={Boolean(book)} label="Add title" />} title={book ? "Edit book" : "Add a book to the catalogue"} action={saveBook}>
-      <Hidden name="id" value={book?.id} />
-      <TextField name="title" label="Title" defaultValue={book?.title} required maxLength={200} />
-      <TextField name="author" label="Author" defaultValue={book?.author} required maxLength={120} />
-      <div className="grid gap-4 sm:grid-cols-2">
-        <TextField name="isbn" label="ISBN (optional)" defaultValue={book?.isbn} inputMode="numeric" />
-        <TextField name="category" label="Category" defaultValue={book?.category ?? categories[0]} list="book-categories" required />
-        <datalist id="book-categories">
-          {categories.map((c) => (
-            <option key={c} value={c} />
-          ))}
-        </datalist>
-        <TextField name="ageRange" label="Ages" defaultValue={book?.ageRange} placeholder="8-11" />
-        <TextField
-          name="copiesTotal"
-          type="number"
-          min={Math.max(1, onLoan)}
-          max={500}
-          label="Copies owned"
-          defaultValue={book?.copiesTotal ?? 1}
-          description={onLoan ? `${onLoan} currently on loan.` : undefined}
-        />
-      </div>
-    </FormDialog>
-  );
-}
-
-export function IssueBookDialog({ books, classNames }: { books: Book[]; classNames: Record<string, string> }) {
-  const available = books.filter((b) => b.copiesAvailable > 0).sort((a, b) => a.title.localeCompare(b.title));
-  const [due] = React.useState(() => new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10));
-  return (
-    <FormDialog
-      trigger={
-        <Button size="lg" variant="outline" className="font-bold" disabled={available.length === 0}>
-          <BookUpIcon />
-          Issue a book
-        </Button>
-      }
-      title="Issue a book"
-      description="Pupils may have up to three books at a time, and must return overdue books first."
-      action={issueBook}
-      submitLabel="Issue book"
-      pendingLabel="Issuing…"
-    >
-      <StudentPicker classNames={classNames} />
-      <SelectField
-        name="bookId"
-        label="Book"
-        options={available.map((b) => ({ value: b.id, label: `${b.title} — ${b.author} (${b.copiesAvailable} left)` }))}
-        defaultValue={available[0]?.id}
-      />
-      <TextField name="dueDate" type="date" label="Due back" defaultValue={due} description="Fourteen days is the usual loan." />
-    </FormDialog>
   );
 }
 

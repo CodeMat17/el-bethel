@@ -15,7 +15,7 @@ import { requirePupil } from "@/lib/school/auth";
 import { DAY_NAMES } from "@/lib/school/config";
 import { query } from "@/lib/school/convex";
 import { getDirectory } from "@/lib/school/directory";
-import { schoolDay, slotsForDay, studentName, summariseAttendance } from "@/lib/school/data";
+import { schoolDay, slotsForDay, studentName } from "@/lib/school/data";
 import { SUBMISSION_STATUS, formatDate } from "@/lib/school/format";
 
 export const metadata: Metadata = { title: "My School" };
@@ -23,8 +23,7 @@ export const metadata: Metadata = { title: "My School" };
 const TILES = [
   { label: "My Assignments", href: "/portal/pupil/assignments", icon: "ClipboardList", tone: "bg-gold/15 text-gold-foreground dark:text-gold" },
   { label: "My Subjects", href: "/portal/pupil/subjects", icon: "BookOpen", tone: "bg-info/12 text-info" },
-  { label: "Learning Materials", href: "/portal/pupil/materials", icon: "FolderOpen", tone: "bg-success/12 text-success" },
-  { label: "Quizzes", href: "/portal/pupil/quizzes", icon: "Puzzle", tone: "bg-primary/10 text-primary dark:text-gold" },
+  { label: "My Profile", href: "/portal/pupil/profile", icon: "UserRound", tone: "bg-primary/10 text-primary dark:text-gold" },
   { label: "My Results", href: "/portal/pupil/results", icon: "Trophy", tone: "bg-gold/15 text-gold-foreground dark:text-gold" },
   { label: "My Timetable", href: "/portal/pupil/timetable", icon: "Clock", tone: "bg-info/12 text-info" },
 ];
@@ -34,12 +33,11 @@ export default async function PupilHome() {
   const student = user.studentId ? await query(api.people.myStudent, {}) : null;
 
   if (!student) {
-    return <EmptyState icon="Backpack" title="No pupil record found" description="Please contact your class teacher." />;
+    return <EmptyState icon="Backpack" title="No school record found" description="Please contact your class teacher." />;
   }
 
-  const [assignments, attendanceRows, timetable, notifications, events, dir] = await Promise.all([
+  const [assignments, timetable, notifications, events, dir] = await Promise.all([
     query(api.assignments.forStudent, { studentId: student.id }),
-    query(api.attendance.forStudent, { studentId: student.id, limit: 120 }),
     query(api.timetable.forClass, { classId: student.classId }),
     query(api.notifications.mine, { unreadOnly: true, limit: 3 }),
     query(api.content.events, { upcomingOnly: true, limit: 2 }),
@@ -47,17 +45,21 @@ export default async function PupilHome() {
   ]);
   const todo = assignments.filter((a) => a.progress === "not_started");
   const graded = assignments.filter((a) => a.progress === "graded");
-  const attendance = summariseAttendance(attendanceRows);
   const slots = slotsForDay(timetable).filter((s) => s.subjectId);
   const cls = dir.getClass(student.classId);
   const now = new Date();
   const dayLabel = DAY_NAMES[schoolDay(now)];
+  // JSS students get plainer wording and a denser layout than the younger pupils.
+  const secondary = dir.isSecondaryClass(student.classId);
+  const words = secondary
+    ? { todo: "Pending", graded: "Graded", work: "Pending assignments", lessons: "Today's lessons", marks: "Top scores" }
+    : { todo: "Things to do", graded: "Marked", work: "My work to do", lessons: "My lessons today", marks: "My best marks" };
 
   return (
     <>
       <PortalPageHeader
         eyebrow={`${dayLabel} · ${formatDate(now)}`}
-        title={`Hello, ${student.firstName}!`}
+        title={secondary ? `Welcome back, ${student.firstName}` : `Hello, ${student.firstName}!`}
         description={`You are in ${dir.className(student.classId)} with ${dir.teacherName(cls?.classTeacherId)}.`}
       />
 
@@ -67,33 +69,43 @@ export default async function PupilHome() {
           <div className="text-center">
             <p className="font-heading text-4xl leading-none font-extrabold text-gold">{todo.length}</p>
             <p className="mt-2 text-xs font-bold tracking-wide text-navy-foreground/70 uppercase">
-              Things to do
+              {words.todo}
             </p>
           </div>
           <div className="text-center">
             <p className="font-heading text-4xl leading-none font-extrabold text-gold">{graded.length}</p>
             <p className="mt-2 text-xs font-bold tracking-wide text-navy-foreground/70 uppercase">
-              Marked
+              {words.graded}
             </p>
           </div>
           <div className="text-center">
-            <p className="font-heading text-4xl leading-none font-extrabold text-gold">{attendance.rate}%</p>
+            <p className="font-heading text-4xl leading-none font-extrabold text-gold">{slots.length}</p>
             <p className="mt-2 text-xs font-bold tracking-wide text-navy-foreground/70 uppercase">
-              Attendance
+              Lessons today
             </p>
           </div>
         </div>
       </Card>
 
-      {/* Big tiles — large touch targets for young pupils */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      {/* Big tiles — large touch targets for young pupils; a compact row for JSS */}
+      <div className={secondary ? "grid grid-cols-3 gap-3 lg:grid-cols-5" : "grid grid-cols-2 gap-3 sm:grid-cols-3"}>
         {TILES.map((tile) => (
           <Link key={tile.href} href={tile.href} className="group block">
-            <Card className="flex min-h-32 flex-col items-center justify-center gap-3 p-4 text-center transition-all group-hover:-translate-y-1 group-hover:border-gold/50 group-hover:shadow-lg sm:min-h-40">
-              <span className={`grid size-14 place-items-center rounded-2xl sm:size-16 ${tile.tone}`}>
-                <Icon name={tile.icon} className="size-6 sm:size-7" />
+            <Card
+              className={
+                secondary
+                  ? "flex min-h-24 flex-col items-center justify-center gap-2 p-3 text-center transition-all group-hover:border-gold/50 group-hover:shadow-md"
+                  : "flex min-h-32 flex-col items-center justify-center gap-3 p-4 text-center transition-all group-hover:-translate-y-1 group-hover:border-gold/50 group-hover:shadow-lg sm:min-h-40"
+              }
+            >
+              <span
+                className={`grid place-items-center ${secondary ? "size-10 rounded-xl" : "size-14 rounded-2xl sm:size-16"} ${tile.tone}`}
+              >
+                <Icon name={tile.icon} className={secondary ? "size-5" : "size-6 sm:size-7"} />
               </span>
-              <span className="text-sm font-extrabold sm:text-base">{tile.label}</span>
+              <span className={secondary ? "text-xs font-bold sm:text-sm" : "text-sm font-extrabold sm:text-base"}>
+                {secondary ? tile.label.replace(/^My /, "") : tile.label}
+              </span>
             </Card>
           </Link>
         ))}
@@ -103,7 +115,7 @@ export default async function PupilHome() {
         <div className="space-y-6">
           <Card className="gap-0 p-5 sm:p-6">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="font-heading text-base font-extrabold">My work to do</h2>
+              <h2 className="font-heading text-base font-extrabold">{words.work}</h2>
               <Button variant="link" size="sm" className="font-bold" render={<Link href="/portal/pupil/assignments" />}>
                 See all <ArrowRightIcon />
               </Button>
@@ -145,7 +157,7 @@ export default async function PupilHome() {
           </Card>
 
           <Card className="gap-0 p-5 sm:p-6">
-            <h2 className="font-heading text-base font-extrabold">My lessons today</h2>
+            <h2 className="font-heading text-base font-extrabold">{words.lessons}</h2>
             <Separator className="my-4" />
             {slots.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-foreground">No lessons today.</p>
@@ -173,7 +185,7 @@ export default async function PupilHome() {
 
         <div className="space-y-6">
           <Card className="gap-0 p-5 sm:p-6">
-            <h2 className="font-heading text-base font-extrabold">My best marks</h2>
+            <h2 className="font-heading text-base font-extrabold">{words.marks}</h2>
             <Separator className="my-4" />
             {graded.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-foreground">

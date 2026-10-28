@@ -128,6 +128,7 @@ export default async function ParentAssignmentsPage({ searchParams }: PageProps<
               name: studentName(c),
               className: dir.className(c.classId),
               avatarSeed: c.avatarSeed,
+              photoUrl: c.photo?.url,
             }))}
           />
         }

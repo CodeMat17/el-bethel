@@ -9,6 +9,7 @@ import { SignInCard } from "@/components/admin/sign-in-card";
 import { StatCard, StatusPill } from "@/components/common";
 import { ConfirmAction } from "@/components/portal/confirm-action";
 import { PortalPageHeader } from "@/components/portal/page-header";
+import { ProfilePhoto } from "@/components/portal/profile-photo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -17,9 +18,9 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { linkGuardian, setStudentStatus } from "@/lib/school/actions/admin";
 import { isSuperAdmin, requireAdmin } from "@/lib/school/auth";
 import { query } from "@/lib/school/convex";
-import { studentName, summariseAttendance } from "@/lib/school/data";
+import { studentName } from "@/lib/school/data";
 import { getDirectory } from "@/lib/school/directory";
-import { formatDate } from "@/lib/school/format";
+import { formatDate, initials } from "@/lib/school/format";
 
 export const metadata: Metadata = { title: "Pupil" };
 
@@ -31,13 +32,11 @@ export default async function AdminStudentPage({ params }: PageProps<"/portal/ad
   const { student, parents } = record;
   const studentId = student.id as Id<"students">;
 
-  const [account, results, attendanceRows, assignments] = await Promise.all([
+  const [account, results, assignments] = await Promise.all([
     query(api.users.forProfile, { studentId }),
     query(api.results.allForStudent, { studentId }),
-    query(api.attendance.forStudent, { studentId, limit: 200 }),
     query(api.assignments.forStudent, { studentId }),
   ]);
-  const attendance = summariseAttendance(attendanceRows);
   const marked = assignments.filter((a) => a.progress === "graded");
   const missed = assignments.filter((a) => a.progress === "missed").length;
   const classOptions = dir.classes.map((c) => ({ value: c.id, label: c.name }));
@@ -56,16 +55,12 @@ export default async function AdminStudentPage({ params }: PageProps<"/portal/ad
         action={
           <div className="flex flex-wrap gap-2">
             <StatusPill tone={student.status === "active" ? "success" : "neutral"}>{student.status}</StatusPill>
-            <Button size="sm" variant="outline" className="font-bold" render={<Link href={`/portal/admin/students/${student.id}/insights`} />}>
-              Learning profile
-            </Button>
             <StudentDialog classes={classOptions} student={student} />
           </div>
         }
       />
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Attendance" value={`${attendance.rate}%`} icon="CalendarCheck" tone={attendance.rate >= 95 ? "success" : "warning"} />
+      <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <StatCard label="Assignments marked" value={marked.length} icon="ClipboardCheck" tone="info" />
         <StatCard label="Assignments missed" value={missed} icon="CircleAlert" tone={missed ? "warning" : "success"} />
         <StatCard label="Terms with results" value={results.length} icon="Trophy" tone="gold" />
@@ -75,6 +70,9 @@ export default async function AdminStudentPage({ params }: PageProps<"/portal/ad
         <Card className="gap-0 p-5 sm:p-6">
           <h2 className="font-heading text-base font-extrabold">Details</h2>
           <Separator className="my-4" />
+          <div className="mb-5 flex justify-center sm:justify-start">
+            <ProfilePhoto url={student.photo?.url} seed={student.avatarSeed} initials={initials(student.firstName, student.lastName)} />
+          </div>
           <dl className="grid gap-3 text-sm sm:grid-cols-2">
             {[
               ["Date of birth", formatDate(student.dateOfBirth)],

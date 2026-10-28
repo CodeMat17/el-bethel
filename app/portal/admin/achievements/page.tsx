@@ -43,7 +43,7 @@ export default async function AdminAchievementsPage() {
           <div>
             <h2 className="font-heading text-base font-extrabold">House points</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Pupils earn stars for homework, quizzes, attendance, reading and awards; each pupil&apos;s stars count for their house.
+              Pupils earn stars for homework, reading and awards; each pupil&apos;s stars count for their house.
               {computedAt ? ` Last worked out ${formatDateTime(computedAt)}.` : " Worked out every night."}
             </p>
           </div>

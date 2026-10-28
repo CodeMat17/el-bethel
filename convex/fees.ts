@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 
+import { DEFAULT_BANK_DETAILS } from "../lib/school/config";
 import { mutation, query } from "./_generated/server";
 import { assertStudentAccess, fail, requireAdmin, requireViewer } from "./lib/access";
 import { accountsForStudent, audit, notify, nowISO, withId } from "./lib/util";
@@ -9,6 +10,37 @@ import { accountsForStudent, audit, notify, nowISO, withId } from "./lib/util";
  * has confirmed them (bank transfer, POS or cash); nothing is marked as paid from
  * the browser.
  */
+
+/** Public: the account shown on the application form and in the portals. */
+export const bankDetails = query({
+  args: {},
+  handler: async (ctx) => {
+    const row = await ctx.db.query("bankDetails").first();
+    return row ? { bankName: row.bankName, accountNumber: row.accountNumber, accountName: row.accountName } : DEFAULT_BANK_DETAILS;
+  },
+});
+
+export const updateBankDetails = mutation({
+  args: { bankName: v.string(), accountNumber: v.string(), accountName: v.string() },
+  handler: async (ctx, args) => {
+    const viewer = await requireAdmin(ctx);
+    const next = { bankName: args.bankName.trim(), accountNumber: args.accountNumber.replace(/\s+/g, ""), accountName: args.accountName.trim() };
+    if (!next.bankName || !next.accountName) fail("INVALID", "Enter the bank and the account name.");
+    if (!/^\d{10}$/.test(next.accountNumber)) fail("INVALID", "The account number must be 10 digits.");
+    const row = await ctx.db.query("bankDetails").first();
+    const previous = row ?? DEFAULT_BANK_DETAILS;
+    if (row) await ctx.db.patch(row._id, { ...next, updatedAt: nowISO() });
+    else await ctx.db.insert("bankDetails", { ...next, updatedAt: nowISO() });
+    const describe = (b: typeof next) => `${b.bankName} · ${b.accountNumber} · ${b.accountName}`;
+    await audit(ctx, viewer, {
+      action: "Updated bank details",
+      entity: "Settings",
+      entityId: "bankDetails",
+      previousValue: describe(previous),
+      newValue: describe(next),
+    });
+  },
+});
 
 export const forStudent = query({
   args: { studentId: v.id("students") },

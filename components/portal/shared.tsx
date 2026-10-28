@@ -16,9 +16,8 @@ import {
 } from "@/components/ui/table";
 import { DAY_NAMES, DEFAULT_CA_MAX, GRADE_BANDS } from "@/lib/school/config";
 import type { Directory } from "@/lib/school/directory";
-import { ATTENDANCE_STATUS, formatDate, gradeTone, money } from "@/lib/school/format";
+import { formatDate, gradeTone, money } from "@/lib/school/format";
 import type {
-  AttendanceRecord,
   Invoice,
   ResultEntry,
   TimetableSlot,
@@ -82,56 +81,6 @@ export function TimetableGrid({ slots, dir }: { slots: TimetableSlot[]; dir: Dir
         </tbody>
       </table>
     </div>
-  );
-}
-
-/* ------------------------------- attendance ------------------------------- */
-
-export function AttendanceStrip({ records }: { records: AttendanceRecord[] }) {
-  const recent = [...records].sort((a, b) => a.date.localeCompare(b.date)).slice(-30);
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {recent.map((record) => {
-        const status = ATTENDANCE_STATUS[record.status];
-        const colour =
-          record.status === "present"
-            ? "bg-success"
-            : record.status === "late"
-              ? "bg-warning"
-              : record.status === "absent"
-                ? "bg-destructive"
-                : "bg-info";
-        return (
-          <span
-            key={record.id}
-            title={`${formatDate(record.date)} — ${status.label}`}
-            className={cn("size-6 rounded-md", colour)}
-          >
-            <span className="sr-only">
-              {formatDate(record.date)}: {status.label}
-            </span>
-          </span>
-        );
-      })}
-    </div>
-  );
-}
-
-export function AttendanceLegend() {
-  return (
-    <ul className="flex flex-wrap gap-4 text-xs">
-      {[
-        { label: "Present", colour: "bg-success" },
-        { label: "Late", colour: "bg-warning" },
-        { label: "Absent", colour: "bg-destructive" },
-        { label: "Excused", colour: "bg-info" },
-      ].map((item) => (
-        <li key={item.label} className="flex items-center gap-2 font-semibold text-muted-foreground">
-          <span className={cn("size-3 rounded", item.colour)} />
-          {item.label}
-        </li>
-      ))}
-    </ul>
   );
 }
 

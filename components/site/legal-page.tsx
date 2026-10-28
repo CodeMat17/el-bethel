@@ -39,8 +39,8 @@ export function LegalPage({
                 On this page
               </p>
               <ul className="mt-4 space-y-2.5">
-                {sections.map((section) => (
-                  <li key={section.heading}>
+                {sections.map((section, i) => (
+                  <li key={i}>
                     <a
                       href={`#${section.heading.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
                       className="text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
@@ -55,9 +55,9 @@ export function LegalPage({
           </nav>
 
           <div className="max-w-3xl space-y-10">
-            {sections.map((section) => (
+            {sections.map((section, i) => (
               <section
-                key={section.heading}
+                key={i}
                 id={section.heading.toLowerCase().replace(/[^a-z0-9]+/g, "-")}
                 className="scroll-mt-28"
               >
@@ -67,10 +67,10 @@ export function LegalPage({
                     <p key={i}>{paragraph}</p>
                   ))}
                 </div>
-                {section.bullets ? (
+                {section.bullets?.length ? (
                   <ul className="mt-4 space-y-2.5">
-                    {section.bullets.map((bullet) => (
-                      <li key={bullet} className="flex items-start gap-3 text-sm leading-relaxed">
+                    {section.bullets.map((bullet, j) => (
+                      <li key={j} className="flex items-start gap-3 text-sm leading-relaxed">
                         <span className="mt-2 size-1.5 shrink-0 rounded-full bg-gold" />
                         {bullet}
                       </li>

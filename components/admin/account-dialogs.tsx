@@ -1,21 +1,22 @@
 "use client";
 
 import * as React from "react";
-import { KeyRoundIcon, RefreshCwIcon, ShieldIcon, UserPlusIcon } from "lucide-react";
+import { KeyRoundIcon, MailIcon, RefreshCwIcon, ShieldIcon, UserPlusIcon } from "lucide-react";
 
 import { CheckGroupField, Hidden, TextField } from "@/components/admin/fields";
 import { FormDialog } from "@/components/admin/form-dialog";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { createLogin, resetPassword, updateRoles } from "@/lib/school/actions/admin";
+import { ConfirmAction } from "@/components/portal/confirm-action";
+import { createLogin, resetPassword, sendSignInInvite, updateRoles } from "@/lib/school/actions/admin";
 import type { Role } from "@/lib/school/types";
 
 const WORDS = ["Sun", "Lake", "Star", "Moon", "Tree", "Bird", "Rock", "Leaf", "Wave", "Rain", "Gold", "Blue"];
 
 function generatePassword() {
   const pick = () => WORDS[Math.floor(Math.random() * WORDS.length)];
-  const digits = String(Math.floor(1000 + Math.random() * 9000));
+  const digits = String(Math.floor(10000 + Math.random() * 90000));
   return `${pick()}-${digits}-${pick()}`;
 }
 
@@ -37,12 +38,12 @@ function PasswordField({ name = "password", label = "Password" }: { name?: strin
     <Field>
       <FieldLabel htmlFor={`pw-${name}`}>{label}</FieldLabel>
       <div className="flex gap-2">
-        <Input id={`pw-${name}`} name={name} value={value} onChange={(e) => setValue(e.target.value)} minLength={8} className="h-11 font-mono" autoComplete="off" />
+        <Input id={`pw-${name}`} name={name} value={value} onChange={(e) => setValue(e.target.value)} minLength={15} className="h-11 font-mono" autoComplete="off" />
         <Button type="button" variant="outline" size="icon-lg" aria-label="Generate another password" onClick={() => setValue(generatePassword())}>
           <RefreshCwIcon />
         </Button>
       </div>
-      <FieldDescription>At least 8 characters. Write it down and give it to them in person.</FieldDescription>
+      <FieldDescription>Generated for you; press the arrows for a new one. Write it down and give it to them in person.</FieldDescription>
     </Field>
   );
 }
@@ -50,6 +51,7 @@ function PasswordField({ name = "password", label = "Password" }: { name?: strin
 const ROLE_OPTIONS: { value: Role; label: string }[] = [
   { value: "admin", label: "Administrator" },
   { value: "super_admin", label: "Super administrator" },
+  { value: "site_admin", label: "Site administrator (website content only)" },
   { value: "teacher", label: "Teacher" },
 ];
 
@@ -95,8 +97,8 @@ export function CreateLoginDialog({
       title={name ? `Create a sign-in for ${name}` : "Create a staff sign-in"}
       description={
         kind === "pupil"
-          ? "Pupils sign in with an email address and password. Use an address the pupil or their parent can check."
-          : "They sign in with their email address and password."
+          ? "Pupils sign in with an email address and the password below. Use an address the pupil or their parent can check."
+          : "They sign in with their email address and the password below."
       }
       action={createLogin}
       submitLabel="Create sign-in"
@@ -144,6 +146,25 @@ export function CreateLoginDialog({
   );
 }
 
+/** Email the set-your-password link again to someone who hasn't signed in yet. */
+export function SendInviteButton({ userId, name }: { userId: string; name: string }) {
+  return (
+    <ConfirmAction
+      action={sendSignInInvite.bind(null, userId)}
+      icon={<MailIcon />}
+      variant="ghost"
+      pendingText="Sending…"
+      confirm={{
+        title: `Email ${name} a sign-in link?`,
+        description: "Only if they check email: they'll get a link to choose their own password. The password the school gave them keeps working until then.",
+        confirmLabel: "Send invite",
+      }}
+    >
+      Send invite
+    </ConfirmAction>
+  );
+}
+
 export function ResetPasswordDialog({ userId, name }: { userId: string; name: string }) {
   return (
     <FormDialog
@@ -154,7 +175,7 @@ export function ResetPasswordDialog({ userId, name }: { userId: string; name: st
         </Button>
       }
       title={`Reset ${name}'s password`}
-      description="They will be signed out on every device and must use the new password."
+      description="A new password is generated below. They will be signed out on every device and must use the new one, so give it to them in person."
       action={resetPassword}
       submitLabel="Set new password"
       pendingLabel="Updating…"
@@ -185,6 +206,7 @@ export function RolesDialog({
   const options: { value: Role; label: string; disabled?: boolean }[] = [
     { value: "super_admin", label: "Super administrator", disabled: !canGrantAdmin },
     { value: "admin", label: "Administrator", disabled: !canGrantAdmin },
+    { value: "site_admin", label: "Site administrator (website content only)", disabled: !canGrantAdmin },
     { value: "teacher", label: "Teacher", disabled: !hasTeacher },
     { value: "parent", label: "Parent", disabled: !hasParent },
     { value: "pupil", label: "Pupil", disabled: !hasStudent },

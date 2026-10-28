@@ -6,7 +6,7 @@ import { EmptyState, StatCard } from "@/components/common";
 import { AdminFilters } from "@/components/portal/admin-filters";
 import { PortalPageHeader } from "@/components/portal/page-header";
 import { Pager } from "@/components/portal/pager";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -67,6 +67,7 @@ export default async function AdminParentsPage({ searchParams }: PageProps<"/por
                     <TableCell>
                       <Link href={`/portal/admin/parents/${parent.id}`} className="flex items-center gap-3 hover:underline">
                         <Avatar className="size-8 shrink-0">
+                          {parent.photo ? <AvatarImage src={parent.photo.url} alt="" /> : null}
                           <AvatarFallback className={cn("text-[0.65rem] font-bold", avatarTone(parent.avatarSeed))}>
                             {initials(parent.firstName, parent.lastName)}
                           </AvatarFallback>

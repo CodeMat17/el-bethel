@@ -16,7 +16,7 @@ import { studentName } from "@/lib/school/data";
 import { getMyChildren, resolveActiveChild } from "@/lib/school/parent";
 import { getDirectory } from "@/lib/school/directory";
 import { query } from "@/lib/school/convex";
-import { formatDate, percent } from "@/lib/school/format";
+import { formatDate } from "@/lib/school/format";
 
 export const metadata: Metadata = { title: "Results" };
 
@@ -48,6 +48,7 @@ export default async function ParentResultsPage({ searchParams }: PageProps<"/po
                 name: studentName(c),
                 className: dir.className(c.classId),
                 avatarSeed: c.avatarSeed,
+                photoUrl: c.photo?.url,
               }))}
             />
           }
@@ -75,6 +76,7 @@ export default async function ParentResultsPage({ searchParams }: PageProps<"/po
               name: studentName(c),
               className: dir.className(c.classId),
               avatarSeed: c.avatarSeed,
+              photoUrl: c.photo?.url,
             }))}
           />
         }
@@ -99,7 +101,7 @@ export default async function ParentResultsPage({ searchParams }: PageProps<"/po
           return (
             <TabsContent key={term.id} value={term.id} className="mt-6 space-y-6">
               {report ? (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-4 sm:grid-cols-3">
                   <StatCard
                     label="Average"
                     value={`${report.average}%`}
@@ -113,13 +115,6 @@ export default async function ParentResultsPage({ searchParams }: PageProps<"/po
                     hint={dir.className(report.classId)}
                     icon="Trophy"
                     tone="gold"
-                  />
-                  <StatCard
-                    label="Attendance"
-                    value={`${percent(report.attendancePresent, report.attendanceTotal)}%`}
-                    hint={`${report.attendancePresent} of ${report.attendanceTotal} days`}
-                    icon="CalendarCheck"
-                    tone="info"
                   />
                   <StatCard
                     label="Promotion"
@@ -167,8 +162,8 @@ export default async function ParentResultsPage({ searchParams }: PageProps<"/po
                         </p>
                         <Progress value={weakest.total} className="mt-2" />
                       </div>
-                      <Button variant="outline" size="lg" className="w-full font-bold" render={<Link href="/portal/parent/appointments" />}>
-                        Book a meeting with the class teacher
+                      <Button variant="outline" size="lg" className="w-full font-bold" render={<Link href="/contact" />}>
+                        Arrange a meeting with the class teacher
                       </Button>
                     </div>
                   ) : null}

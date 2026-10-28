@@ -1,6 +1,7 @@
 import { api } from "@/convex/_generated/api";
 import { renderCertificatePdf } from "@/lib/school/certificate-pdf";
 import { getConvexToken, query } from "@/lib/school/convex";
+import { getSchool } from "@/lib/school/site-content";
 
 /**
  * Download a certificate as a PDF. Convex decides who may see it: the pupil,
@@ -15,6 +16,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   if (!cert) return new Response("Certificate not found.", { status: 404 });
   if (cert.revokedAt) return new Response("This certificate has been withdrawn.", { status: 410 });
 
+  const school = await getSchool();
   const pdf = await renderCertificatePdf({
     certificateNo: cert.certificateNo,
     award: cert.award,
@@ -24,7 +26,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     issuedAt: cert.issuedAt,
     studentName: cert.studentName,
     classLabel: cert.classLabel,
-  });
+  }, school);
 
   return new Response(Buffer.from(pdf), {
     headers: {

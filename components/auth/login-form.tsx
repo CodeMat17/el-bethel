@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { useSignIn } from "@clerk/nextjs";
+import { useClerk, useSignIn } from "@clerk/nextjs";
 import { EyeIcon, EyeOffIcon, LogInIcon, MailCheckIcon, TriangleAlertIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -10,9 +10,16 @@ import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 
-type ClerkLikeError = { longMessage?: string; message?: string; code?: string } | null;
+type ClerkErrorDetail = { longMessage?: string; message?: string; code?: string };
+type ClerkLikeError = (ClerkErrorDetail & { errors?: ClerkErrorDetail[] }) | null;
 
-function describe(error: ClerkLikeError): string {
+/** API failures arrive wrapped (code "api_response_error"); the useful detail is the first inner error. */
+function detail(error: ClerkLikeError): ClerkErrorDetail | null {
+  return error?.errors?.[0] ?? error;
+}
+
+function describe(wrapped: ClerkLikeError): string {
+  const error = detail(wrapped);
   if (!error) return "We couldn't sign you in. Please try again.";
   if (error.code === "form_password_incorrect" || error.code === "form_identifier_not_found") {
     // Deliberately vague: never reveal whether an account exists.
@@ -24,6 +31,7 @@ function describe(error: ClerkLikeError): string {
 
 export function LoginForm() {
   const router = useRouter();
+  const clerk = useClerk();
   const { signIn } = useSignIn();
   const [identifier, setIdentifier] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -76,6 +84,14 @@ export function LoginForm() {
     setPending(true);
     try {
       const { error } = await signIn.password({ identifier: identifier.trim(), password });
+      if (detail(error)?.code === "session_exists") {
+        // The browser still holds a Clerk session the server didn't accept (otherwise /login
+        // would have redirected): expired, unfinished or for another account. Clear it so the
+        // details just entered can be used.
+        await new Promise<void>((resolve) => void clerk.signOut(() => resolve()));
+        setMessage("An old sign-in on this device has been cleared. Please press Sign in again.");
+        return;
+      }
       if (error) {
         setMessage(describe(error));
         return;

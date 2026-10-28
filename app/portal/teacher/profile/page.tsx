@@ -3,7 +3,7 @@ import { ShieldCheckIcon } from "lucide-react";
 
 import { EmptyState, StatCard } from "@/components/common";
 import { PortalPageHeader } from "@/components/portal/page-header";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ProfilePhoto } from "@/components/portal/profile-photo";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -13,8 +13,7 @@ import { api } from "@/convex/_generated/api";
 import { query } from "@/lib/school/convex";
 import { teacherName } from "@/lib/school/data";
 import { getDirectory } from "@/lib/school/directory";
-import { avatarTone, formatDate, initials } from "@/lib/school/format";
-import { cn } from "@/lib/utils";
+import { formatDate, initials } from "@/lib/school/format";
 
 export const metadata: Metadata = { title: "Profile" };
 
@@ -41,14 +40,15 @@ export default async function TeacherProfilePage() {
       <PortalPageHeader title="My profile" description="Your staff record, teaching load and account security." />
 
       <Card className="mb-6 gap-0 overflow-hidden p-0">
-        <div className="flex flex-col gap-4 bg-navy p-6 text-navy-foreground sm:flex-row sm:items-center">
-          <Avatar className="size-20 shrink-0 ring-2 ring-gold/40">
-            <AvatarFallback className={cn("text-xl font-extrabold", avatarTone(teacher.avatarSeed))}>
-              {initials(teacher.firstName, teacher.lastName)}
-            </AvatarFallback>
-          </Avatar>
+        <div className="flex flex-col items-center gap-5 bg-navy p-6 text-center text-navy-foreground sm:flex-row sm:text-left">
+          <ProfilePhoto
+            url={teacher.photo?.url}
+            seed={teacher.avatarSeed}
+            initials={initials(teacher.firstName, teacher.lastName)}
+            editable
+          />
           <div className="min-w-0">
-            <h2 className="font-heading text-2xl font-extrabold">{teacherName(teacher)}</h2>
+            <h2 className="font-heading text-2xl font-extrabold sm:text-3xl">{teacherName(teacher)}</h2>
             <p className="mt-1 text-sm text-navy-foreground/70">
               {teacher.position} · {teacher.department}
             </p>
@@ -136,7 +136,6 @@ export default async function TeacherProfilePage() {
                   <li>· View pupils in classes you teach</li>
                   <li>· Create and grade assignments</li>
                   <li>· Upload learning materials</li>
-                  <li>· Take attendance</li>
                   <li>· Enter authorised scores</li>
                 </ul>
               </div>

@@ -10,14 +10,15 @@ import {
   requireViewer,
   type Viewer,
 } from "./lib/access";
+import { emailConfigured, emailFor, enqueueEmail } from "./lib/delivery";
 import { audit, nowISO, withId } from "./lib/util";
 import { role, type RoleValue } from "./validators";
 
 const USERNAME = /^[a-z0-9_]{4,32}$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PRIVILEGED: RoleValue[] = ["super_admin", "admin"];
+const PRIVILEGED: RoleValue[] = ["super_admin", "admin", "site_admin"];
 
-function toSessionUser(user: Doc<"users">) {
+function toSessionUser(user: Doc<"users">, photoUrl?: string) {
   return {
     id: user._id,
     name: user.name,
@@ -25,6 +26,7 @@ function toSessionUser(user: Doc<"users">) {
     username: user.username,
     roles: user.roles,
     avatarSeed: user.avatarSeed,
+    photoUrl,
     teacherId: user.teacherId,
     parentId: user.parentId,
     studentId: user.studentId,
@@ -36,7 +38,15 @@ export const me = query({
   args: {},
   handler: async (ctx) => {
     const user = await getViewer(ctx);
-    return user ? toSessionUser(user) : null;
+    if (!user) return null;
+    const person = user.teacherId
+      ? await ctx.db.get(user.teacherId)
+      : user.parentId
+        ? await ctx.db.get(user.parentId)
+        : user.studentId
+          ? await ctx.db.get(user.studentId)
+          : null;
+    return toSessionUser(user, person?.photo?.url);
   },
 });
 
@@ -341,6 +351,32 @@ export const recordPasswordReset = mutation({
     if (!user) fail("NOT_FOUND", "That account no longer exists.");
     assertCanManage(viewer, user);
     await audit(ctx, viewer, { action: "Reset password", entity: "User", entityId: userId, newValue: user.username });
+  },
+});
+
+/**
+ * Email a new account holder a link to set their own password. Pupil-only
+ * accounts never get email, so the school sets their password instead.
+ */
+export const sendInvite = mutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, { userId }) => {
+    const viewer = await requireAdmin(ctx);
+    const user = await ctx.db.get(userId);
+    if (!user) fail("NOT_FOUND", "That account no longer exists.");
+    assertCanManage(viewer, user);
+    if (!user.clerkUserId) fail("INVALID", "This account has no sign-in yet.");
+    const to = await emailFor(ctx, user);
+    if (!to) fail("INVALID", "This account has no email address the school can write to.");
+    if (!emailConfigured()) return { sent: false, to };
+    await enqueueEmail(ctx, user, to, {
+      title: "Your school portal account is ready",
+      body: `Hello ${user.name}, the school has created your portal account. Open the link, enter ${to} and we'll email you a code to set your own password. You can then sign in at any time.`,
+      href: `/login?setup=1&email=${encodeURIComponent(to)}`,
+      cta: "Set your password",
+    });
+    await audit(ctx, viewer, { action: "Sent sign-in invite", entity: "User", entityId: userId, newValue: to });
+    return { sent: true, to };
   },
 });
 
