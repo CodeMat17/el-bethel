@@ -49,7 +49,29 @@ function useDismissed(noticeId: string): [boolean, () => void] {
   return [dismissed, dismiss];
 }
 
-export function EmergencyBanner({ notice }: { notice: EmergencyNotice }) {
+/**
+ * The notice whose window covers the current time. Pages are static, so the
+ * server can't know "now"; the browser checks on load and once a minute. The
+ * server snapshot is "none", so the banner appears right after hydration.
+ */
+function useLiveNotice(notices: EmergencyNotice[]): EmergencyNotice | null {
+  const subscribe = React.useCallback((onChange: () => void) => {
+    const timer = window.setInterval(onChange, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const getSnapshot = React.useCallback(() => {
+    const now = new Date().toISOString();
+    return notices.find((n) => n.startsAt <= now && n.endsAt >= now) ?? null;
+  }, [notices]);
+  return React.useSyncExternalStore(subscribe, getSnapshot, () => null);
+}
+
+export function EmergencyBanner({ notices }: { notices: EmergencyNotice[] }) {
+  const notice = useLiveNotice(notices);
+  return notice ? <NoticeBar key={notice.id} notice={notice} /> : null;
+}
+
+function NoticeBar({ notice }: { notice: EmergencyNotice }) {
   const [dismissed, dismiss] = useDismissed(notice.id);
 
   if (dismissed) return null;

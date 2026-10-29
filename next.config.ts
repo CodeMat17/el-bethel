@@ -1,27 +1,24 @@
 import type { NextConfig } from "next";
 
-// Shared hosting (Hostinger) caps how many threads one account may run. The
-// Rust tooling (SWC, Tailwind) sizes its thread pools to the server's CPU count
-// and panics with "OS can't spawn worker thread" when it hits that cap, so keep
-// production builds small. Build workers inherit these variables.
+// Builds run on shared hosting (Hostinger), which caps threads and memory per
+// account. scripts/build.mjs limits the native thread pools; the options below
+// keep the rest of the build small.
 const isBuild = process.argv.includes("build");
-if (isBuild) {
-  process.env.TOKIO_WORKER_THREADS ??= "2";
-  process.env.RAYON_NUM_THREADS ??= "2";
-  process.env.UV_THREADPOOL_SIZE ??= "2";
-}
 
 const nextConfig: NextConfig = {
   images: {
-    remotePatterns: [
-      { protocol: "https", hostname: "images.pexels.com", pathname: "/photos/**" },
-      { protocol: "https", hostname: "res.cloudinary.com" },
-    ],
+    // Cloudinary resizes photos on its CDN, so this server never runs the image optimizer.
+    loader: "custom",
+    loaderFile: "./lib/image-loader.ts",
   },
   experimental: {
     // Enables the `unauthorized()` and `forbidden()` server guards used by the portals.
     authInterrupts: true,
-    // One static-generation worker instead of one per CPU (see note above).
+    // Lower peak memory during webpack compilation.
+    webpackMemoryOptimizations: true,
+    // Public pages read Convex while prerendering; retry a dropped connection instead of failing the build.
+    staticGenerationRetryCount: 3,
+    // One static-generation worker instead of one per CPU.
     ...(isBuild && { cpus: 1 }),
   },
   async headers() {

@@ -7,11 +7,12 @@ import { Icon } from "@/components/icon";
 import { Reveal, ToneImage } from "@/components/motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DatedGroup, DatedItem, WhenDated } from "@/components/site/dated";
 import { Card, CardContent } from "@/components/ui/card";
 import { getContent } from "@/lib/school/site-content";
 import { slugify } from "@/lib/utils";
 import { getClubs, getGallery, getUpcomingEvents } from "@/lib/school/site-data";
-import { formatDate } from "@/lib/school/format";
+import { eventEnd, formatDate, todayISO } from "@/lib/school/format";
 
 export const metadata: Metadata = {
   title: "School Life",
@@ -31,7 +32,6 @@ export default async function SchoolLifePage() {
     { label: "Events", href: "#events", show: page.events.visible && upcoming.length > 0 },
     { label: "Gallery", href: "#gallery", show: page.gallery.visible && allGallery.length > 0 },
   ].filter((l) => l.show);
-  const events = upcoming.slice(0, 4);
   const gallery = allGallery.slice(0, 6);
 
   return (
@@ -159,44 +159,50 @@ export default async function SchoolLifePage() {
       </section>
       ) : null}
 
-      {page.events.visible && events.length ? (
-      <section id="events" className="eb-section scroll-mt-24">
-        <div className="eb-container">
-          <SectionHeading
-            eyebrow={page.events.eyebrow}
-            title={page.events.title}
-            action={
-              <Button variant="outline" size="lg" className="font-bold" render={<Link href="/school-life/events" />}>
-                All events <ArrowRightIcon />
-              </Button>
-            }
-          />
-          <ul className="mt-8 grid gap-3 sm:grid-cols-2">
-            {events.map((event, i) => (
-              <Reveal key={event.id} delay={i * 0.05} as="li">
-                <Link href={`/school-life/events/${event.slug}`} className="group block">
-                  <Card className="flex flex-row items-center gap-4 p-4 transition-colors group-hover:border-gold/40">
-                    <div className="grid size-14 shrink-0 place-items-center rounded-xl bg-navy text-navy-foreground">
-                      <span className="font-heading text-lg leading-none font-extrabold text-gold">
-                        {new Date(event.date).getUTCDate()}
-                      </span>
-                      <span className="text-[0.6rem] font-bold uppercase">
-                        {new Date(event.date).toLocaleDateString("en-GB", { month: "short", timeZone: "UTC" })}
-                      </span>
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="truncate font-heading text-sm font-extrabold">{event.title}</h3>
-                      <p className="mt-1 flex items-center gap-1.5 truncate text-xs text-muted-foreground">
-                        <MapPinIcon className="size-3.5 shrink-0" /> {event.venue} · {formatDate(event.date)}
-                      </p>
-                    </div>
-                  </Card>
-                </Link>
-              </Reveal>
-            ))}
-          </ul>
-        </div>
-      </section>
+      {page.events.visible && upcoming.length ? (
+      <DatedGroup asOf={todayISO()} ends={upcoming.map(eventEnd)} limit={4}>
+        <WhenDated>
+          <section id="events" className="eb-section scroll-mt-24">
+            <div className="eb-container">
+              <SectionHeading
+                eyebrow={page.events.eyebrow}
+                title={page.events.title}
+                action={
+                  <Button variant="outline" size="lg" className="font-bold" render={<Link href="/school-life/events" />}>
+                    All events <ArrowRightIcon />
+                  </Button>
+                }
+              />
+              <ul className="mt-8 grid gap-3 sm:grid-cols-2">
+                {upcoming.map((event, i) => (
+                  <DatedItem key={event.id} index={i}>
+                    <Reveal delay={i * 0.05} as="li">
+                      <Link href={`/school-life/events/${event.slug}`} className="group block">
+                        <Card className="flex flex-row items-center gap-4 p-4 transition-colors group-hover:border-gold/40">
+                          <div className="grid size-14 shrink-0 place-items-center rounded-xl bg-navy text-navy-foreground">
+                            <span className="font-heading text-lg leading-none font-extrabold text-gold">
+                              {new Date(event.date).getUTCDate()}
+                            </span>
+                            <span className="text-[0.6rem] font-bold uppercase">
+                              {new Date(event.date).toLocaleDateString("en-GB", { month: "short", timeZone: "UTC" })}
+                            </span>
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="truncate font-heading text-sm font-extrabold">{event.title}</h3>
+                            <p className="mt-1 flex items-center gap-1.5 truncate text-xs text-muted-foreground">
+                              <MapPinIcon className="size-3.5 shrink-0" /> {event.venue} · {formatDate(event.date)}
+                            </p>
+                          </div>
+                        </Card>
+                      </Link>
+                    </Reveal>
+                  </DatedItem>
+                ))}
+              </ul>
+            </div>
+          </section>
+        </WhenDated>
+      </DatedGroup>
       ) : null}
 
       {page.gallery.visible && gallery.length ? (

@@ -5,6 +5,7 @@ import { cache } from "react";
 import { api } from "@/convex/_generated/api";
 import { CLASS_LEVELS } from "./config";
 import { publicQuery } from "./convex";
+import { SITE_TAGS, siteCache } from "./site-cache";
 import type { AcademicSession, ID, SchoolClass, Subject, Teacher, TeachingAssignment, Term } from "./types";
 
 /**
@@ -127,3 +128,8 @@ async function load() {
 }
 
 export const getDirectory = cache(async (): Promise<Directory> => build(await load()));
+
+const loadForSite = siteCache(load, "directory", [SITE_TAGS.directory]);
+
+/** The same directory for the public website, cached until an admin changes it. Portals use `getDirectory`. */
+export const getPublicDirectory = cache(async (): Promise<Directory> => build(await loadForSite()));

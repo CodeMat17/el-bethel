@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { destroyAsset } from "@/lib/school/cloudinary";
 import { tryMutation } from "@/lib/school/convex";
+import { SITE_TAGS, refreshSite } from "@/lib/school/site-cache";
 import type { CloudMedia } from "@/lib/school/types";
 
 /**
@@ -43,7 +44,7 @@ export async function saveAlumniStory(formData: FormData, cover?: CloudMedia): P
   });
   if (!result.ok) return { ok: false, message: result.message };
   if (result.data.previousCover) await destroyAsset(result.data.previousCover);
-  revalidatePath("/alumni", "layout");
+  refreshSite(SITE_TAGS.alumni);
   return done("Story saved.", "/portal/admin/alumni");
 }
 
@@ -51,6 +52,6 @@ export async function removeAlumniStory(id: string): Promise<PremiumResult> {
   const result = await tryMutation(api.alumni.removeStory, { id: id as Id<"alumniStories"> });
   if (!result.ok) return { ok: false, message: result.message };
   if (result.data.publicId) await destroyAsset(result.data.publicId);
-  revalidatePath("/alumni", "layout");
+  refreshSite(SITE_TAGS.alumni);
   return done("Story removed.", "/portal/admin/alumni");
 }

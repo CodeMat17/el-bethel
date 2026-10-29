@@ -5,11 +5,13 @@ import { ArrowRightIcon, MapPinIcon } from "lucide-react";
 import { CtaBand, PageHero, SectionHeading, StatusPill } from "@/components/common";
 import { Reveal } from "@/components/motion";
 import { Button } from "@/components/ui/button";
+import { CalendarToday } from "@/components/site/calendar-today";
+import { TodayMark, WhenToday } from "@/components/site/dated";
 import { Card } from "@/components/ui/card";
 import { academicCalendar } from "@/lib/school/calendar";
-import { getDirectory } from "@/lib/school/directory";
+import { getPublicDirectory } from "@/lib/school/directory";
 import { getAllEvents } from "@/lib/school/site-data";
-import { formatDate, formatLongDate } from "@/lib/school/format";
+import { formatDate, todayISO } from "@/lib/school/format";
 
 export const metadata: Metadata = {
   title: "School Calendar",
@@ -29,12 +31,10 @@ const CATEGORY_TONE = {
 } as const;
 
 export default async function CalendarPage() {
-  const [events, dir] = await Promise.all([getAllEvents(), getDirectory()]);
+  const [events, dir] = await Promise.all([getAllEvents(), getPublicDirectory()]);
   const { session, blocks } = academicCalendar(dir.sessions, dir.terms);
-  const today = new Date();
-  const isCurrent = (block: (typeof blocks)[number]) =>
-    today >= new Date(`${block.start}T00:00:00Z`) && today <= new Date(`${block.end}T23:59:59Z`);
-  const currentBlock = blocks.find(isCurrent);
+  // The page is static, so the browser works out which term is current (see components/site/dated).
+  const asOf = todayISO();
   const months = events.reduce<Record<string, typeof events>>((acc, event) => {
     const key = new Date(event.date).toLocaleDateString("en-GB", {
       month: "long",
@@ -58,18 +58,19 @@ export default async function CalendarPage() {
         <div className="eb-container">
           <SectionHeading eyebrow="Terms and breaks" title="How the year is divided" />
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {blocks.map((block, i) => {
-              const current = isCurrent(block);
-              return (
-                <Reveal key={block.name} delay={i * 0.04}>
+            {blocks.map((block, i) => (
+              <Reveal key={block.name} delay={i * 0.04}>
+                <TodayMark asOf={asOf} start={block.start} end={block.end} className="group/term h-full">
                   <Card
-                    className={`h-full gap-0 p-6 ${
-                      current ? "border-gold/50 bg-gold/10 shadow-md" : block.type === "term" ? "" : "opacity-80"
+                    className={`h-full gap-0 p-6 group-data-today/term:border-gold/50 group-data-today/term:bg-gold/10 group-data-today/term:opacity-100 group-data-today/term:shadow-md ${
+                      block.type === "term" ? "" : "opacity-80"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <h3 className="font-heading text-base font-extrabold">{block.name}</h3>
-                      {current ? <StatusPill tone="gold">Current</StatusPill> : null}
+                      <WhenToday asOf={asOf} start={block.start} end={block.end}>
+                        <StatusPill tone="gold">Current</StatusPill>
+                      </WhenToday>
                     </div>
                     <p className="mt-3 text-sm font-semibold">{formatDate(block.start)}</p>
                     <p className="text-sm text-muted-foreground">to {formatDate(block.end)}</p>
@@ -77,9 +78,9 @@ export default async function CalendarPage() {
                       {block.type === "term" ? "Teaching term" : "School closed"}
                     </p>
                   </Card>
-                </Reveal>
-              );
-            })}
+                </TodayMark>
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>
@@ -143,12 +144,7 @@ export default async function CalendarPage() {
           <Card className="gap-0 border-info/30 bg-info/10 p-6">
             <h2 className="font-heading text-base font-extrabold">Today</h2>
             <p className="mt-2 text-sm leading-relaxed">
-              {formatLongDate(today)}
-              {currentBlock
-                ? currentBlock.type === "term"
-                  ? ` — ${currentBlock.name} is in progress.`
-                  : ` — the school is closed for the ${currentBlock.name}.`
-                : "."}{" "}
+              <CalendarToday asOf={asOf} blocks={blocks} />{" "}
               Signed-in parents and pupils see
               their own class timetable and personalised calendar in the portals.
             </p>

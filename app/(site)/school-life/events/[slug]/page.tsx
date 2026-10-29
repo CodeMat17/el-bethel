@@ -6,12 +6,13 @@ import { ArrowLeftIcon, CalendarDaysIcon, ClockIcon, MapPinIcon, TicketIcon } fr
 import { CtaBand, StatusPill } from "@/components/common";
 import { ToneImage } from "@/components/motion";
 import { Button } from "@/components/ui/button";
+import { DatedGroup, DatedItem, WhenDated } from "@/components/site/dated";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { SITE_URL } from "@/lib/school/config";
 import { getSchool } from "@/lib/school/site-content";
 import { getAllEvents, getEventBySlug, getUpcomingEvents } from "@/lib/school/site-data";
-import { formatLongDate } from "@/lib/school/format";
+import { eventEnd, formatLongDate, todayISO } from "@/lib/school/format";
 
 const CATEGORY_TONE = {
   academic: "info",
@@ -50,7 +51,8 @@ export default async function EventPage({ params }: PageProps<"/school-life/even
   const event = await getEventBySlug(slug);
   if (!event) notFound();
 
-  const related = (await getUpcomingEvents()).filter((e) => e.slug !== event.slug).slice(0, 3);
+  // The browser drops events that end after this page was built (see DatedGroup).
+  const related = (await getUpcomingEvents()).filter((e) => e.slug !== event.slug);
 
   const schema = {
     "@context": "https://schema.org",
@@ -164,25 +166,31 @@ export default async function EventPage({ params }: PageProps<"/school-life/even
               </Card>
 
               {related.length > 0 ? (
-                <Card className="gap-0 p-6">
-                  <h2 className="font-heading text-base font-extrabold">Also coming up</h2>
-                  <Separator className="my-4" />
-                  <ul className="space-y-3">
-                    {related.map((item) => (
-                      <li key={item.id}>
-                        <Link
-                          href={`/school-life/events/${item.slug}`}
-                          className="block text-sm font-semibold transition-colors hover:text-primary dark:hover:text-gold"
-                        >
-                          {item.title}
-                          <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
-                            {formatLongDate(item.date)}
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
+                <DatedGroup asOf={todayISO()} ends={related.map(eventEnd)} limit={3}>
+                  <WhenDated>
+                    <Card className="gap-0 p-6">
+                      <h2 className="font-heading text-base font-extrabold">Also coming up</h2>
+                      <Separator className="my-4" />
+                      <ul className="space-y-3">
+                        {related.map((item, i) => (
+                          <DatedItem key={item.id} index={i}>
+                            <li>
+                              <Link
+                                href={`/school-life/events/${item.slug}`}
+                                className="block text-sm font-semibold transition-colors hover:text-primary dark:hover:text-gold"
+                              >
+                                {item.title}
+                                <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                                  {formatLongDate(item.date)}
+                                </span>
+                              </Link>
+                            </li>
+                          </DatedItem>
+                        ))}
+                      </ul>
+                    </Card>
+                  </WhenDated>
+                </DatedGroup>
               ) : null}
             </aside>
           </div>

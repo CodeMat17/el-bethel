@@ -8,13 +8,15 @@ import { revalidatePath } from "next/cache";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { destroyAsset } from "@/lib/school/cloudinary";
+import { SITE_TAGS, refreshSite } from "@/lib/school/site-cache";
 import { query, tryMutation } from "@/lib/school/convex";
 import type { ApplicationStatus, CloudMedia, Role } from "@/lib/school/types";
 
 /**
  * Administrator actions. Every one forwards to a Convex mutation that checks the
  * caller is an administrator (or super administrator, for admin accounts); Clerk
- * is only touched after Convex has agreed.
+ * is only touched after Convex has agreed, and the public website is only
+ * refreshed (by cache tag, see refreshSite) for changes Convex accepted.
  */
 
 export interface AdminResult {
@@ -239,6 +241,7 @@ export async function saveStudent(formData: FormData, photo?: CloudMedia): Promi
     const result = await tryMutation(api.people.updateStudent, { studentId: id as Id<"students">, ...fields });
     if (!result.ok) return { ok: false, message: result.message };
     if (result.data.previousPhoto) await destroyAsset(result.data.previousPhoto);
+    refreshSite(SITE_TAGS.levels);
     return { ...done("Pupil record updated.", "/portal/admin/students"), id };
   }
   const result = await tryMutation(api.people.createStudent, {
@@ -246,6 +249,7 @@ export async function saveStudent(formData: FormData, photo?: CloudMedia): Promi
     parentIds: formData.getAll("parentIds").map(String).filter(Boolean) as Id<"parents">[],
   });
   if (!result.ok) return { ok: false, message: result.message };
+  refreshSite(SITE_TAGS.levels);
   return { ...done("Pupil enrolled.", "/portal/admin/students"), id: String(result.data) };
 }
 
@@ -259,6 +263,7 @@ export async function setStudentStatus(studentId: string, status: "active" | "gr
       console.error("Clerk ban failed", error);
     }
   }
+  refreshSite(SITE_TAGS.levels);
   return done(`Pupil marked as ${status}.`, "/portal/admin/students");
 }
 
@@ -332,11 +337,13 @@ export async function saveTeacher(formData: FormData, photo?: CloudMedia): Promi
         console.error("Clerk ban failed", error);
       }
     }
-    return { ...done("Staff record updated.", "/portal/admin/teachers", "/about/team"), id };
+    refreshSite(SITE_TAGS.directory);
+    return { ...done("Staff record updated.", "/portal/admin/teachers"), id };
   }
   const result = await tryMutation(api.people.createTeacher, fields);
   if (!result.ok) return { ok: false, message: result.message };
-  return { ...done("Staff member added.", "/portal/admin/teachers", "/about/team"), id: String(result.data) };
+  refreshSite(SITE_TAGS.directory);
+  return { ...done("Staff member added.", "/portal/admin/teachers"), id: String(result.data) };
 }
 
 /* --------------------------------- academics ------------------------------ */
@@ -352,12 +359,14 @@ export async function saveClass(formData: FormData): Promise<AdminResult> {
     room: str(formData, "room"),
   });
   if (!result.ok) return { ok: false, message: result.message };
+  refreshSite(SITE_TAGS.directory, SITE_TAGS.levels);
   return done("Class saved.", "/portal/admin/classes");
 }
 
 export async function removeClass(classId: string): Promise<AdminResult> {
   const result = await tryMutation(api.academics.removeClass, { id: classId as Id<"classes"> });
   if (!result.ok) return { ok: false, message: result.message };
+  refreshSite(SITE_TAGS.directory, SITE_TAGS.levels);
   return done("Class deleted.", "/portal/admin/classes");
 }
 
@@ -368,6 +377,7 @@ export async function setSubjectTeacher(classId: string, subjectId: string, teac
     teacherId: teacherId ? (teacherId as Id<"teachers">) : undefined,
   });
   if (!result.ok) return { ok: false, message: result.message };
+  refreshSite(SITE_TAGS.directory);
   return done(teacherId ? "Subject teacher assigned." : "Subject teacher removed.", "/portal/admin/classes");
 }
 
@@ -380,17 +390,25 @@ export async function saveSubject(formData: FormData): Promise<AdminResult> {
     levelIds: formData.getAll("levelIds").map(String),
   });
   if (!result.ok) return { ok: false, message: result.message };
-  return done("Subject saved.", "/portal/admin/subjects", "/academics");
+  refreshSite(SITE_TAGS.directory);
+  return done("Subject saved.", "/portal/admin/subjects");
 }
 
 export async function removeSubject(subjectId: string): Promise<AdminResult> {
   const result = await tryMutation(api.academics.removeSubject, { id: subjectId as Id<"subjects"> });
   if (!result.ok) return { ok: false, message: result.message };
+  refreshSite(SITE_TAGS.directory);
   return done("Subject deleted.", "/portal/admin/subjects");
 }
 
 /** Term dates feed the public calendar and both portals' event screens. */
-const CALENDAR_PATHS = ["/portal/admin/sessions", "/portal/admin/events", "/portal/site/events", "/calendar", "/"];
+const CALENDAR_PATHS = ["/portal/admin/sessions", "/portal/admin/events", "/portal/site/events"];
+
+/** Terms and sessions appear on the public calendar; refresh it, then the portal screens. */
+function calendarDone(message: string): AdminResult {
+  refreshSite(SITE_TAGS.directory);
+  return done(message, ...CALENDAR_PATHS);
+}
 
 export async function saveSession(formData: FormData): Promise<AdminResult> {
   const result = await tryMutation(api.academics.saveSession, {
@@ -400,7 +418,7 @@ export async function saveSession(formData: FormData): Promise<AdminResult> {
     endDate: str(formData, "endDate"),
   });
   if (!result.ok) return { ok: false, message: result.message };
-  return done("Session saved.", ...CALENDAR_PATHS);
+  return calendarDone("Session saved.");
 }
 
 export async function saveTerm(formData: FormData): Promise<AdminResult> {
@@ -417,24 +435,26 @@ export async function saveTerm(formData: FormData): Promise<AdminResult> {
     resultPublishDate: str(formData, "resultPublishDate"),
   });
   if (!result.ok) return { ok: false, message: result.message };
-  return done("Term saved.", ...CALENDAR_PATHS);
+  return calendarDone("Term saved.");
 }
 
 export async function removeTerm(termId: string): Promise<AdminResult> {
   const result = await tryMutation(api.academics.removeTerm, { id: termId as Id<"terms"> });
   if (!result.ok) return { ok: false, message: result.message };
-  return done("Term deleted.", ...CALENDAR_PATHS);
+  return calendarDone("Term deleted.");
 }
 
 export async function removeSession(sessionId: string): Promise<AdminResult> {
   const result = await tryMutation(api.academics.removeSession, { id: sessionId as Id<"academicSessions"> });
   if (!result.ok) return { ok: false, message: result.message };
-  return done("Session deleted.", ...CALENDAR_PATHS);
+  return calendarDone("Session deleted.");
 }
 
 export async function setActiveTerm(termId: string): Promise<AdminResult> {
   const result = await tryMutation(api.academics.setActiveTerm, { termId: termId as Id<"terms"> });
   if (!result.ok) return { ok: false, message: result.message };
+  refreshSite(SITE_TAGS.directory);
+  // Every portal screen shows the current term.
   revalidatePath("/portal", "layout");
   return { ok: true, message: "Current term updated." };
 }
@@ -460,8 +480,7 @@ export async function saveNews(formData: FormData, cover?: CloudMedia): Promise<
   });
   if (!result.ok) return { ok: false, message: result.message };
   if (result.data.previousCover) await destroyAsset(result.data.previousCover);
-  revalidatePath("/news", "layout");
-  revalidatePath("/");
+  refreshSite(SITE_TAGS.news);
   return { ...done("Post saved.", "/portal/site/news"), id: result.data.id };
 }
 
@@ -469,12 +488,12 @@ export async function removeNews(id: string): Promise<AdminResult> {
   const result = await tryMutation(api.content.removeNews, { id: id as Id<"news"> });
   if (!result.ok) return { ok: false, message: result.message };
   if (result.data?.publicId) await destroyAsset(result.data.publicId);
-  revalidatePath("/news", "layout");
+  refreshSite(SITE_TAGS.news);
   return done("Post deleted.", "/portal/site/news");
 }
 
 /** Events are managed from both the admin and Site portals and shown on the calendar and homepage. */
-const EVENT_PATHS = ["/portal/admin/events", "/portal/admin", "/portal/site/events", "/calendar", "/"];
+const EVENT_PATHS = ["/portal/admin/events", "/portal/admin", "/portal/site/events"];
 
 export async function saveEvent(formData: FormData, cover?: CloudMedia): Promise<AdminResult> {
   const category = str(formData, "category");
@@ -501,7 +520,7 @@ export async function saveEvent(formData: FormData, cover?: CloudMedia): Promise
   });
   if (!result.ok) return { ok: false, message: result.message };
   if (result.data.previousCover) await destroyAsset(result.data.previousCover);
-  revalidatePath("/school-life/events", "layout");
+  refreshSite(SITE_TAGS.events);
   return { ...done("Event saved.", ...EVENT_PATHS), id: result.data.id };
 }
 
@@ -509,7 +528,7 @@ export async function removeEvent(id: string): Promise<AdminResult> {
   const result = await tryMutation(api.content.removeEvent, { id: id as Id<"events"> });
   if (!result.ok) return { ok: false, message: result.message };
   if (result.data?.publicId) await destroyAsset(result.data.publicId);
-  revalidatePath("/school-life/events", "layout");
+  refreshSite(SITE_TAGS.events);
   return done("Event deleted.", ...EVENT_PATHS);
 }
 
@@ -523,7 +542,7 @@ export async function addGalleryItem(formData: FormData, media: CloudMedia): Pro
     media,
   });
   if (!result.ok) return { ok: false, message: result.message };
-  revalidatePath("/school-life/gallery");
+  refreshSite(SITE_TAGS.gallery);
   return done("Added to the gallery.", "/portal/site/gallery");
 }
 
@@ -536,7 +555,7 @@ export async function updateGalleryItem(formData: FormData): Promise<AdminResult
     consentCleared: bool(formData, "consentCleared"),
   });
   if (!result.ok) return { ok: false, message: result.message };
-  revalidatePath("/school-life/gallery");
+  refreshSite(SITE_TAGS.gallery);
   return done("Gallery item updated.", "/portal/site/gallery");
 }
 
@@ -544,7 +563,7 @@ export async function removeGalleryItem(id: string): Promise<AdminResult> {
   const result = await tryMutation(api.content.removeGalleryItem, { id: id as Id<"gallery"> });
   if (!result.ok) return { ok: false, message: result.message };
   if (result.data?.publicId) await destroyAsset(result.data.publicId, result.data.resourceType ?? "image");
-  revalidatePath("/school-life/gallery");
+  refreshSite(SITE_TAGS.gallery);
   return done("Removed from the gallery.", "/portal/site/gallery");
 }
 
@@ -562,20 +581,20 @@ export async function saveNotice(formData: FormData): Promise<AdminResult> {
     active: bool(formData, "active"),
   });
   if (!result.ok) return { ok: false, message: result.message };
-  revalidatePath("/", "layout");
+  refreshSite(SITE_TAGS.notices);
   return done("Notice saved.", "/portal/admin/notices");
 }
 
 export async function removeNotice(id: string): Promise<AdminResult> {
   const result = await tryMutation(api.content.removeNotice, { id: id as Id<"emergencyNotices"> });
   if (!result.ok) return { ok: false, message: result.message };
-  revalidatePath("/", "layout");
+  refreshSite(SITE_TAGS.notices);
   return done("Notice deleted.", "/portal/admin/notices");
 }
 
 /* -------------------------------- documents ------------------------------- */
 
-const DOCUMENT_PATHS = ["/portal/admin/documents", "/portal/parent/documents", "/documents"];
+const DOCUMENT_PATHS = ["/portal/admin/documents", "/portal/parent/documents"];
 
 /** A one-time Convex storage URL for the browser to upload a PDF to. */
 export async function requestDocumentUploadUrl(): Promise<{ ok: true; url: string } | { ok: false; message: string }> {
@@ -599,12 +618,14 @@ export async function saveDocument(formData: FormData): Promise<AdminResult> {
     file: storageId ? { storageId: storageId as Id<"_storage">, fileName: str(formData, "fileName") } : undefined,
   });
   if (!result.ok) return { ok: false, message: result.message };
+  refreshSite(SITE_TAGS.documents);
   return { ...done("Document saved.", ...DOCUMENT_PATHS), id: result.data };
 }
 
 export async function removeDocument(id: string): Promise<AdminResult> {
   const result = await tryMutation(api.content.removeDocument, { id: id as Id<"documents"> });
   if (!result.ok) return { ok: false, message: result.message };
+  refreshSite(SITE_TAGS.documents);
   return done("Document deleted.", ...DOCUMENT_PATHS);
 }
 
@@ -676,7 +697,8 @@ export async function enrolApplicant(applicationId: string, classId: string): Pr
   });
   if (!result.ok) return { ok: false, message: result.message };
   const e = result.data;
-  const paths = ["/portal/admin/admissions", "/portal/admin/students", "/portal/admin/parents", "/portal/admin/users"];
+  refreshSite(SITE_TAGS.levels);
+  const paths =["/portal/admin/admissions", "/portal/admin/students", "/portal/admin/parents", "/portal/admin/users"];
   const enrolled = `Enrolled in ${e.className} as ${e.studentNo}.`;
   if (!e.needsSignIn) return done(`${enrolled} ${e.parentName} already has a sign-in and will see the new child.`, ...paths);
 

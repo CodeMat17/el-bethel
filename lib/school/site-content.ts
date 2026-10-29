@@ -8,6 +8,7 @@ import { CMS_DEFAULTS, withDefaults } from "./cms/defaults";
 import { validateCms, type CmsData, type CmsKey } from "./cms/schema";
 import { fillTokens, withLinks, type School } from "./cms/tokens";
 import { publicQuery } from "./convex";
+import { SITE_TAGS, siteCache } from "./site-cache";
 
 /**
  * Editable website content, read on the public site. Visitors get the published
@@ -24,6 +25,10 @@ export const getPreviewToken = cache(async (): Promise<string | null> => {
   return (await cookies()).get(PREVIEW_COOKIE)?.value ?? null;
 });
 
+/** Published content stays cached until that section is published again (see the cms actions). */
+const published = (key: CmsKey) =>
+  siteCache(() => publicQuery(api.cms.published, { key }), `cms:${key}`, [SITE_TAGS.cms, SITE_TAGS.cmsKey(key)])();
+
 const load = cache(async (key: CmsKey): Promise<unknown> => {
   try {
     const token = await getPreviewToken();
@@ -31,7 +36,7 @@ const load = cache(async (key: CmsKey): Promise<unknown> => {
       const draft = await publicQuery(api.cms.preview, { key, token });
       if (draft !== null) return draft;
     }
-    return await publicQuery(api.cms.published, { key });
+    return await published(key);
   } catch (error) {
     console.error(`Could not load website content "${key}"; using the defaults.`, error);
     return null;

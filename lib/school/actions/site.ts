@@ -5,10 +5,11 @@ import { revalidatePath } from "next/cache";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { tryMutation } from "@/lib/school/convex";
+import { SITE_TAGS, refreshSite } from "@/lib/school/site-cache";
 
 /**
  * Site portal list actions (testimonials, clubs, FAQs). Convex checks the caller
- * is a site or super administrator; these refresh the pages that show the lists.
+ * is a site or super administrator; these refresh only the pages that show the lists.
  */
 
 export interface SiteResult {
@@ -21,8 +22,8 @@ const opt = (f: FormData, key: string) => str(f, key) || undefined;
 
 async function finish(result: { ok: boolean; message?: string }, message: string, portalPath: string): Promise<SiteResult> {
   if (!result.ok) return { ok: false, message: result.message };
-  // Lists appear on several public pages (homepage, school life, admissions).
-  revalidatePath("/", "layout");
+  // Lists appear on several public pages (homepage, school life, admissions); the tag finds them all.
+  refreshSite(SITE_TAGS.lists);
   revalidatePath(portalPath);
   return { ok: true, message };
 }

@@ -2,13 +2,13 @@ import { EmergencyBanner } from "@/components/site/emergency-banner";
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
 import { PreviewBanner } from "@/components/site/preview-banner";
-import { getActiveNotice } from "@/lib/school/site-data";
+import { getActiveNotices } from "@/lib/school/site-data";
 import { getContent, getPreviewToken, getSchool } from "@/lib/school/site-content";
 import { SITE_URL } from "@/lib/school/config";
 
 export default async function SiteLayout({ children }: LayoutProps<"/">) {
-  const [notice, SCHOOL, about, previewing] = await Promise.all([
-    getActiveNotice(),
+  const [notices, SCHOOL, about, previewing] = await Promise.all([
+    getActiveNotices(),
     getSchool(),
     getContent("about"),
     getPreviewToken(),
@@ -48,7 +48,7 @@ export default async function SiteLayout({ children }: LayoutProps<"/">) {
         Skip to content
       </a>
       {previewing ? <PreviewBanner /> : null}
-      {notice ? <EmergencyBanner notice={notice} /> : null}
+      <EmergencyBanner notices={notices} />
       <SiteHeader school={SCHOOL} />
       <main id="main" className="flex-1">
         {children}

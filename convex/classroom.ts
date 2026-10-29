@@ -4,7 +4,6 @@ import { query } from "./_generated/server";
 import { assertTeachesClass, isAdmin, requireStaff, teacherClassIds } from "./lib/access";
 import { toStudents } from "./lib/mappers";
 import { withId } from "./lib/util";
-import { classroomQuizzes } from "./quizzes";
 
 /** Pupil and assignment counts for each class the viewer teaches. */
 export const summaries = query({
@@ -32,7 +31,7 @@ export const summaries = query({
   },
 });
 
-/** The digital classroom: roster with attendance, assignments with progress, materials and quizzes. */
+/** The digital classroom: roster, assignments with progress and the timetable. */
 export const overview = query({
   args: { classId: v.string() },
   handler: async (ctx, args) => {
@@ -43,28 +42,13 @@ export const overview = query({
     if (!cls) return null;
     await assertTeachesClass(ctx, viewer, classId);
 
-    const [students, attendance, assignments, materials, quizzes, timetable] = await Promise.all([
+    const [students, assignments, timetable] = await Promise.all([
       ctx.db.query("students").withIndex("by_class", (q) => q.eq("classId", classId)).collect(),
-      ctx.db.query("attendance").withIndex("by_class_date", (q) => q.eq("classId", classId)).order("desc").take(4000),
       ctx.db.query("assignments").withIndex("by_class", (q) => q.eq("classId", classId)).collect(),
-      ctx.db.query("materials").withIndex("by_class", (q) => q.eq("classId", classId)).collect(),
-      classroomQuizzes(ctx, classId),
       ctx.db.query("timetable").withIndex("by_class", (q) => q.eq("classId", classId)).collect(),
     ]);
     const active = students.filter((s) => s.status === "active");
-    const rates = new Map<string, { present: number; total: number }>();
-    for (const r of attendance) {
-      const e = rates.get(r.studentId) ?? { present: 0, total: 0 };
-      e.total += 1;
-      if (r.status === "present" || r.status === "late") e.present += 1;
-      rates.set(r.studentId, e);
-    }
-    const roster = (await toStudents(ctx, active))
-      .sort((a, b) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName))
-      .map((s) => {
-        const e = rates.get(s.id);
-        return { ...s, attendanceRate: e?.total ? Math.round((e.present / e.total) * 100) : 0 };
-      });
+    const roster = (await toStudents(ctx, active)).sort((a, b) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName));
 
     const withStats = await Promise.all(
       assignments
@@ -84,8 +68,6 @@ export const overview = query({
       class: withId(cls),
       roster,
       assignments: withStats,
-      materials: materials.map(withId).sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt)),
-      quizzes,
       timetable: timetable.map(withId),
     };
   },

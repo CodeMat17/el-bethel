@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { tryMutation } from "@/lib/school/convex";
+import { SITE_TAGS, refreshSite } from "@/lib/school/site-cache";
 
 /**
  * Certificate and achievement actions. Each forwards to a
@@ -67,7 +68,7 @@ export async function saveAchievement(formData: FormData): Promise<OpsResult> {
     issueCertificate: bool(formData, "issueCertificate"),
   });
   if (!result.ok) return { ok: false, message: result.message };
-  revalidatePath("/");
+  refreshSite(SITE_TAGS.lists);
   return done(
     result.data.certificateNo ? `Saved, and certificate ${result.data.certificateNo} issued.` : "Achievement saved.",
     "/portal/admin/achievements",
@@ -78,7 +79,7 @@ export async function saveAchievement(formData: FormData): Promise<OpsResult> {
 export async function removeAchievement(id: string): Promise<OpsResult> {
   const result = await tryMutation(api.awards.removeAchievement, { id: id as Id<"achievements"> });
   if (!result.ok) return { ok: false, message: result.message };
-  revalidatePath("/");
+  refreshSite(SITE_TAGS.lists);
   return done("Achievement removed.", "/portal/admin/achievements");
 }
 

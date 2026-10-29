@@ -4,8 +4,9 @@ import { CalendarDaysIcon } from "lucide-react";
 
 import { CtaBand, PageHero, SectionHeading } from "@/components/common";
 import { Reveal, ToneImage } from "@/components/motion";
+import { DatedGroup, DatedItem, WhenDated } from "@/components/site/dated";
 import { Card } from "@/components/ui/card";
-import { formatDate } from "@/lib/school/format";
+import { eventEnd, formatDate, todayISO } from "@/lib/school/format";
 import { getAlumniHub } from "@/lib/school/site-data";
 import { getContent } from "@/lib/school/site-content";
 
@@ -60,26 +61,32 @@ export default async function AlumniPage() {
       </section>
 
       {hub.events.length > 0 ? (
-        <section className="eb-section border-t bg-muted/40">
-          <div className="eb-container max-w-3xl">
-            <SectionHeading eyebrow={events.eyebrow} title={events.title} />
-            <ul className="mt-6 space-y-3">
-              {hub.events.map((e) => (
-                <li key={e.id}>
-                  <Link href={`/school-life/events/${e.slug}`} className="flex items-start gap-4 rounded-2xl border bg-card p-4 transition-colors hover:border-gold/50">
-                    <CalendarDaysIcon className="mt-0.5 size-5 shrink-0 text-gold" />
-                    <span>
-                      <span className="block font-bold">{e.title}</span>
-                      <span className="text-sm text-muted-foreground">
-                        {formatDate(e.date)} · {e.startTime} · {e.venue}
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
+        <DatedGroup asOf={todayISO()} ends={hub.events.map(eventEnd)}>
+          <WhenDated>
+            <section className="eb-section border-t bg-muted/40">
+              <div className="eb-container max-w-3xl">
+                <SectionHeading eyebrow={events.eyebrow} title={events.title} />
+                <ul className="mt-6 space-y-3">
+                  {hub.events.map((e, i) => (
+                    <DatedItem key={e.id} index={i}>
+                      <li>
+                        <Link href={`/school-life/events/${e.slug}`} className="flex items-start gap-4 rounded-2xl border bg-card p-4 transition-colors hover:border-gold/50">
+                          <CalendarDaysIcon className="mt-0.5 size-5 shrink-0 text-gold" />
+                          <span>
+                            <span className="block font-bold">{e.title}</span>
+                            <span className="text-sm text-muted-foreground">
+                              {formatDate(e.date)} · {e.startTime} · {e.venue}
+                            </span>
+                          </span>
+                        </Link>
+                      </li>
+                    </DatedItem>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          </WhenDated>
+        </DatedGroup>
       ) : null}
 
       {cta.visible ? <CtaBand title={cta.title} text={cta.text} primary={cta.primary} secondary={cta.secondary} /> : null}

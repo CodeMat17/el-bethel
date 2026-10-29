@@ -4,6 +4,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx } from "./_generated/server";
 import { fail, getViewer, hasRole, requireAdmin, requireEventEditor, requireSiteAdmin, requireViewer } from "./lib/access";
 import { audit, getByLooseId, nowISO, slugify, withId } from "./lib/util";
+import { scheduleNewsRelease } from "./newsRelease";
 import { cloudMedia } from "./validators";
 
 /**
@@ -101,22 +102,19 @@ export const siteContent = query({
   },
 });
 
-export const vacancyBySlug = query({
-  args: { slug: v.string() },
-  handler: async (ctx, { slug }) => {
-    const row = await ctx.db.query("vacancies").withIndex("by_slug", (q) => q.eq("slug", slug)).first();
-    return row ? withId(row) : null;
-  },
-});
-
-/** The live emergency notice, if any. */
-export const activeNotice = query({
+/**
+ * Active emergency notices that have not ended yet. The website caches this list,
+ * so the browser picks the one whose window covers the current time.
+ */
+export const activeNotices = query({
   args: {},
   handler: async (ctx) => {
     const now = nowISO();
     const rows = await ctx.db.query("emergencyNotices").withIndex("by_active", (q) => q.eq("active", true)).collect();
-    const live = rows.find((n) => n.startsAt <= now && n.endsAt >= now);
-    return live ? withId(live) : null;
+    return rows
+      .filter((n) => n.endsAt >= now)
+      .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
+      .map(withId);
   },
 });
 
@@ -284,10 +282,12 @@ export const saveNews = mutation({
       if (!before) fail("NOT_FOUND", "Post not found.");
       await ctx.db.patch(id, { ...doc, slug: before.title === doc.title ? before.slug : await uniqueSlug(ctx, "news", doc.title, id) });
       await audit(ctx, viewer, { action: "Edited news post", entity: "News", entityId: id, newValue: doc.title });
+      await scheduleNewsRelease(ctx, id, doc);
       return { id, previousCover: before.cover?.publicId !== doc.cover?.publicId ? before.cover?.publicId : undefined };
     }
     const newId = await ctx.db.insert("news", { ...doc, slug: await uniqueSlug(ctx, "news", doc.title), tone: ["navy", "gold", "info", "success", "plum"][Math.floor(Math.random() * 5)] });
     await audit(ctx, viewer, { action: "Created news post", entity: "News", entityId: newId, newValue: doc.title });
+    await scheduleNewsRelease(ctx, newId, doc);
     return { id: newId, previousCover: undefined };
   },
 });
@@ -528,26 +528,11 @@ export const removeDocument = mutation({
   },
 });
 
-/** Library catalogue and bus routes shown on the public website. */
+/** Titles of the documents kept in the portals, listed on the public documents page. */
 export const publicCatalogue = query({
   args: {},
   handler: async (ctx) => {
-    const [books, routes, documents] = await Promise.all([
-      ctx.db.query("books").collect(),
-      ctx.db.query("transportRoutes").collect(),
-      ctx.db.query("documents").collect(),
-    ]);
-    return {
-      books: books.map(withId),
-      // Crew phone numbers are for families of riders only.
-      routes: routes.map((r) => {
-        const { driverPhone, attendantPhone, ...rest } = withId(r);
-        void driverPhone;
-        void attendantPhone;
-        return rest;
-      }),
-      // Titles only: the documents themselves are in the portals.
-      restrictedDocuments: documents.filter((d) => d.visibility !== "public").map(withId),
-    };
+    const documents = await ctx.db.query("documents").collect();
+    return { restrictedDocuments: documents.filter((d) => d.visibility !== "public").map(withId) };
   },
 });

@@ -37,7 +37,11 @@ const TIME_FMT = new Intl.DateTimeFormat("en-GB", {
 
 export const formatDate = (value: string | Date): string => DATE_FMT.format(new Date(value));
 export const formatLongDate = (value: string | Date): string => LONG_DATE_FMT.format(new Date(value));
-export const formatTime = (value: string | Date): string => TIME_FMT.format(new Date(value));
+/** Today as YYYY-MM-DD (UTC): the day a static page is rendered, for `components/site/dated`. */
+export const todayISO = (): string => new Date().toISOString().slice(0, 10);
+/** An event's last day as YYYY-MM-DD. */
+export const eventEnd = (event: { date: string; endDate?: string }): string => (event.endDate ?? event.date).slice(0, 10);
+export const formatTime =(value: string | Date): string => TIME_FMT.format(new Date(value));
 export const formatDateTime = (value: string | Date): string =>
   `${DATE_FMT.format(new Date(value))} · ${TIME_FMT.format(new Date(value))}`;
 

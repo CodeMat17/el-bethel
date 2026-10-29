@@ -4,7 +4,11 @@ import { notFound } from "next/navigation";
 import { CtaBand, PageHero } from "@/components/common";
 import { ToneImage } from "@/components/motion";
 import { formatDate } from "@/lib/school/format";
-import { getAlumniStory } from "@/lib/school/site-data";
+import { getAlumniHub, getAlumniStory } from "@/lib/school/site-data";
+
+export async function generateStaticParams() {
+  return (await getAlumniHub()).stories.map((story) => ({ slug: story.slug }));
+}
 
 export async function generateMetadata({ params }: PageProps<"/alumni/stories/[slug]">): Promise<Metadata> {
   const { slug } = await params;

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { teacherName } from "@/lib/school/data";
-import { getDirectory } from "@/lib/school/directory";
+import { getPublicDirectory } from "@/lib/school/directory";
 import { getTeachers } from "@/lib/school/site-data";
 import { getContent, getSchool } from "@/lib/school/site-content";
 
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TeamPage() {
-  const [dir, allTeachers, SCHOOL, page] = await Promise.all([getDirectory(), getTeachers(), getSchool(), getContent("team")]);
+  const [dir, allTeachers, SCHOOL, page] = await Promise.all([getPublicDirectory(), getTeachers(), getSchool(), getContent("team")]);
   const { hero, headteacher, leadership, office, cta } = page;
   const leaders = allTeachers.filter((t) => t.department === "Leadership");
   const teachers: DirectoryTeacher[] = allTeachers

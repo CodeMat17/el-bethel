@@ -130,14 +130,6 @@ export const academics = query({
   },
 });
 
-export const recentAudit = query({
-  args: { limit: v.optional(v.number()) },
-  handler: async (ctx, { limit }) => {
-    await requireAdmin(ctx);
-    return (await ctx.db.query("auditLogs").withIndex("by_at").order("desc").take(limit ?? 6)).map(withId);
-  },
-});
-
 export const enquiryStats = query({
   args: {},
   handler: async (ctx) => {
@@ -166,8 +158,7 @@ export const childSummaries = query({
     for (const studentId of await parentStudentIds(ctx, viewer.parentId)) {
       const student = await ctx.db.get(studentId);
       if (!student) continue;
-      const [attendance, assignments, invoices] = await Promise.all([
-        ctx.db.query("attendance").withIndex("by_student", (q) => q.eq("studentId", studentId)).order("desc").take(200),
+      const [assignments, invoices] = await Promise.all([
         ctx.db.query("assignments").withIndex("by_class", (q) => q.eq("classId", student.classId)).collect(),
         ctx.db.query("invoices").withIndex("by_student", (q) => q.eq("studentId", studentId)).collect(),
       ]);
@@ -180,10 +171,8 @@ export const childSummaries = query({
           .unique();
         if (!sub) pending += 1;
       }
-      const attended = attendance.filter((r) => r.status === "present" || r.status === "late").length;
       out.push({
         studentId,
-        attendanceRate: attendance.length ? Math.round((attended / attendance.length) * 100) : 0,
         pendingAssignments: pending,
         balance: invoices.reduce((n, i) => n + (i.total - i.amountPaid), 0),
       });
