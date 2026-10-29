@@ -1,10 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { preload } from "react-dom";
+import { Nunito } from "next/font/google";
 
 import { Providers } from "@/components/providers";
 import { SITE_URL } from "@/lib/school/config";
 import { getSchool } from "@/lib/school/site-content";
 import "./globals.css";
+
+const nunito = Nunito({
+  variable: "--font-nunito",
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+});
 
 export async function generateMetadata(): Promise<Metadata> {
   const SCHOOL = await getSchool();
@@ -61,9 +68,8 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
-  preload("/fonts/nunito-latin.woff2", { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
   return (
-    <html lang="en-NG" data-scroll-behavior="smooth" suppressHydrationWarning className="h-full antialiased">
+    <html lang="en-NG" data-scroll-behavior="smooth" suppressHydrationWarning className={`${nunito.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <Providers>{children}</Providers>
       </body>
