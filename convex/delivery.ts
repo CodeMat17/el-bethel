@@ -111,6 +111,77 @@ export const send = internalAction({
   },
 });
 
+/** Forward a contact-page enquiry to the school's published email, with Reply-To set to the enquirer. */
+export const sendEnquiry = internalAction({
+  args: { enquiryId: v.id("enquiries") },
+  handler: async (ctx, { enquiryId }) => {
+    if (!emailConfigured()) {
+      console.warn(`Enquiry ${enquiryId} not emailed: RESEND_API_KEY / RESEND_FROM are not set`);
+      return;
+    }
+    const e = await ctx.runQuery(internal.delivery.enquiry, { enquiryId });
+    if (!e) return;
+    const site = (process.env.SITE_URL ?? SITE_URL).replace(/\/$/, "");
+    const label = e.category.charAt(0).toUpperCase() + e.category.slice(1);
+    const subject = `New enquiry (${label}) from ${e.name}`;
+    const rows: [string, string][] = [
+      ["Name", e.name],
+      ["Email", e.email],
+      ["Phone", e.phone],
+      ["Category", label],
+    ];
+    const html = `<!doctype html><html><body style="margin:0;background:#faf8f4;font-family:Arial,Helvetica,sans-serif;color:#1f2430">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:16px;border:1px solid #ebe6da">
+<tr><td style="padding:24px 28px;border-bottom:3px solid #c79a38"><strong style="color:#232a3a;font-size:16px">${escapeHtml(e.school.name)}</strong></td></tr>
+<tr><td style="padding:28px">
+<h1 style="margin:0 0 16px;font-size:20px;color:#232a3a">New enquiry from the contact page</h1>
+<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px;line-height:1.6">
+${rows.map(([k, val]) => `<tr><td style="padding:2px 16px 2px 0;color:#6b7280">${k}</td><td style="padding:2px 0;font-weight:700">${escapeHtml(val)}</td></tr>`).join("\n")}
+</table>
+<p style="margin:20px 0 0;font-size:15px;line-height:1.6;white-space:pre-wrap">${escapeHtml(e.message)}</p>
+<p style="margin:28px 0 0"><a href="${escapeHtml(`${site}/portal/admin/enquiries`)}" style="display:inline-block;background:#232a3a;color:#ffffff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px">Open enquiries</a></p>
+</td></tr>
+<tr><td style="padding:18px 28px;font-size:12px;color:#6b7280;border-top:1px solid #ebe6da">Reply to this email to answer ${escapeHtml(e.name)} directly.</td></tr>
+</table></td></tr></table></body></html>`;
+    const text = `New enquiry from the contact page\n\n${rows.map(([k, val]) => `${k}: ${val}`).join("\n")}\n\n${e.message}\n\nOpen enquiries: ${site}/portal/admin/enquiries`;
+    try {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.RESEND_API_KEY!.trim()}`,
+          "Content-Type": "application/json",
+          "Idempotency-Key": `enquiry-${enquiryId}`,
+        },
+        body: JSON.stringify({
+          from: process.env.RESEND_FROM!.trim(),
+          to: [e.school.email],
+          reply_to: e.email,
+          subject,
+          html,
+          text,
+        }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { message?: string };
+        console.error(`Enquiry ${enquiryId} email failed: ${body.message ?? `Resend returned ${res.status}`}`);
+      }
+    } catch (error) {
+      console.error(`Enquiry ${enquiryId} email failed: ${String(error)}`);
+    }
+  },
+});
+
+export const enquiry = internalQuery({
+  args: { enquiryId: v.id("enquiries") },
+  handler: async (ctx, { enquiryId }) => {
+    const e = await ctx.db.get(enquiryId);
+    if (!e) return null;
+    const s = await publishedContent(ctx, "identity");
+    return { ...e, school: { name: s.name, email: s.email } };
+  },
+});
+
 /* ---------------------------------- admin --------------------------------- */
 
 export const adminLog = query({

@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 
+import { internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import { fail, requireAdmin } from "./lib/access";
 import { audit, nowISO, withId } from "./lib/util";
@@ -19,7 +20,7 @@ export const submitEnquiry = mutation({
   handler: async (ctx, a) => {
     if (!EMAIL.test(a.email.trim())) fail("INVALID", "Enter a valid email address.");
     if (a.message.trim().length < 10 || a.message.length > 4000) fail("INVALID", "Please write a message of 10 to 4000 characters.");
-    await ctx.db.insert("enquiries", {
+    const enquiryId = await ctx.db.insert("enquiries", {
       ...a,
       name: a.name.trim().slice(0, 120),
       email: a.email.trim().toLowerCase(),
@@ -28,6 +29,8 @@ export const submitEnquiry = mutation({
       status: "new",
       createdAt: nowISO(),
     });
+    // Forward it to the school's published email address.
+    await ctx.scheduler.runAfter(0, internal.delivery.sendEnquiry, { enquiryId });
   },
 });
 
