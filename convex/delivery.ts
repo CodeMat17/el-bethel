@@ -121,7 +121,6 @@ export const sendEnquiry = internalAction({
     }
     const e = await ctx.runQuery(internal.delivery.enquiry, { enquiryId });
     if (!e) return;
-    const site = (process.env.SITE_URL ?? SITE_URL).replace(/\/$/, "");
     const label = e.category.charAt(0).toUpperCase() + e.category.slice(1);
     const subject = `New enquiry (${label}) from ${e.name}`;
     const rows: [string, string][] = [
@@ -139,12 +138,12 @@ export const sendEnquiry = internalAction({
 <table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px;line-height:1.6">
 ${rows.map(([k, val]) => `<tr><td style="padding:2px 16px 2px 0;color:#6b7280">${k}</td><td style="padding:2px 0;font-weight:700">${escapeHtml(val)}</td></tr>`).join("\n")}
 </table>
-<p style="margin:20px 0 0;font-size:15px;line-height:1.6;white-space:pre-wrap">${escapeHtml(e.message)}</p>
-<p style="margin:28px 0 0"><a href="${escapeHtml(`${site}/portal/admin/enquiries`)}" style="display:inline-block;background:#232a3a;color:#ffffff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px">Open enquiries</a></p>
+<p style="margin:24px 0 8px;font-size:13px;color:#6b7280;text-transform:uppercase;letter-spacing:0.04em">Message</p>
+<div style="padding:16px 18px;background:#faf8f4;border:1px solid #ebe6da;border-radius:10px;font-size:15px;line-height:1.6;white-space:pre-wrap;word-break:break-word">${escapeHtml(e.message)}</div>
 </td></tr>
 <tr><td style="padding:18px 28px;font-size:12px;color:#6b7280;border-top:1px solid #ebe6da">Reply to this email to answer ${escapeHtml(e.name)} directly.</td></tr>
 </table></td></tr></table></body></html>`;
-    const text = `New enquiry from the contact page\n\n${rows.map(([k, val]) => `${k}: ${val}`).join("\n")}\n\n${e.message}\n\nOpen enquiries: ${site}/portal/admin/enquiries`;
+    const text = `New enquiry from the contact page\n\n${rows.map(([k, val]) => `${k}: ${val}`).join("\n")}\n\nMessage:\n${e.message}`;
     try {
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
