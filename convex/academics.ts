@@ -133,7 +133,8 @@ export const removeSubject = mutation({
     if (!subject) return;
     const used =
       (await ctx.db.query("assignments").collect()).some((a) => a.subjectId === id) ||
-      Boolean(await ctx.db.query("results").filter((q) => q.eq(q.field("subjectId"), id)).first());
+      Boolean(await ctx.db.query("results").filter((q) => q.eq(q.field("subjectId"), id)).first()) ||
+      Boolean(await ctx.db.query("midtermScores").filter((q) => q.eq(q.field("subjectId"), id)).first());
     if (used) fail("INVALID", "This subject has assignments or results on record and can't be deleted.");
     for (const row of (await ctx.db.query("teachingAssignments").collect()).filter((r) => r.subjectId === id)) {
       await ctx.db.delete(row._id);
@@ -225,13 +226,14 @@ export const removeTerm = mutation({
     const term = await ctx.db.get(id);
     if (!term) return;
     if (term.active) fail("INVALID", "Make another term current before deleting this one.");
-    const [result, report, assignment, invoice] = await Promise.all([
+    const [result, report, midterm, assignment, invoice] = await Promise.all([
       ctx.db.query("results").withIndex("by_term", (q) => q.eq("termId", id)).first(),
       ctx.db.query("reportCards").withIndex("by_term", (q) => q.eq("termId", id)).first(),
+      ctx.db.query("midtermScores").withIndex("by_term", (q) => q.eq("termId", id)).first(),
       ctx.db.query("assignments").filter((q) => q.eq(q.field("termId"), id)).first(),
       ctx.db.query("invoices").filter((q) => q.eq(q.field("termId"), id)).first(),
     ]);
-    if (result || report) fail("INVALID", "This term has results on record and can't be deleted. Edit its dates instead.");
+    if (result || report || midterm) fail("INVALID", "This term has results on record and can't be deleted. Edit its dates instead.");
     if (assignment) fail("INVALID", "This term has assignments on record and can't be deleted. Edit its dates instead.");
     if (invoice) fail("INVALID", "This term has invoices on record and can't be deleted. Edit its dates instead.");
     await ctx.db.delete(id);

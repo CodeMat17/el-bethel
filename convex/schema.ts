@@ -277,6 +277,38 @@ export default defineSchema({
     .index("by_class_term_subject", ["classId", "termId", "subjectId"])
     .index("by_term", ["termId"]),
 
+  /** One subject's mid-term test score for one pupil in one term. Separate from the end-of-term CA and exam. */
+  midtermScores: defineTable({
+    studentId: v.id("students"),
+    subjectId: v.id("subjects"),
+    classId: v.id("classes"),
+    termId: v.id("terms"),
+    score: v.number(),
+    /** Marks the test was out of. */
+    maxScore: v.number(),
+    /** The score as a percentage, which the grade is taken from. */
+    percent: v.number(),
+    grade: v.string(),
+    remark: v.string(),
+    position: v.optional(v.number()),
+    enteredBy: v.optional(v.id("users")),
+    updatedAt: v.optional(v.string()),
+  })
+    .index("by_student_term", ["studentId", "termId"])
+    .index("by_class_term", ["classId", "termId"])
+    .index("by_class_term_subject", ["classId", "termId", "subjectId"])
+    .index("by_term", ["termId"]),
+
+  /** A class's mid-term results for a term, once published to pupils and parents. */
+  midtermPublications: defineTable({
+    classId: v.id("classes"),
+    termId: v.id("terms"),
+    publishedAt: v.string(),
+    publishedBy: v.optional(v.id("users")),
+  })
+    .index("by_class_term", ["classId", "termId"])
+    .index("by_term", ["termId"]),
+
   /** The term summary for one pupil. Visible to pupils and parents once published. */
   reportCards: defineTable({
     studentId: v.id("students"),

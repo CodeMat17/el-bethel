@@ -20,7 +20,7 @@ import { internalAction, internalMutation, internalQuery } from "./_generated/se
 const TABLES: TableNames[] = [
   "users", "academicSessions", "terms", "classes", "subjects", "teachers", "teachingAssignments",
   "students", "parents", "guardianships", "assignments", "submissions", "attendance", "results",
-  "reportCards", "invoices", "payments", "applications", "news", "events", "gallery", "clubs",
+  "reportCards", "midtermScores", "midtermPublications", "invoices", "payments", "applications", "news", "events", "gallery", "clubs",
   "achievements", "testimonials", "faqs", "documents", "vacancies", "emergencyNotices", "books",
   "borrowings", "transportRoutes", "enquiries", "tourBookings", "certificates", "notifications",
   "messageThreads", "threadParticipants", "threadMessages", "appointments", "availability",

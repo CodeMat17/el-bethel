@@ -2,7 +2,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { EmptyState } from "@/components/common";
+import { MidtermEntry } from "@/components/portal/midterm-entry";
 import { PortalPageHeader } from "@/components/portal/page-header";
+import { PublishMidterm } from "@/components/portal/publish-midterm";
 import { PublishResults } from "@/components/portal/publish-results";
 import { ResultsEntry, type ResultRow } from "@/components/portal/results-entry";
 import { Button } from "@/components/ui/button";
@@ -17,34 +19,8 @@ import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Results" };
 
-export default async function TeacherResultsPage({ searchParams }: PageProps<"/portal/teacher/results">) {
-  const user = await requireTeacher();
-  const params = await searchParams;
-  const dir = await getDirectory();
-
-  const classes = isAdmin(user) ? dir.classes : dir.classesForTeacher(user.teacherId);
-  if (classes.length === 0) {
-    return <EmptyState icon="School" title="No classes assigned" description="Contact the school administrator." />;
-  }
-
-  // Never trust the query string: only classes this teacher teaches are selectable.
-  const cls = classes.find((c) => c.id === param(params.class)) ?? classes[0];
-  const isClassTeacher = cls.classTeacherId === user.teacherId;
-  const view = param(params.view) === "publish" && (isClassTeacher || isAdmin(user)) ? "publish" : "scores";
-
-  const subjects = isAdmin(user) ? dir.subjectsForClass(cls.id) : dir.subjectsForTeacherInClass(user.teacherId, cls.id);
-  const subject = subjects.find((s) => s.id === param(params.subject)) ?? subjects[0];
-  const terms = [...dir.terms].sort((a, b) => b.startDate.localeCompare(a.startDate));
-  const term = terms.find((t) => t.id === param(params.term)) ?? dir.activeTerm ?? terms[0];
-
-  if (!term) {
-    return <EmptyState icon="Trophy" title="No terms set up" description="Ask an administrator to add the school terms." />;
-  }
-
-  const buildHref = (next: Partial<{ class: string; subject: string; term: string; view: string }>) =>
-    `/portal/teacher/results?class=${next.class ?? cls.id}&subject=${next.subject ?? subject?.id ?? ""}&term=${next.term ?? term.id}&view=${next.view ?? view}`;
-
-  const Picker = ({ label, items, current, make }: { label: string; items: { id: string; name: string }[]; current?: string; make: (id: string) => string }) => (
+function Picker({ label, items, current, make }: { label: string; items: { id: string; name: string }[]; current?: string; make: (id: string) => string }) {
+  return (
     <div>
       <p className="text-xs font-bold text-muted-foreground uppercase">{label}</p>
       <div className="mt-2 flex flex-wrap gap-2">
@@ -62,9 +38,61 @@ export default async function TeacherResultsPage({ searchParams }: PageProps<"/p
       </div>
     </div>
   );
+}
+
+export default async function TeacherResultsPage({ searchParams }: PageProps<"/portal/teacher/results">) {
+  const user = await requireTeacher();
+  const params = await searchParams;
+  const dir = await getDirectory();
+
+  const classes = isAdmin(user) ? dir.classes : dir.classesForTeacher(user.teacherId);
+  if (classes.length === 0) {
+    return <EmptyState icon="School" title="No classes assigned" description="Contact the school administrator." />;
+  }
+
+  // Never trust the query string: only classes this teacher teaches are selectable.
+  const cls = classes.find((c) => c.id === param(params.class)) ?? classes[0];
+  const isClassTeacher = cls.classTeacherId === user.teacherId;
+  const view = param(params.view) === "publish" && (isClassTeacher || isAdmin(user)) ? "publish" : "scores";
+  const assessment = param(params.assessment) === "midterm" ? "midterm" : "exam";
+
+  const subjects = isAdmin(user) ? dir.subjectsForClass(cls.id) : dir.subjectsForTeacherInClass(user.teacherId, cls.id);
+  const subject = subjects.find((s) => s.id === param(params.subject)) ?? subjects[0];
+  const terms = [...dir.terms].sort((a, b) => b.startDate.localeCompare(a.startDate));
+  const term = terms.find((t) => t.id === param(params.term)) ?? dir.activeTerm ?? terms[0];
+
+  if (!term) {
+    return <EmptyState icon="Trophy" title="No terms set up" description="Ask an administrator to add the school terms." />;
+  }
+
+  const buildHref = (next: Partial<{ class: string; subject: string; term: string; view: string; assessment: string }>) =>
+    `/portal/teacher/results?assessment=${next.assessment ?? assessment}&class=${next.class ?? cls.id}&subject=${next.subject ?? subject?.id ?? ""}&term=${next.term ?? term.id}&view=${next.view ?? view}`;
 
   let body: React.ReactNode;
-  if (view === "publish") {
+  if (view === "publish" && assessment === "midterm") {
+    const summary = await query(api.midterm.classSummary, { classId: cls.id as Id<"classes">, termId: term.id as Id<"terms"> });
+    body = (
+      <PublishMidterm
+        key={cls.id + term.id}
+        classId={cls.id}
+        termId={term.id}
+        className={cls.name}
+        termName={term.name}
+        totalSubjects={summary.subjectsEntered || summary.totalSubjects}
+        published={summary.published}
+        canPublish={summary.canPublish}
+        canUnpublish={isAdmin(user)}
+        rows={summary.rows.map((r) => ({
+          studentId: r.student.id,
+          name: studentName(r.student),
+          studentNo: r.student.studentNo,
+          subjects: r.subjects,
+          average: r.average,
+          position: r.position,
+        }))}
+      />
+    );
+  } else if (view === "publish") {
     const summary = await query(api.results.classSummary, { classId: cls.id as Id<"classes">, termId: term.id as Id<"terms"> });
     body = (
       <PublishResults
@@ -90,6 +118,31 @@ export default async function TeacherResultsPage({ searchParams }: PageProps<"/p
     );
   } else if (!subject) {
     body = <EmptyState icon="Trophy" title="No subjects to enter" description="You are not assigned a subject in this class." />;
+  } else if (assessment === "midterm") {
+    const sheet = await query(api.midterm.subjectSheet, {
+      classId: cls.id as Id<"classes">,
+      subjectId: subject.id as Id<"subjects">,
+      termId: term.id as Id<"terms">,
+    });
+    body = (
+      <MidtermEntry
+        key={cls.id + ":" + subject.id + ":" + term.id}
+        classId={cls.id}
+        subjectId={subject.id}
+        termId={term.id}
+        className={cls.name}
+        subjectName={subject.name}
+        termName={term.name}
+        maxScore={sheet.maxScore}
+        locked={sheet.locked}
+        rows={sheet.rows.map(({ student, score }) => ({
+          id: student.id,
+          name: studentName(student),
+          studentNo: student.studentNo,
+          score: score ? String(score.score) : "",
+        }))}
+      />
+    );
   } else {
     const sheet = await query(api.results.subjectSheet, {
       classId: cls.id as Id<"classes">,
@@ -122,8 +175,8 @@ export default async function TeacherResultsPage({ searchParams }: PageProps<"/p
   return (
     <>
       <PortalPageHeader
-        title="Exam results"
-        description="Enter CA and exam scores for your subjects. Class teachers then review the term summary and publish it to pupils and parents."
+        title="Results"
+        description="Enter mid-term test scores and end-of-term CA and exam scores for your subjects. Class teachers then review each summary and publish it to pupils and parents."
       />
 
       <div className="mb-4 flex flex-wrap gap-2">
@@ -132,13 +185,22 @@ export default async function TeacherResultsPage({ searchParams }: PageProps<"/p
         </Button>
         {isClassTeacher || isAdmin(user) ? (
           <Button variant={view === "publish" ? "default" : "outline"} className="font-bold" render={<Link href={buildHref({ view: "publish" })} />}>
-            Review &amp; publish class results
+            Review &amp; publish class {assessment === "midterm" ? "mid-term " : ""}results
           </Button>
         ) : null}
       </div>
 
       <Card className="mb-6 gap-0 p-4">
         <div className="space-y-4">
+          <Picker
+            label="Assessment"
+            items={[
+              { id: "midterm", name: "Mid-term test" },
+              { id: "exam", name: "End of term" },
+            ]}
+            current={assessment}
+            make={(id) => buildHref({ assessment: id })}
+          />
           <Picker label="Class" items={classes} current={cls.id} make={(id) => buildHref({ class: id, subject: "" })} />
           {view === "scores" ? <Picker label="Subject" items={subjects} current={subject?.id} make={(id) => buildHref({ subject: id })} /> : null}
           <Picker label="Term" items={terms} current={term.id} make={(id) => buildHref({ term: id })} />

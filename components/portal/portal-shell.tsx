@@ -1,13 +1,13 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useClerk } from "@clerk/nextjs";
 import { BellIcon, LogOutIcon, MenuIcon } from "lucide-react";
 
 import { Icon } from "@/components/icon";
-import { BrandMark } from "@/components/site/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -112,6 +112,17 @@ export function PortalShell({
     </nav>
   );
 
+  const schoolLogo = (
+    <Image
+      alt="School logo"
+      priority
+      src="/logo.webp"
+      width={36}
+      height={36}
+      className="size-9 shrink-0 rounded object-cover"
+    />
+  );
+
   const accountBlock = (
     <div className="border-t border-sidebar-border p-3">
       <div className="flex items-center gap-3 rounded-lg px-2 py-2">
@@ -145,7 +156,7 @@ export function PortalShell({
       {/* Desktop sidebar */}
       <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
         <div className="flex h-16 items-center gap-2.5 border-b border-sidebar-border px-4">
-          <BrandMark className="size-9" />
+          {schoolLogo}
           <div className="min-w-0">
             <p className="truncate font-heading text-sm leading-tight font-extrabold text-sidebar-foreground">
               El-Bethel
@@ -172,7 +183,7 @@ export function PortalShell({
               <SheetContent side="left" className="w-[min(19rem,86vw)] gap-0 border-sidebar-border bg-sidebar p-0">
                 <SheetHeader className="h-16 justify-center border-b border-sidebar-border px-4">
                   <SheetTitle className="flex items-center gap-2.5 text-left">
-                    <BrandMark className="size-9" />
+                    {schoolLogo}
                     <span className="min-w-0">
                       <span className="block truncate font-heading text-sm leading-tight font-extrabold text-sidebar-foreground">
                         El-Bethel

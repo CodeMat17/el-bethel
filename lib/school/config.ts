@@ -469,6 +469,14 @@ export function isValidCaMax(caMax: number) {
   return Number.isInteger(caMax) && caMax >= 0 && caMax <= 100;
 }
 
+/** What a mid-term test is marked out of unless the teacher sets otherwise. */
+export const DEFAULT_MIDTERM_MAX = 100;
+
+/** A mid-term test is marked out of a whole number between 1 and 100. */
+export function isValidMidtermMax(max: number) {
+  return Number.isInteger(max) && max >= 1 && max <= 100;
+}
+
 export const GRADE_BANDS = [
   { min: 80, grade: "A", remark: "Excellent" },
   { min: 70, grade: "B", remark: "Very Good" },

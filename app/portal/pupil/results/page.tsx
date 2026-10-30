@@ -3,7 +3,7 @@ import { TrophyIcon } from "lucide-react";
 
 import { EmptyState, StatCard } from "@/components/common";
 import { PortalPageHeader } from "@/components/portal/page-header";
-import { GradeKey, ResultsTable } from "@/components/portal/shared";
+import { GradeKey, MidtermTable, ResultsTable } from "@/components/portal/shared";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
@@ -21,12 +21,18 @@ export default async function PupilResultsPage() {
     return <EmptyState icon="Backpack" title="No school record" description="Please ask your class teacher." />;
   }
 
-  const [reports, assignments, dir] = await Promise.all([
+  const [reports, midterms, assignments, dir] = await Promise.all([
     query(api.results.allForStudent, { studentId: user.studentId }),
+    query(api.midterm.allForStudent, { studentId: user.studentId }),
     query(api.assignments.forStudent, { studentId: user.studentId }),
     getDirectory(),
   ]);
-  const terms = reports.map((r) => r.term);
+  // The current term (so the mid-term section is always there) and every term with results, newest first.
+  const termMap = new Map([...reports, ...midterms].map((r) => [r.term.id as string, { id: r.term.id as string, name: r.term.name, startDate: r.term.startDate }]));
+  if (dir.activeTerm && !termMap.has(dir.activeTerm.id)) termMap.set(dir.activeTerm.id, dir.activeTerm);
+  const terms = [...termMap.values()].sort((a, b) =>
+    b.startDate.localeCompare(a.startDate),
+  );
   const graded = assignments.filter((a) => a.progress === "graded");
   const average = graded.length
     ? Math.round(
@@ -38,7 +44,7 @@ export default async function PupilResultsPage() {
     <>
       <PortalPageHeader
         title="My results"
-        description="Your marked assignments and a summary of your published exam results. Your full report card is given to you at school."
+        description="Your marked assignments, mid-term test scores and a summary of your published exam results. Your full report card is given to you at school."
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -49,7 +55,7 @@ export default async function PupilResultsPage() {
           icon="ChartColumn"
           tone={average >= 70 ? "success" : "warning"}
         />
-        <StatCard label="Terms with results" value={terms.length} icon="Trophy" tone="gold" />
+        <StatCard label="Terms with results" value={new Set([...reports, ...midterms].map((r) => r.term.id)).size} icon="Trophy" tone="gold" />
       </div>
 
       <Card className="mt-6 gap-0 p-5 sm:p-6">
@@ -91,7 +97,7 @@ export default async function PupilResultsPage() {
 
       {terms.length > 0 ? (
         <div className="mt-6">
-          <h2 className="mb-4 font-heading text-base font-extrabold">My exam results</h2>
+          <h2 className="mb-4 font-heading text-base font-extrabold">My test and exam results</h2>
           <Tabs defaultValue={terms[0].id}>
             <TabsList className="h-auto w-full overflow-x-auto sm:w-fit">
               {terms.map((term) => (
@@ -104,8 +110,25 @@ export default async function PupilResultsPage() {
               const entry = reports.find((r) => r.term.id === term.id);
               const results = entry?.results ?? [];
               const report = entry?.reportCard ?? null;
+              const midterm = midterms.find((m) => m.term.id === term.id);
               return (
                 <TabsContent key={term.id} value={term.id} className="mt-5 space-y-5">
+                  {midterm ? (
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 className="font-heading text-sm font-extrabold">Mid-term test</h3>
+                        <p className="text-sm font-bold">
+                          Average {midterm.average}% · {midterm.position} of {midterm.classSize} in class
+                        </p>
+                      </div>
+                      <MidtermTable scores={midterm.scores} finals={results} dir={dir} />
+                    </div>
+                  ) : (
+                    <p className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
+                      Your {term.name} mid-term test scores will appear here once your class teacher publishes them.
+                    </p>
+                  )}
+                  {entry && midterm ? <h3 className="font-heading text-sm font-extrabold">End of term</h3> : null}
                   {report ? (
                     <Card className="gap-0 border-gold/30 bg-gold/8 p-5">
                       <div className="grid gap-4 sm:grid-cols-2">
@@ -127,7 +150,7 @@ export default async function PupilResultsPage() {
                       </p>
                     </Card>
                   ) : null}
-                  <ResultsTable results={results} dir={dir} />
+                  {entry ? <ResultsTable results={results} dir={dir} /> : null}
                   <GradeKey />
                 </TabsContent>
               );

@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { EmptyState, StatCard } from "@/components/common";
 import { ChildSwitcher } from "@/components/portal/child-switcher";
 import { PortalPageHeader } from "@/components/portal/page-header";
-import { GradeKey, ResultsTable } from "@/components/portal/shared";
+import { GradeKey, MidtermTable, ResultsTable } from "@/components/portal/shared";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -31,8 +31,16 @@ export default async function ParentResultsPage({ searchParams }: PageProps<"/po
     return <EmptyState icon="Users" title="No children linked" description="Contact the school office." />;
   }
 
-  const reports = await query(api.results.allForStudent, { studentId: child.id });
-  const terms = reports.map((r) => r.term);
+  const [reports, midterms] = await Promise.all([
+    query(api.results.allForStudent, { studentId: child.id }),
+    query(api.midterm.allForStudent, { studentId: child.id }),
+  ]);
+  // The current term (so families can always find the mid-term section) and every term with results, newest first.
+  const termMap = new Map([...reports, ...midterms].map((r) => [r.term.id as string, { id: r.term.id as string, name: r.term.name, sessionId: r.term.sessionId as string, startDate: r.term.startDate }]));
+  if (dir.activeTerm && !termMap.has(dir.activeTerm.id)) termMap.set(dir.activeTerm.id, dir.activeTerm);
+  const terms = [...termMap.values()].sort((a, b) =>
+    b.startDate.localeCompare(a.startDate),
+  );
 
   if (terms.length === 0) {
     return (
@@ -56,7 +64,7 @@ export default async function ParentResultsPage({ searchParams }: PageProps<"/po
         <EmptyState
           icon="Trophy"
           title="No results have been published yet"
-          description="Results appear here as soon as the class teacher publishes them at the end of each term."
+          description="Results appear here as soon as the class teacher publishes them, after the mid-term test and at the end of each term."
         />
       </>
     );
@@ -66,8 +74,8 @@ export default async function ParentResultsPage({ searchParams }: PageProps<"/po
     <>
       <PortalPageHeader
         eyebrow={`${studentName(child)} · ${dir.className(child.classId)}`}
-        title="Exam results"
-        description="A summary of each published term: subject scores, average, class position and teacher comments."
+        title="Results"
+        description="Mid-term test scores and the end-of-term summary for each term: subject scores, averages, class position and teacher comments."
         action={
           <ChildSwitcher
             activeId={child.id}
@@ -97,9 +105,61 @@ export default async function ParentResultsPage({ searchParams }: PageProps<"/po
           const report = entry?.reportCard ?? null;
           const best = [...results].sort((a, b) => b.total - a.total)[0];
           const weakest = [...results].sort((a, b) => a.total - b.total)[0];
+          const midterm = midterms.find((m) => m.term.id === term.id);
 
           return (
             <TabsContent key={term.id} value={term.id} className="mt-6 space-y-6">
+              {midterm ? (
+                <Card className="gap-0 p-5 sm:p-6">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <h2 className="font-heading text-base font-extrabold">Mid-term assessment</h2>
+                    {midterm.publishedAt ? (
+                      <p className="text-xs text-muted-foreground">Published {formatDate(midterm.publishedAt)}</p>
+                    ) : null}
+                  </div>
+                  <Separator className="my-4" />
+                  <div className="mb-5 grid gap-4 sm:grid-cols-3">
+                    <StatCard
+                      label="Mid-term average"
+                      value={`${midterm.average}%`}
+                      hint={`${midterm.scores.length} subjects`}
+                      icon="ChartColumn"
+                      tone={midterm.average >= 70 ? "success" : midterm.average >= 50 ? "warning" : "danger"}
+                    />
+                    <StatCard
+                      label="Class position"
+                      value={`${midterm.position} of ${midterm.classSize}`}
+                      hint={dir.className(midterm.classId)}
+                      icon="Trophy"
+                      tone="gold"
+                    />
+                    <StatCard
+                      label="Class average"
+                      value={`${midterm.classAverage}%`}
+                      hint={midterm.average >= midterm.classAverage ? "At or above the class average" : "Below the class average"}
+                      icon="Users"
+                    />
+                  </div>
+                  <MidtermTable scores={midterm.scores} finals={results} dir={dir} />
+                  <p className="mt-4 text-xs text-muted-foreground">
+                    The mid-term test shows progress halfway through the term. It is reported on its own and is not part
+                    of the end-of-term CA or exam.
+                    {results.length > 0 ? " The last column shows the end-of-term total and the change since mid-term." : ""}
+                  </p>
+                </Card>
+              ) : (
+                <Card className="gap-0 p-5 sm:p-6">
+                  <h2 className="font-heading text-base font-extrabold">Mid-term assessment</h2>
+                  <Separator className="my-4" />
+                  <p className="text-sm text-muted-foreground">
+                    {studentName(child)}&apos;s {term.name} mid-term test scores will appear here once the class teacher
+                    publishes them. You will get a notification when they are ready.
+                  </p>
+                </Card>
+              )}
+
+              {entry ? (
+              <>
               {report ? (
                 <div className="grid gap-4 sm:grid-cols-3">
                   <StatCard
@@ -199,6 +259,12 @@ export default async function ParentResultsPage({ searchParams }: PageProps<"/po
                   </Card>
                 ) : null}
               </div>
+              </>
+              ) : (
+                <Card className="gap-0 p-5 text-sm text-muted-foreground sm:p-6">
+                  End-of-term results for {term.name} will appear here once the class teacher publishes them.
+                </Card>
+              )}
             </TabsContent>
           );
         })}

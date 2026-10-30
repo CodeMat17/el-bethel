@@ -64,3 +64,44 @@ export async function unpublishClassResults(input: { classId: string; termId: st
   revalidatePath("/portal", "layout");
   return { ok: true, message: "Results withdrawn. Pupils and parents can no longer see them." };
 }
+
+/* ---------------------------- mid-term results ---------------------------- */
+
+export async function saveMidtermScores(input: {
+  classId: string;
+  subjectId: string;
+  termId: string;
+  maxScore: number;
+  rows: { studentId: string; score?: number }[];
+}): Promise<TeachingState> {
+  const result = await tryMutation(api.midterm.saveSubjectScores, {
+    classId: input.classId as Id<"classes">,
+    subjectId: input.subjectId as Id<"subjects">,
+    termId: input.termId as Id<"terms">,
+    maxScore: input.maxScore,
+    rows: input.rows.map((r) => ({ studentId: r.studentId as Id<"students">, score: r.score })),
+  });
+  if (!result.ok) return { ok: false, message: result.message };
+  revalidatePath("/portal/teacher/results");
+  return { ok: true, message: `Mid-term scores saved for ${result.data.saved} pupils.` };
+}
+
+export async function publishMidtermResults(input: { classId: string; termId: string }): Promise<TeachingState> {
+  const result = await tryMutation(api.midterm.publishClass, {
+    classId: input.classId as Id<"classes">,
+    termId: input.termId as Id<"terms">,
+  });
+  if (!result.ok) return { ok: false, message: result.message };
+  revalidatePath("/portal", "layout");
+  return { ok: true, message: `Mid-term results published for ${result.data.published} pupils. Pupils and parents can see them now.` };
+}
+
+export async function unpublishMidtermResults(input: { classId: string; termId: string }): Promise<TeachingState> {
+  const result = await tryMutation(api.midterm.unpublishClass, {
+    classId: input.classId as Id<"classes">,
+    termId: input.termId as Id<"terms">,
+  });
+  if (!result.ok) return { ok: false, message: result.message };
+  revalidatePath("/portal", "layout");
+  return { ok: true, message: "Mid-term results withdrawn. Pupils and parents can no longer see them." };
+}

@@ -128,6 +128,71 @@ export function ResultsTable({ results, dir }: { results: ResultEntry[]; dir: Di
   );
 }
 
+/** A pupil's mid-term test scores. With end-of-term results, also shows how each subject moved since. */
+export function MidtermTable({
+  scores,
+  finals = [],
+  dir,
+}: {
+  scores: { id: string; subjectId: string; score: number; maxScore: number; percent: number; grade: string; remark: string }[];
+  finals?: ResultEntry[];
+  dir: Directory;
+}) {
+  const finalFor = new Map(finals.map((r) => [r.subjectId, r]));
+  const compare = finals.length > 0;
+  return (
+    <div className="overflow-x-auto rounded-2xl border bg-card">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Subject</TableHead>
+            <TableHead className="text-right">Score</TableHead>
+            <TableHead className="text-right">%</TableHead>
+            <TableHead className="text-right">Grade</TableHead>
+            <TableHead>Remark</TableHead>
+            {compare ? <TableHead className="text-right">End of term</TableHead> : null}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {[...scores]
+            .sort((a, b) => dir.subjectName(a.subjectId).localeCompare(dir.subjectName(b.subjectId)))
+            .map((s) => {
+              const final = finalFor.get(s.subjectId);
+              const change = final ? Math.round((final.total - s.percent) * 10) / 10 : null;
+              return (
+                <TableRow key={s.id}>
+                  <TableCell className="font-bold">{dir.subjectName(s.subjectId)}</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {s.score}
+                    <span className="text-xs text-muted-foreground"> / {s.maxScore}</span>
+                  </TableCell>
+                  <TableCell className="text-right font-extrabold tabular-nums">{s.percent}</TableCell>
+                  <TableCell className="text-right">
+                    <StatusPill tone={gradeTone(s.grade)} dot={false}>{s.grade}</StatusPill>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{s.remark}</TableCell>
+                  {compare ? (
+                    <TableCell className="text-right tabular-nums">
+                      {final ? (
+                        <>
+                          <span className="font-bold">{final.total}%</span>
+                          <span className={cn("ml-1.5 text-xs font-bold", change! > 0 ? "text-success" : change! < 0 ? "text-destructive" : "text-muted-foreground")}>
+                            {change! > 0 ? `+${change}` : change}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                  ) : null}
+                </TableRow>
+              );
+            })}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
 
 export function GradeKey() {
   return (
