@@ -325,20 +325,12 @@ export const publishClass = mutation({
     const commentMap = new Map((comments ?? []).map((c) => [c.studentId, c]));
     const now = nowISO();
     for (const r of withScores) {
-      // Attendance within the term, for the summary.
-      const records = await ctx.db
-        .query("attendance")
-        .withIndex("by_student", (q) => q.eq("studentId", r.student._id).gte("date", term.startDate.slice(0, 10)).lte("date", term.endDate.slice(0, 10)))
-        .collect();
-      const present = records.filter((a) => a.status === "present" || a.status === "late").length;
       const given = commentMap.get(r.student._id);
       const doc = {
         average: r.average,
         totalScore: r.totalScore,
         position: positions.get(r.student._id) ?? 0,
         classSize: withScores.length,
-        attendancePresent: present,
-        attendanceTotal: records.length,
         teacherComment: given?.teacherComment.trim() || r.card?.teacherComment || defaultTeacherComment(r.average),
         headteacherComment: given?.headteacherComment?.trim() || r.card?.headteacherComment || defaultHeadComment(r.average),
         publishedAt: now,
@@ -381,20 +373,6 @@ export const unpublishClass = mutation({
       .collect();
     for (const c of cards) await ctx.db.patch(c._id, { publishedAt: undefined, publishedBy: undefined });
     await audit(ctx, viewer, { action: "Withdrew term results", entity: "Results", entityId: `${classId}:${termId}` });
-  },
-});
-
-export const updateComment = mutation({
-  args: { reportCardId: v.id("reportCards"), teacherComment: v.string(), headteacherComment: v.optional(v.string()) },
-  handler: async (ctx, { reportCardId, teacherComment, headteacherComment }) => {
-    const viewer = await requireStaff(ctx);
-    const card = await ctx.db.get(reportCardId);
-    if (!card) fail("NOT_FOUND", "Report not found.");
-    await assertCanPublishClassResults(ctx, viewer, card.classId);
-    await ctx.db.patch(reportCardId, {
-      teacherComment: teacherComment.trim(),
-      ...(headteacherComment !== undefined && isAdmin(viewer) ? { headteacherComment: headteacherComment.trim() } : {}),
-    });
   },
 });
 

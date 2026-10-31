@@ -131,20 +131,3 @@ export function gradeTone(grade: string): ToneName {
   if (grade === "D") return "warning";
   return "danger";
 }
-
-/** School shop order statuses, with what happens next for the parent. */
-export const ORDER_STATUS: Record<string, { label: string; tone: ToneName; next: string }> = {
-  placed: { label: "Awaiting payment", tone: "warning", next: "Pay at the bursary or by transfer, quoting the order number." },
-  paid: { label: "Paid — being prepared", tone: "info", next: "We'll tell you when it's ready to collect." },
-  ready: { label: "Ready to collect", tone: "success", next: "Collect from the school office, or it comes home in your child's bag." },
-  collected: { label: "Collected", tone: "neutral", next: "" },
-  cancelled: { label: "Cancelled", tone: "neutral", next: "" },
-};
-
-export const SHOP_CATEGORY: Record<string, string> = {
-  uniform: "Uniform",
-  sportswear: "Sportswear",
-  books: "Books",
-  stationery: "Stationery",
-  accessories: "Accessories",
-};

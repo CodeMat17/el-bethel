@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
 import { mutation, query } from "./_generated/server";
-import { fail, getViewer, requireViewer } from "./lib/access";
+import { fail, requireViewer } from "./lib/access";
 import { withId } from "./lib/util";
 
 export const mine = query({
@@ -22,19 +22,6 @@ export const mine = query({
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       .slice(0, limit ?? 100)
       .map(withId);
-  },
-});
-
-export const unreadCount = query({
-  args: {},
-  handler: async (ctx) => {
-    const viewer = await getViewer(ctx);
-    if (!viewer) return 0;
-    const rows = await ctx.db
-      .query("notifications")
-      .withIndex("by_user_read", (q) => q.eq("userId", viewer._id).eq("read", false))
-      .collect();
-    return rows.length;
   },
 });
 

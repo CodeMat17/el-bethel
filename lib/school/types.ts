@@ -136,7 +136,6 @@ export interface Student {
   house: "Emerald" | "Sapphire" | "Ruby" | "Amber";
   bloodGroup: string;
   medicalNotes?: string;
-  transportRouteId?: ID;
 }
 
 export interface Parent {
@@ -252,18 +251,6 @@ export interface Submission {
 
 /* ------------------------------- attendance ------------------------------- */
 
-export type AttendanceStatus = "present" | "absent" | "late" | "excused";
-
-export interface AttendanceRecord {
-  id: ID;
-  studentId: ID;
-  classId: ID;
-  date: string;
-  status: AttendanceStatus;
-  note?: string;
-  recordedBy?: ID;
-}
-
 /* --------------------------------- results -------------------------------- */
 
 export interface AssessmentWeighting {
@@ -299,8 +286,6 @@ export interface ReportCard {
   totalScore: number;
   position: number;
   classSize: number;
-  attendancePresent: number;
-  attendanceTotal: number;
   conduct: { label: string; rating: number }[];
   teacherComment: string;
   headteacherComment: string;
@@ -519,100 +504,6 @@ export interface AppNotification {
   read: boolean;
 }
 
-export interface ThreadMessage {
-  id: ID;
-  senderId: ID;
-  body: string;
-  sentAt: string;
-  readBy: ID[];
-}
-
-export interface MessageThread {
-  id: ID;
-  subject: string;
-  participantIds: ID[];
-  studentId?: ID;
-  createdAt: string;
-  updatedAt: string;
-  messages: ThreadMessage[];
-}
-
-export interface Appointment {
-  id: ID;
-  teacherId: ID;
-  parentId: ID;
-  studentId: ID;
-  date: string;
-  time: string;
-  mode: "in_person" | "virtual";
-  status: "requested" | "confirmed" | "rescheduled" | "cancelled" | "completed";
-  note?: string;
-}
-
-export interface TeacherAvailability {
-  id: ID;
-  teacherId: ID;
-  date: string;
-  time: string;
-  taken: boolean;
-}
-
-export interface LearningMaterial {
-  id: ID;
-  title: string;
-  description: string;
-  classId: ID;
-  subjectId: ID;
-  teacherId: ID;
-  kind: "note" | "pdf" | "worksheet" | "video" | "audio" | "slides" | "link" | "image";
-  url: string;
-  media?: CloudMedia;
-  sizeBytes: number;
-  uploadedAt: string;
-  downloads: number;
-}
-
-export interface QuizQuestion {
-  id: ID;
-  type: "multiple_choice" | "true_false" | "short_answer" | "picture" | "matching";
-  prompt: string;
-  options: string[];
-  /** The right option; for short answers, accepted answers separated by "|" (empty = marked by hand). */
-  answer: string;
-  points: number;
-  imageUrl?: string;
-  pairs?: { left: string; right: string }[];
-}
-
-export interface Quiz {
-  id: ID;
-  title: string;
-  classId: ID;
-  subjectId: ID;
-  teacherId: ID;
-  description: string;
-  durationMinutes: number;
-  attemptsAllowed: number;
-  randomize: boolean;
-  showResultsImmediately: boolean;
-  questions: QuizQuestion[];
-  opensAt: string;
-  closesAt: string;
-  status: "draft" | "published" | "closed";
-}
-
-export interface QuizAttempt {
-  id: ID;
-  quizId: ID;
-  studentId: ID;
-  answers: Record<string, string>;
-  score: number;
-  maxScore: number;
-  startedAt: string;
-  submittedAt?: string;
-  attemptNo: number;
-}
-
 export interface TimetableSlot {
   id: ID;
   classId: ID;
@@ -672,36 +563,6 @@ export interface Enquiry {
   createdAt: string;
 }
 
-export interface TourBooking {
-  id: ID;
-  reference: string;
-  parentName: string;
-  phone: string;
-  email: string;
-  preferredDate: string;
-  preferredTime: string;
-  visitors: number;
-  intendedLevelId: ID;
-  mode: "physical" | "virtual" | "consultation";
-  notes?: string;
-  status: "requested" | "confirmed" | "completed" | "cancelled";
-  createdAt: string;
-}
-
-export interface AuditLog {
-  id: ID;
-  actorId?: ID;
-  actorName: string;
-  action: string;
-  entity: string;
-  entityId: ID;
-  previousValue?: string;
-  newValue?: string;
-  at: string;
-  ip: string;
-  device: string;
-}
-
 export interface EmergencyNotice {
   id: ID;
   title: string;
@@ -711,39 +572,6 @@ export interface EmergencyNotice {
   startsAt: string;
   endsAt: string;
   active: boolean;
-}
-
-export interface Book {
-  id: ID;
-  title: string;
-  author: string;
-  isbn: string;
-  category: string;
-  copiesTotal: number;
-  copiesAvailable: number;
-  ageRange: string;
-}
-
-export interface Borrowing {
-  id: ID;
-  bookId: ID;
-  studentId: ID;
-  borrowedAt: string;
-  dueDate: string;
-  returnedAt?: string;
-  status: "borrowed" | "returned" | "overdue";
-}
-
-export interface TransportRoute {
-  id: ID;
-  busNo: string;
-  route: string;
-  driver: string;
-  attendant: string;
-  driverPhone?: string;
-  attendantPhone?: string;
-  stops: { name: string; pickupTime: string; dropoffTime: string; lat?: number; lng?: number }[];
-  capacity: number;
 }
 
 export interface SchoolDocument {
@@ -757,20 +585,6 @@ export interface SchoolDocument {
   visibility: "public" | "parents" | "staff";
   updatedAt: string;
   category: string;
-}
-
-export interface Vacancy {
-  id: ID;
-  slug: string;
-  title: string;
-  department: string;
-  type: "Full-time" | "Part-time" | "Contract";
-  location: string;
-  summary: string;
-  responsibilities: string[];
-  requirements: string[];
-  closingDate: string;
-  status: "open" | "closed";
 }
 
 export interface Testimonial {

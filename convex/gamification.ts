@@ -8,9 +8,9 @@ import { audit, nowISO } from "./lib/util";
 
 /**
  * Stars, badges and house points. Points are derived from what a pupil has
- * actually done — homework handed in on time, quizzes, attendance, reading and
- * awards — so they can't drift from the records. Pupils only ever see their own
- * stars; the only shared leaderboard is between houses, never between children.
+ * actually done — homework handed in on time and awards — so they can't drift
+ * from the records. Pupils only ever see their own stars; the only shared
+ * leaderboard is between houses, never between children.
  */
 
 const HOUSES = ["Emerald", "Sapphire", "Ruby", "Amber"] as const;
@@ -20,11 +20,6 @@ export const POINTS = {
   onTime: 10,
   late: 4,
   greatWork: 5,
-  quiz: 5,
-  quizStrong: 5,
-  present: 2,
-  lateArrival: 1,
-  book: 5,
   achievement: 25,
   certificate: 20,
 };
@@ -42,23 +37,13 @@ interface Tally {
   onTime: number;
   late: number;
   greatWork: number;
-  quizzes: number;
-  strongQuizzes: number;
-  present: number;
-  lateArrivals: number;
-  streak: number;
-  bestStreak: number;
-  books: number;
   achievements: number;
   certificates: number;
 }
 
 async function tally(ctx: QueryCtx, studentId: Id<"students">): Promise<Tally> {
-  const [submissions, attempts, attendance, loans, achievements, certificates] = await Promise.all([
+  const [submissions, achievements, certificates] = await Promise.all([
     ctx.db.query("submissions").withIndex("by_student", (q) => q.eq("studentId", studentId)).collect(),
-    ctx.db.query("quizAttempts").withIndex("by_student", (q) => q.eq("studentId", studentId)).collect(),
-    ctx.db.query("attendance").withIndex("by_student", (q) => q.eq("studentId", studentId)).collect(),
-    ctx.db.query("borrowings").withIndex("by_student", (q) => q.eq("studentId", studentId)).collect(),
     ctx.db.query("achievements").withIndex("by_student", (q) => q.eq("studentId", studentId)).collect(),
     ctx.db.query("certificates").withIndex("by_student", (q) => q.eq("studentId", studentId)).collect(),
   ]);
@@ -67,13 +52,6 @@ async function tally(ctx: QueryCtx, studentId: Id<"students">): Promise<Tally> {
     onTime: 0,
     late: 0,
     greatWork: 0,
-    quizzes: 0,
-    strongQuizzes: 0,
-    present: 0,
-    lateArrivals: 0,
-    streak: 0,
-    bestStreak: 0,
-    books: 0,
     achievements: achievements.length,
     certificates: certificates.filter((c) => !c.revokedAt).length,
   };
@@ -87,40 +65,17 @@ async function tally(ctx: QueryCtx, studentId: Id<"students">): Promise<Tally> {
     else t.late += 1;
     if (s.status === "graded" && a.maxScore > 0 && (s.score ?? 0) / a.maxScore >= 0.8) t.greatWork += 1;
   }
-
-  // Each quiz counts once, by the pupil's best marked attempt.
-  const best = new Map<string, number>();
-  for (const a of attempts) {
-    if ((a.status ?? "submitted") !== "submitted" || a.needsMarking || !a.maxScore) continue;
-    best.set(a.quizId, Math.max(best.get(a.quizId) ?? 0, a.score / a.maxScore));
-  }
-  t.quizzes = best.size;
-  t.strongQuizzes = [...best.values()].filter((p) => p >= 0.8).length;
-
-  // Attendance, oldest first, for streaks. Excused days neither add nor break a streak.
-  let run = 0;
-  for (const r of [...attendance].sort((a, b) => a.date.localeCompare(b.date))) {
-    if (r.status === "present" || r.status === "late") {
-      if (r.status === "present") t.present += 1;
-      else t.lateArrivals += 1;
-      run += 1;
-      t.bestStreak = Math.max(t.bestStreak, run);
-    } else if (r.status === "absent") run = 0;
-  }
-  t.streak = run;
-  t.books = loans.filter((l) => l.returnedAt || l.status === "returned").length;
   return t;
 }
 
 function score(t: Tally) {
-  const breakdown = [
-    { key: "homework", label: "Homework", icon: "ClipboardList", points: t.onTime * POINTS.onTime + t.late * POINTS.late + t.greatWork * POINTS.greatWork },
-    { key: "quizzes", label: "Quizzes", icon: "Puzzle", points: t.quizzes * POINTS.quiz + t.strongQuizzes * POINTS.quizStrong },
-    { key: "attendance", label: "Attendance", icon: "CalendarCheck", points: t.present * POINTS.present + t.lateArrivals * POINTS.lateArrival },
-    { key: "reading", label: "Reading", icon: "BookOpen", points: t.books * POINTS.book },
-    { key: "awards", label: "Awards", icon: "Award", points: t.achievements * POINTS.achievement + t.certificates * POINTS.certificate },
-  ];
-  return { total: breakdown.reduce((n, b) => n + b.points, 0), breakdown };
+  return (
+    t.onTime * POINTS.onTime +
+    t.late * POINTS.late +
+    t.greatWork * POINTS.greatWork +
+    t.achievements * POINTS.achievement +
+    t.certificates * POINTS.certificate
+  );
 }
 
 function badges(t: Tally) {
@@ -137,10 +92,6 @@ function badges(t: Tally) {
     b("first-steps", "First Steps", "Hand in your first assignment.", "Sprout", t.onTime + t.late, 1),
     b("homework-hero", "Homework Hero", "Hand in 10 assignments on time.", "ClipboardCheck", t.onTime, 10),
     b("great-work", "Great Work", "Score 80% or more on 5 assignments.", "Trophy", t.greatWork, 5),
-    b("quiz-whiz", "Quiz Whiz", "Score 80% or more on 3 quizzes.", "Puzzle", t.strongQuizzes, 3),
-    b("perfect-week", "Perfect Week", "Come to school 5 days in a row.", "CalendarCheck", t.bestStreak, 5),
-    b("attendance-star", "Attendance Star", "Come to school 20 days in a row.", "Star", t.bestStreak, 20),
-    b("bookworm", "Bookworm", "Read and return 5 library books.", "BookOpen", t.books, 5),
     b("shining-star", "Shining Star", "Earn an achievement on Our Stars.", "Sparkles", t.achievements, 1),
     b("certified", "Certified", "Receive a certificate.", "Award", t.certificates, 1),
   ];
@@ -179,17 +130,8 @@ export const forStudent = query({
     const student = await ctx.db.get(studentId);
     if (!student) return null;
     const t = await tally(ctx, studentId);
-    const { total, breakdown } = score(t);
-    return {
-      house: student.house,
-      points: total,
-      level: level(total),
-      breakdown,
-      badges: badges(t),
-      streak: t.streak,
-      bestStreak: t.bestStreak,
-      houses: await standings(ctx),
-    };
+    const total = score(t);
+    return { house: student.house, points: total, level: level(total), badges: badges(t) };
   },
 });
 
@@ -211,7 +153,7 @@ export const houseBatch = internalQuery({
     for (const s of page.page) {
       if (s.status !== "active") continue;
       const entry = (totals[s.house] ??= { points: 0, pupils: 0 });
-      entry.points += score(await tally(ctx, s._id)).total;
+      entry.points += score(await tally(ctx, s._id));
       entry.pupils += 1;
     }
     return { totals, cursor: page.continueCursor, done: page.isDone };

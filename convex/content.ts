@@ -72,13 +72,12 @@ export const gallery = query({
 export const siteContent = query({
   args: {},
   handler: async (ctx) => {
-    const [clubs, achievements, testimonials, faqs, documents, vacancies] = await Promise.all([
+    const [clubs, achievements, testimonials, faqs, documents] = await Promise.all([
       ctx.db.query("clubs").collect(),
       ctx.db.query("achievements").collect(),
       ctx.db.query("testimonials").collect(),
       ctx.db.query("faqs").collect(),
       ctx.db.query("documents").withIndex("by_visibility", (q) => q.eq("visibility", "public")).collect(),
-      ctx.db.query("vacancies").collect(),
     ]);
     return {
       clubs: clubs.map(withId),
@@ -97,7 +96,6 @@ export const siteContent = query({
         return withId(f as Doc<"faqs">);
       }),
       documents: documents.map(withId),
-      vacancies: vacancies.map(withId),
     };
   },
 });
@@ -187,15 +185,6 @@ export const adminNews = query({
     await requireSiteAdmin(ctx);
     const rows = await ctx.db.query("news").collect();
     return rows.map(withId).sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
-  },
-});
-
-export const adminNewsPost = query({
-  args: { id: v.string() },
-  handler: async (ctx, { id }) => {
-    await requireSiteAdmin(ctx);
-    const post = await getByLooseId(ctx, "news", id);
-    return post ? withId(post) : null;
   },
 });
 

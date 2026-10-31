@@ -12,13 +12,7 @@ import type {
   AcademicSession,
   AppNotification,
   Application,
-  Appointment,
   Assignment,
-  AttendanceRecord,
-  AttendanceStatus,
-  AuditLog,
-  Book,
-  Borrowing,
   Certificate,
   Club,
   EmergencyNotice,
@@ -26,18 +20,13 @@ import type {
   FaqItem,
   GalleryItem,
   Invoice,
-  LearningMaterial,
-  MessageThread,
   NewsPost,
   Parent,
   Payment,
   Question,
   QuestionAnswer,
-  Quiz,
-  QuizAttempt,
   ReportCard,
   ResultEntry,
-  Role,
   SchoolClass,
   SchoolDocument,
   SchoolEvent,
@@ -45,13 +34,9 @@ import type {
   Subject,
   Submission,
   Teacher,
-  TeacherAvailability,
   Testimonial,
   TimetableSlot,
-  TourBooking,
-  TransportRoute,
   User,
-  Vacancy,
 } from "./types";
 
 /* -------------------------------------------------------------------------- */
@@ -212,7 +197,6 @@ const ACTIVE_TERM_ID = "term-2026-1";
 /* Subjects                                                                    */
 /* -------------------------------------------------------------------------- */
 
-const ALL_LEVELS = CLASS_LEVELS.map((l) => l.id);
 const EARLY_YEARS = ["lvl-cre", "lvl-pre"];
 const NURSERY_LEVELS = ["lvl-n1", "lvl-n2", "lvl-n3"];
 const PRIMARY_LEVELS = ["lvl-p1", "lvl-p2", "lvl-p3", "lvl-p4", "lvl-p5", "lvl-p6"];
@@ -470,7 +454,6 @@ function makeStudent(classId: string, lastName: string, parentIds: string[], for
     avatarSeed: `${firstName}${lastName}${studentCounter}`,
     house: pick(HOUSES),
     bloodGroup: pick(BLOOD),
-    transportRouteId: undefined,
   };
   return student;
 }
@@ -621,7 +604,7 @@ const FLAGSHIP_QUESTIONS: Question[] = [
 
 const sumPoints = (qs: Question[]) => qs.reduce((n, q) => n + q.points, 0);
 
-// Assignments, materials and quizzes run from Primary 1 upwards; the early years
+// Assignments run from Primary 1 upwards; the early years
 // are assessed through observation rather than set work.
 const TEACHING_CLASSES = classes.filter(
   (c) => c.levelId.startsWith("lvl-p") || c.levelId.startsWith("lvl-j"),
@@ -768,36 +751,6 @@ if (davidIdx >= 0) submissions[davidIdx] = davidFlagship;
 else submissions.push(davidFlagship);
 
 /* -------------------------------------------------------------------------- */
-/* Attendance                                                                  */
-/* -------------------------------------------------------------------------- */
-
-const attendance: AttendanceRecord[] = [];
-let attendanceCounter = 0;
-const SCHOOL_DAYS = 15;
-for (let d = SCHOOL_DAYS; d >= 0; d--) {
-  const date = addDays(DEMO_TODAY, -d);
-  const weekday = date.getUTCDay();
-  if (weekday === 0 || weekday === 6) continue;
-  for (const cls of classes) {
-    const roster = studentsByClass.get(cls.id) ?? [];
-    for (const student of roster) {
-      const roll = rng();
-      const status: AttendanceStatus = roll < 0.925 ? "present" : roll < 0.96 ? "late" : roll < 0.985 ? "absent" : "excused";
-      attendanceCounter += 1;
-      attendance.push({
-        id: `att-${attendanceCounter}`,
-        studentId: student.id,
-        classId: cls.id,
-        date: dayKey(date),
-        status,
-        note: status === "excused" ? "Medical appointment — note received from parent." : undefined,
-        recordedBy: cls.classTeacherId,
-      });
-    }
-  }
-}
-
-/* -------------------------------------------------------------------------- */
 /* Results and report cards                                                    */
 /* -------------------------------------------------------------------------- */
 
@@ -852,8 +805,6 @@ for (const cls of classes) {
         totalScore: entry.total,
         position: idx + 1,
         classSize: ranked.length,
-        attendancePresent: int(52, 60),
-        attendanceTotal: 61,
         conduct: CONDUCT_TRAITS.map((label) => ({ label, rating: int(3, 5) })),
         teacherComment:
           average >= 75
@@ -913,113 +864,6 @@ for (const student of students) {
       paidAt: iso(addDays(DEMO_TODAY, -int(3, 40))),
       verifiedAt: iso(addDays(DEMO_TODAY, -int(3, 40))),
       receiptNo: `RCP-2026-${String(paymentCounter).padStart(5, "0")}`,
-    });
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-/* Learning materials & quizzes                                                */
-/* -------------------------------------------------------------------------- */
-
-const materials: LearningMaterial[] = [];
-let materialCounter = 0;
-const MATERIAL_TITLES = [
-  "Lesson Notes: Week 1–3",
-  "Revision Worksheet",
-  "Topic Summary Sheet",
-  "Practice Questions",
-  "Class Presentation Slides",
-  "Reading List for the Term",
-  "Video Lesson Recap",
-  "Illustrated Vocabulary Cards",
-];
-for (const cls of TEACHING_CLASSES) {
-  const levelSubjects = subjectsForLevel(cls.levelId);
-  for (let i = 0; i < 4; i++) {
-    materialCounter += 1;
-    const subject = levelSubjects[(i * 3) % levelSubjects.length];
-    const kind = pick(["note", "pdf", "worksheet", "video", "slides", "link"] as const);
-    materials.push({
-      id: `mat-${materialCounter}`,
-      title: `${subject.name} — ${MATERIAL_TITLES[(materialCounter + i) % MATERIAL_TITLES.length]}`,
-      description: `Supporting material for ${cls.name} covering the current ${subject.name} scheme of work.`,
-      classId: cls.id,
-      subjectId: subject.id,
-      teacherId: teachingAssignments.get(`${cls.id}:${subject.id}`) ?? cls.classTeacherId,
-      kind,
-      url: "#",
-      sizeBytes: int(150000, 6000000),
-      uploadedAt: iso(addDays(DEMO_TODAY, -int(1, 30))),
-      downloads: int(4, 120),
-    });
-  }
-}
-
-const quizzes: Quiz[] = [];
-const quizAttempts: QuizAttempt[] = [];
-const QUIZ_BANK: { subjectId: string; title: string; questions: { prompt: string; options: string[]; answer: string }[] }[] = [
-  {
-    subjectId: "sub-mth",
-    title: "Fractions Quick Check",
-    questions: [
-      { prompt: "Which fraction is the largest?", options: ["1/2", "1/3", "1/4", "1/6"], answer: "1/2" },
-      { prompt: "1/2 is the same as ...", options: ["2/4", "2/3", "3/4", "1/4"], answer: "2/4" },
-      { prompt: "What is 1/4 of 20?", options: ["4", "5", "6", "10"], answer: "5" },
-      { prompt: "Half of 18 is 9.", options: ["True", "False"], answer: "True" },
-      { prompt: "Which is a proper fraction?", options: ["5/3", "3/5", "7/7", "9/4"], answer: "3/5" },
-    ],
-  },
-  {
-    subjectId: "sub-eng",
-    title: "Parts of Speech Check",
-    questions: [
-      { prompt: "Which word is a noun?", options: ["quickly", "table", "run", "blue"], answer: "table" },
-      { prompt: "Which word is a verb?", options: ["happy", "jump", "chair", "soft"], answer: "jump" },
-      { prompt: "An adjective describes a noun.", options: ["True", "False"], answer: "True" },
-      { prompt: "Which word is an adverb?", options: ["slowly", "book", "green", "she"], answer: "slowly" },
-      { prompt: "Which word is a pronoun?", options: ["they", "walk", "bright", "school"], answer: "they" },
-    ],
-  },
-  {
-    subjectId: "sub-bsc",
-    title: "Living Things Check",
-    questions: [
-      { prompt: "Which one is a living thing?", options: ["Stone", "Tree", "Chair", "Cup"], answer: "Tree" },
-      { prompt: "Living things can grow.", options: ["True", "False"], answer: "True" },
-      { prompt: "Plants make their food using ...", options: ["Sunlight", "Sand", "Plastic", "Metal"], answer: "Sunlight" },
-      { prompt: "Which is NOT a sense organ?", options: ["Eye", "Ear", "Nose", "Pencil"], answer: "Pencil" },
-      { prompt: "Fish breathe using gills.", options: ["True", "False"], answer: "True" },
-    ],
-  },
-];
-
-let quizCounter = 0;
-for (const cls of TEACHING_CLASSES.slice(0, 10)) {
-  for (const bank of QUIZ_BANK) {
-    if (!subjectsForLevel(cls.levelId).some((s) => s.id === bank.subjectId)) continue;
-    quizCounter += 1;
-    quizzes.push({
-      id: `qz-${quizCounter}`,
-      title: `${bank.title} — ${cls.name}`,
-      classId: cls.id,
-      subjectId: bank.subjectId,
-      teacherId: teachingAssignments.get(`${cls.id}:${bank.subjectId}`) ?? cls.classTeacherId,
-      description: "A short check of understanding. You may take it once and see your result immediately.",
-      durationMinutes: 10,
-      attemptsAllowed: 1,
-      randomize: true,
-      showResultsImmediately: true,
-      questions: bank.questions.map((q, i) => ({
-        id: `qz-${quizCounter}-q${i + 1}`,
-        type: q.options.length === 2 ? "true_false" : "multiple_choice",
-        prompt: q.prompt,
-        options: q.options,
-        answer: q.answer,
-        points: 2,
-      })),
-      opensAt: iso(addDays(DEMO_TODAY, -7)),
-      closesAt: iso(addDays(DEMO_TODAY, 14)),
-      status: "published",
     });
   }
 }
@@ -1121,7 +965,7 @@ const news: NewsPost[] = [
     title: "Welcome Back to a New Academic Session",
     excerpt: "We are delighted to welcome our returning pupils and new members of the El-Bethel family to the 2026/2027 session.",
     content:
-      "Welcome to the 2026/2027 academic session at El-Bethel International Academy.\n\nWe are delighted to welcome our returning pupils and new members of the El-Bethel family. We look forward to another exciting year of learning, discovery, friendship and achievement.\n\nThis term brings a refreshed reading programme, an expanded robotics offering in the ICT and Innovation Lab, and a full calendar of sporting and cultural events. Our teachers have spent the vacation preparing classrooms, schemes of work and learning resources so that every child settles quickly into the rhythm of the term.\n\nParents can follow their child's assignments, attendance and results in the Parent Portal from the first week of term.",
+      "Welcome to the 2026/2027 academic session at El-Bethel International Academy.\n\nWe are delighted to welcome our returning pupils and new members of the El-Bethel family. We look forward to another exciting year of learning, discovery, friendship and achievement.\n\nThis term brings a refreshed reading programme, an expanded robotics offering in the ICT and Innovation Lab, and a full calendar of sporting and cultural events. Our teachers have spent the vacation preparing classrooms, schemes of work and learning resources so that every child settles quickly into the rhythm of the term.\n\nParents can follow their child's assignments and results in the Parent Portal from the first week of term.",
     category: "Announcements", tags: ["session", "resumption"], authorName: "Dr. Amaka N. Okafor",
     publishedAt: "2026-09-01T08:00:00.000Z", status: "published", tone: "navy",
     seoTitle: "Welcome Back to a New Academic Session | El-Bethel International Academy",
@@ -1211,7 +1055,7 @@ const news: NewsPost[] = [
     title: "Digital Report Cards Launch This Term",
     excerpt: "Parents will receive termly report cards directly in the Parent Portal, with downloadable PDFs.",
     content:
-      "From this term, report cards are published to the Parent Portal on the result publication date.\n\nEach report card includes subject-by-subject continuous assessment and examination scores, attendance, conduct ratings, the class teacher's comment and the Headteacher's comment. A printable version is available to download.\n\nPrinted copies remain available on request from the school office.",
+      "From this term, report cards are published to the Parent Portal on the result publication date.\n\nEach report card includes subject-by-subject continuous assessment and examination scores, conduct ratings, the class teacher's comment and the Headteacher's comment. A printable version is available to download.\n\nPrinted copies remain available on request from the school office.",
     category: "Academics", tags: ["results", "portal"], authorName: "Mr. Ifeanyi Adeyemi",
     publishedAt: "2026-09-16T10:00:00.000Z", status: "published", tone: "success",
     seoTitle: "Digital Report Cards Launch", seoDescription: "Termly report cards are now published in the El-Bethel Parent Portal.",
@@ -1404,81 +1248,6 @@ const documents: SchoolDocument[] = [
   { id: "doc-10", title: "Termly Lunch Menu", description: "Three-week rotating menu with allergy notes.", fileName: "lunch-menu-first-term.pdf", sizeBytes: 224_118, visibility: "parents", updatedAt: "2026-09-11T09:00:00.000Z", category: "Wellbeing" },
 ];
 
-const vacancies: Vacancy[] = [
-  {
-    id: "vac-1", slug: "upper-primary-mathematics-teacher", title: "Upper Primary Mathematics Teacher",
-    department: "Mathematics", type: "Full-time", location: "Ushafa, Abuja",
-    summary: "Teach mathematics across Primary 4 to 6 with a focus on reasoning and problem solving.",
-    responsibilities: ["Plan and deliver engaging mathematics lessons", "Assess and report on pupil progress", "Contribute to the mathematics scheme of work", "Support the mathematics olympiad team"],
-    requirements: ["B.Ed or B.Sc with PGDE", "Minimum of three years primary teaching experience", "Strong classroom management", "Comfortable with digital learning tools"],
-    closingDate: "2026-10-31", status: "open",
-  },
-  {
-    id: "vac-2", slug: "lower-primary-assistant-teacher", title: "Lower Primary Assistant Teacher",
-    department: "Lower Primary", type: "Full-time", location: "Ushafa, Abuja",
-    summary: "Support the class teacher in a lower primary classroom with warmth, patience and energy.",
-    responsibilities: ["Support daily classroom routines", "Prepare learning materials", "Supervise play and transitions", "Communicate observations to the class teacher"],
-    requirements: ["NCE or B.Ed in primary education", "Experience with children aged 5 to 9", "Excellent interpersonal skills"],
-    closingDate: "2026-11-15", status: "open",
-  },
-  {
-    id: "vac-3", slug: "school-nurse", title: "School Nurse",
-    department: "Wellbeing", type: "Full-time", location: "Ushafa, Abuja",
-    summary: "Lead our medical centre and support the health and wellbeing of every pupil.",
-    responsibilities: ["Provide first aid and daily medical support", "Maintain accurate medication and health records", "Run health screening and awareness sessions", "Liaise with parents on health matters"],
-    requirements: ["Registered nurse with a valid practising licence", "Paediatric experience preferred", "Excellent record keeping"],
-    closingDate: "2026-10-20", status: "open",
-  },
-  {
-    id: "vac-4", slug: "ict-support-officer", title: "ICT Support Officer",
-    department: "Technology", type: "Contract", location: "Ushafa, Abuja",
-    summary: "Keep our classrooms, lab and school platform running smoothly.",
-    responsibilities: ["Maintain classroom and lab hardware", "Support staff with the school platform", "Manage network and device security", "Assist with robotics club sessions"],
-    requirements: ["Diploma or degree in a computing field", "Hands-on hardware and networking experience", "Patience working with children and staff"],
-    closingDate: "2026-11-30", status: "open",
-  },
-];
-
-const books: Book[] = [
-  { id: "bk-1", title: "The Very Hungry Caterpillar", author: "Eric Carle", isbn: "9780241003008", category: "Picture Book", copiesTotal: 8, copiesAvailable: 5, ageRange: "3-6" },
-  { id: "bk-2", title: "Chike and the River", author: "Chinua Achebe", isbn: "9780307473868", category: "Fiction", copiesTotal: 12, copiesAvailable: 7, ageRange: "8-12" },
-  { id: "bk-3", title: "The Drum", author: "Chinua Achebe", isbn: "9789782081100", category: "Folktale", copiesTotal: 10, copiesAvailable: 10, ageRange: "6-9" },
-  { id: "bk-4", title: "Charlotte's Web", author: "E. B. White", isbn: "9780064400558", category: "Fiction", copiesTotal: 10, copiesAvailable: 4, ageRange: "8-11" },
-  { id: "bk-5", title: "Matilda", author: "Roald Dahl", isbn: "9780141365466", category: "Fiction", copiesTotal: 14, copiesAvailable: 9, ageRange: "8-12" },
-  { id: "bk-6", title: "Sugar Girl", author: "Kola Onadipe", isbn: "9789781561269", category: "Fiction", copiesTotal: 9, copiesAvailable: 6, ageRange: "8-12" },
-  { id: "bk-7", title: "My First Atlas", author: "DK", isbn: "9780241343593", category: "Reference", copiesTotal: 6, copiesAvailable: 6, ageRange: "6-10" },
-  { id: "bk-8", title: "The Magic Tree House: Dinosaurs Before Dark", author: "Mary Pope Osborne", isbn: "9780679824114", category: "Adventure", copiesTotal: 12, copiesAvailable: 8, ageRange: "6-9" },
-  { id: "bk-9", title: "How Things Work", author: "Conrad Mason", isbn: "9781409562818", category: "Science", copiesTotal: 7, copiesAvailable: 3, ageRange: "7-11" },
-  { id: "bk-10", title: "African Folk Tales for Children", author: "Various", isbn: "9789785521207", category: "Folktale", copiesTotal: 15, copiesAvailable: 11, ageRange: "5-10" },
-  { id: "bk-11", title: "The Boy Who Harnessed the Wind (Young Readers)", author: "William Kamkwamba", isbn: "9780147510426", category: "Biography", copiesTotal: 8, copiesAvailable: 5, ageRange: "9-12" },
-  { id: "bk-12", title: "Oxford Primary Illustrated Dictionary", author: "Oxford", isbn: "9780192737momo", category: "Reference", copiesTotal: 20, copiesAvailable: 18, ageRange: "6-12" },
-];
-
-const borrowings: Borrowing[] = [];
-for (let i = 0; i < 40; i++) {
-  const book = pick(books);
-  const student = students[int(0, students.length - 1)];
-  const borrowedAt = addDays(DEMO_TODAY, -int(1, 30));
-  const dueDate = addDays(borrowedAt, 14);
-  const returned = chance(0.55);
-  borrowings.push({
-    id: `brw-${i + 1}`,
-    bookId: book.id,
-    studentId: student.id,
-    borrowedAt: dayKey(borrowedAt),
-    dueDate: dayKey(dueDate),
-    returnedAt: returned ? dayKey(addDays(borrowedAt, int(3, 13))) : undefined,
-    status: returned ? "returned" : dueDate < DEMO_TODAY ? "overdue" : "borrowed",
-  });
-}
-// Give the demo pupil a visible borrowing history.
-borrowings.push(
-  { id: "brw-david-1", bookId: "bk-2", studentId: DEMO_STUDENT_ID, borrowedAt: dayKey(addDays(DEMO_TODAY, -9)), dueDate: dayKey(addDays(DEMO_TODAY, 5)), status: "borrowed" },
-  { id: "brw-david-2", bookId: "bk-5", studentId: DEMO_STUDENT_ID, borrowedAt: dayKey(addDays(DEMO_TODAY, -30)), dueDate: dayKey(addDays(DEMO_TODAY, -16)), returnedAt: dayKey(addDays(DEMO_TODAY, -18)), status: "returned" },
-);
-
-const transportRoutes: TransportRoute[] = [];
-
 const enquiries: Enquiry[] = Array.from({ length: 18 }, (_, i) => {
   const first = pick(chance(0.5) ? FEMALE_FIRST : MALE_FIRST);
   const last = pick(SURNAMES);
@@ -1497,25 +1266,6 @@ const enquiries: Enquiry[] = Array.from({ length: 18 }, (_, i) => {
     ]),
     status: pick(["new", "assigned", "in_progress", "resolved"] as const),
     createdAt: iso(addDays(DEMO_TODAY, -int(1, 25))),
-  };
-});
-
-const tourBookings: TourBooking[] = Array.from({ length: 9 }, (_, i) => {
-  const first = pick(chance(0.5) ? FEMALE_FIRST : MALE_FIRST);
-  const last = pick(SURNAMES);
-  return {
-    id: `tour-${i + 1}`,
-    reference: `TOUR-2026-${String(i + 1).padStart(4, "0")}`,
-    parentName: `${first} ${last}`,
-    phone: phone(),
-    email: `${first.toLowerCase()}.${last.toLowerCase()}@example.com`,
-    preferredDate: dayKey(addDays(DEMO_TODAY, int(2, 20))),
-    preferredTime: pick(["09:00", "10:00", "11:00", "12:00"]),
-    visitors: int(1, 4),
-    intendedLevelId: pick(CLASS_LEVELS.map((l) => l.id)),
-    mode: pick(["physical", "virtual", "consultation"] as const),
-    status: pick(["requested", "confirmed", "completed"] as const),
-    createdAt: iso(addDays(DEMO_TODAY, -int(1, 14))),
   };
 });
 
@@ -1539,7 +1289,7 @@ const certificates: Certificate[] = [
 ];
 
 /* -------------------------------------------------------------------------- */
-/* Users, notifications, messages, appointments, audit                         */
+/* Users and notifications                                                     */
 /* -------------------------------------------------------------------------- */
 
 const users: User[] = [];
@@ -1573,7 +1323,6 @@ notify("usr-parent", "assignment_graded", "David's Mathematics assignment has be
 notify("usr-parent", "assignment_published", "New Mathematics assignment posted", "Multiplication Tables 6–9 is due next Tuesday.", "/portal/parent/assignments", 2);
 notify("usr-parent", "fee_reminder", "First term fees are due", "An outstanding balance remains on invoice INV-2026-00001.", "/portal/parent/fees", 3, true);
 notify("usr-parent", "event_reminder", "PTA meeting scheduled for Saturday", "The termly PTA general meeting holds at 10:00 AM in the auditorium.", "/calendar", 4, true);
-notify("usr-parent", "attendance_alert", "Mary was marked absent today", "Please contact the class teacher if this is unexpected.", "/portal/parent/attendance", 5, true);
 notify("usr-parent", "payment_confirmation", "Your fee payment was successful", "We have received your payment and a receipt is available to download.", "/portal/parent/payments", 12, true);
 
 notify("usr-pupil", "assignment_published", "New Mathematics assignment posted", "Multiplication Tables 6–9 — due next Tuesday.", "/portal/pupil/assignments", 2);
@@ -1587,106 +1336,6 @@ notify("usr-teacher", "announcement", "Staff briefing moved to 7:15 AM", "Tomorr
 
 notify("usr-admin", "admission_update", "27 new applications this month", "Nine applications are awaiting review.", "/portal/admin/admissions", 1);
 notify("usr-admin", "fee_reminder", "Outstanding fees report ready", "Termly fee collection now stands at 68 percent.", "/portal/admin/fees", 2, true);
-
-
-const messageThreads: MessageThread[] = [
-  {
-    id: "thr-1",
-    subject: "David's reading practice",
-    participantIds: ["usr-parent", "usr-teacher"],
-    studentId: DEMO_STUDENT_ID,
-    createdAt: iso(addDays(DEMO_TODAY, -3)),
-    updatedAt: iso(addDays(DEMO_TODAY, -1)),
-    messages: [
-      { id: "msg-1", senderId: "usr-parent", body: "Good afternoon Miss Obi. David has been enjoying the reading challenge. Could you suggest two books at his level for the weekend?", sentAt: iso(addDays(DEMO_TODAY, -3)), readBy: ["usr-parent", "usr-teacher"] },
-      { id: "msg-2", senderId: "usr-teacher", body: "Good afternoon Mrs. Chukwu. That is lovely to hear. I would suggest Chike and the River, and Sugar Girl. Both are available in the library and I have reserved them for him.", sentAt: iso(addDays(DEMO_TODAY, -2)), readBy: ["usr-parent", "usr-teacher"] },
-      { id: "msg-3", senderId: "usr-parent", body: "Thank you very much. We will start on Chike and the River tonight.", sentAt: iso(addDays(DEMO_TODAY, -1)), readBy: ["usr-parent"] },
-    ],
-  },
-  {
-    id: "thr-2",
-    subject: "Mathematics support for David",
-    participantIds: ["usr-parent", "usr-maths"],
-    studentId: DEMO_STUDENT_ID,
-    createdAt: iso(addDays(DEMO_TODAY, -8)),
-    updatedAt: iso(addDays(DEMO_TODAY, -6)),
-    messages: [
-      { id: "msg-4", senderId: "usr-maths", body: "Good evening. David scored 18 out of 20 on the fractions assignment. Questions 7 and 9 involved simplifying, which we will revisit on Thursday.", sentAt: iso(addDays(DEMO_TODAY, -8)), readBy: ["usr-parent", "usr-maths"] },
-      { id: "msg-5", senderId: "usr-parent", body: "Thank you for letting me know. We will practise simplifying at home this week.", sentAt: iso(addDays(DEMO_TODAY, -6)), readBy: ["usr-parent", "usr-maths"] },
-    ],
-  },
-  {
-    id: "thr-3",
-    subject: "Change of address",
-    participantIds: ["usr-parent", "usr-admin"],
-    createdAt: iso(addDays(DEMO_TODAY, -14)),
-    updatedAt: iso(addDays(DEMO_TODAY, -13)),
-    messages: [
-      { id: "msg-6", senderId: "usr-parent", body: "Good morning. We are moving to Utako next month. Please could you update our address on the children's records?", sentAt: iso(addDays(DEMO_TODAY, -14)), readBy: ["usr-parent", "usr-admin"] },
-      { id: "msg-7", senderId: "usr-admin", body: "Good morning Mrs. Chukwu. Certainly. Please confirm your new address in writing and we will update the records from the first of next month.", sentAt: iso(addDays(DEMO_TODAY, -13)), readBy: ["usr-parent", "usr-admin"] },
-    ],
-  },
-];
-
-const availability: TeacherAvailability[] = [];
-let availabilityCounter = 0;
-for (const teacher of teachers.slice(0, 15)) {
-  for (let d = 1; d <= 5; d++) {
-    for (const time of ["09:30", "10:00", "10:30", "12:00"]) {
-      if (!chance(0.5)) continue;
-      availabilityCounter += 1;
-      availability.push({
-        id: `avl-${availabilityCounter}`,
-        teacherId: teacher.id,
-        date: dayKey(addDays(DEMO_TODAY, d)),
-        time,
-        taken: chance(0.2),
-      });
-    }
-  }
-}
-
-const appointments: Appointment[] = [
-  { id: "apt-1", teacherId: "tch-013", parentId: DEMO_PARENT_ID, studentId: DEMO_STUDENT_ID, date: dayKey(addDays(DEMO_TODAY, 4)), time: "10:00", mode: "in_person", status: "confirmed", note: "Discuss David's progress in English and reading." },
-  { id: "apt-2", teacherId: "tch-019", parentId: DEMO_PARENT_ID, studentId: DEMO_STUDENT_ID, date: dayKey(addDays(DEMO_TODAY, 9)), time: "12:00", mode: "virtual", status: "requested", note: "Mathematics support plan." },
-];
-
-const auditLogs: AuditLog[] = [];
-const AUDIT_ACTIONS: { action: string; entity: string; previous?: string; next?: string }[] = [
-  { action: "Changed pupil class", entity: "Student", previous: "Primary 3A", next: "Primary 4A" },
-  { action: "Published term results", entity: "Term", next: "First Term 2026/2027" },
-  { action: "Updated fee structure", entity: "FeeStructure", previous: "₦340,000", next: "₦350,000" },
-  { action: "Created assignment", entity: "Assignment", next: "Fractions Around Us" },
-  { action: "Deactivated staff account", entity: "User", previous: "active", next: "inactive" },
-  { action: "Approved admission", entity: "Application", previous: "under_review", next: "accepted" },
-  { action: "Verified payment", entity: "Payment", next: "EIA-PAY-000042" },
-  { action: "Uploaded school document", entity: "Document", next: "Parent Handbook" },
-  { action: "Edited homepage content", entity: "ContentBlock", previous: "Hero headline", next: "Hero headline" },
-  { action: "Granted role", entity: "User", previous: "teacher", next: "teacher, class_teacher" },
-];
-for (let i = 0; i < 48; i++) {
-  const a = AUDIT_ACTIONS[i % AUDIT_ACTIONS.length];
-  const actor = pick([
-    { id: "usr-admin", name: "Ngozi Adeleke" },
-    { id: "usr-head", name: "Dr. Amaka N. Okafor" },
-    { id: "usr-admissions", name: "Mrs. Halima Sani" },
-    { id: "usr-accountant", name: "Mr. Bola Ogunleye" },
-  ]);
-  auditLogs.push({
-    id: `aud-${i + 1}`,
-    actorId: actor.id,
-    actorName: actor.name,
-    action: a.action,
-    entity: a.entity,
-    entityId: `${a.entity.toLowerCase()}-${int(1000, 9999)}`,
-    previousValue: a.previous,
-    newValue: a.next,
-    at: iso(addDays(DEMO_TODAY, -int(0, 45))),
-    ip: `102.89.${int(0, 255)}.${int(1, 254)}`,
-    device: pick(["Chrome on Windows", "Safari on iPhone", "Chrome on Android", "Edge on Windows"]),
-  });
-}
-auditLogs.sort((a, b) => b.at.localeCompare(a.at));
 
 /* -------------------------------------------------------------------------- */
 /* Export                                                                      */
@@ -1704,7 +1353,6 @@ export interface Database {
   users: User[];
   assignments: Assignment[];
   submissions: Submission[];
-  attendance: AttendanceRecord[];
   results: ResultEntry[];
   reportCards: ReportCard[];
   invoices: Invoice[];
@@ -1718,23 +1366,11 @@ export interface Database {
   testimonials: Testimonial[];
   faqs: FaqItem[];
   documents: SchoolDocument[];
-  vacancies: Vacancy[];
-  books: Book[];
-  borrowings: Borrowing[];
-  transportRoutes: TransportRoute[];
   enquiries: Enquiry[];
-  tourBookings: TourBooking[];
   emergencyNotices: EmergencyNotice[];
   certificates: Certificate[];
   notifications: AppNotification[];
-  messageThreads: MessageThread[];
-  appointments: Appointment[];
-  availability: TeacherAvailability[];
-  materials: LearningMaterial[];
-  quizzes: Quiz[];
-  quizAttempts: QuizAttempt[];
   timetable: TimetableSlot[];
-  auditLogs: AuditLog[];
   teachingAssignments: Map<string, string>;
   calendar: typeof ACADEMIC_CALENDAR;
   weighting: typeof ASSESSMENT_WEIGHTING;
@@ -1756,7 +1392,6 @@ export function buildDatabase(): Database {
     users,
     assignments,
     submissions,
-    attendance,
     results,
     reportCards,
     invoices,
@@ -1770,23 +1405,11 @@ export function buildDatabase(): Database {
     testimonials,
     faqs,
     documents,
-    vacancies,
-    books,
-    borrowings,
-    transportRoutes,
     enquiries,
-    tourBookings,
     emergencyNotices,
     certificates,
     notifications,
-    messageThreads,
-    appointments,
-    availability,
-    materials,
-    quizzes,
-    quizAttempts,
     timetable,
-    auditLogs,
     teachingAssignments,
     calendar: ACADEMIC_CALENDAR,
     weighting: ASSESSMENT_WEIGHTING,

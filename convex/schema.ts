@@ -3,12 +3,10 @@ import { v } from "convex/values";
 
 import {
   applicationStatus,
-  attendanceStatus,
   cloudMedia,
   feeLine,
   question,
   questionAnswer,
-  quizQuestion,
   role,
 } from "./validators";
 
@@ -153,13 +151,9 @@ export default defineSchema({
     house: v.union(v.literal("Emerald"), v.literal("Sapphire"), v.literal("Ruby"), v.literal("Amber")),
     bloodGroup: v.string(),
     medicalNotes: v.optional(v.string()),
-    transportRouteId: v.optional(v.id("transportRoutes")),
-    /** Name of the stop on the route where the pupil is picked up and dropped off. */
-    transportStop: v.optional(v.string()),
     legacyId: v.optional(v.string()),
   })
     .index("by_class", ["classId"])
-    .index("by_transport_route", ["transportRouteId"])
     .index("by_student_no", ["studentNo"])
     .index("by_status", ["status"])
     .index("by_legacy", ["legacyId"]),
@@ -239,20 +233,6 @@ export default defineSchema({
     .index("by_assignment_student", ["assignmentId", "studentId"])
     .index("by_status", ["status"]),
 
-  /* ------------------------------ attendance ------------------------------ */
-
-  attendance: defineTable({
-    studentId: v.id("students"),
-    classId: v.id("classes"),
-    date: v.string(),
-    status: attendanceStatus,
-    note: v.optional(v.string()),
-    recordedBy: v.optional(v.id("users")),
-  })
-    .index("by_student", ["studentId", "date"])
-    .index("by_class_date", ["classId", "date"])
-    .index("by_date", ["date"]),
-
   /* -------------------------------- results ------------------------------- */
 
   /** One subject's summarised score for one pupil in one term. */
@@ -318,8 +298,9 @@ export default defineSchema({
     totalScore: v.number(),
     position: v.number(),
     classSize: v.number(),
-    attendancePresent: v.number(),
-    attendanceTotal: v.number(),
+    /** Only on report cards published before attendance was dropped. */
+    attendancePresent: v.optional(v.number()),
+    attendanceTotal: v.optional(v.number()),
     conduct: v.array(v.object({ label: v.string(), rating: v.number() })),
     teacherComment: v.string(),
     headteacherComment: v.string(),
@@ -573,19 +554,6 @@ export default defineSchema({
     category: v.string(),
   }).index("by_visibility", ["visibility"]),
 
-  vacancies: defineTable({
-    slug: v.string(),
-    title: v.string(),
-    department: v.string(),
-    type: v.union(v.literal("Full-time"), v.literal("Part-time"), v.literal("Contract")),
-    location: v.string(),
-    summary: v.string(),
-    responsibilities: v.array(v.string()),
-    requirements: v.array(v.string()),
-    closingDate: v.string(),
-    status: v.union(v.literal("open"), v.literal("closed")),
-  }).index("by_slug", ["slug"]),
-
   emergencyNotices: defineTable({
     title: v.string(),
     body: v.string(),
@@ -597,52 +565,6 @@ export default defineSchema({
   }).index("by_active", ["active"]),
 
   /* ------------------------------- operations ----------------------------- */
-
-  books: defineTable({
-    title: v.string(),
-    author: v.string(),
-    isbn: v.string(),
-    category: v.string(),
-    copiesTotal: v.number(),
-    copiesAvailable: v.number(),
-    ageRange: v.string(),
-  }),
-
-  borrowings: defineTable({
-    bookId: v.id("books"),
-    studentId: v.id("students"),
-    borrowedAt: v.string(),
-    dueDate: v.string(),
-    returnedAt: v.optional(v.string()),
-    status: v.union(v.literal("borrowed"), v.literal("returned"), v.literal("overdue")),
-    issuedBy: v.optional(v.id("users")),
-    /** Last reminder sent to the family, so the daily sweep sends each kind once. */
-    reminder: v.optional(v.union(v.literal("due_soon"), v.literal("overdue"))),
-  })
-    .index("by_student", ["studentId"])
-    .index("by_book", ["bookId"])
-    .index("by_status", ["status"]),
-
-  transportRoutes: defineTable({
-    busNo: v.string(),
-    route: v.string(),
-    driver: v.string(),
-    attendant: v.string(),
-    /** Staff contact numbers — shown to riders' parents and staff, never on the public site. */
-    driverPhone: v.optional(v.string()),
-    attendantPhone: v.optional(v.string()),
-    /** Coordinates are optional; when set, the live tracker detects arrivals and estimates arrival times. */
-    stops: v.array(
-      v.object({
-        name: v.string(),
-        pickupTime: v.string(),
-        dropoffTime: v.string(),
-        lat: v.optional(v.number()),
-        lng: v.optional(v.number()),
-      }),
-    ),
-    capacity: v.number(),
-  }),
 
   enquiries: defineTable({
     name: v.string(),
@@ -665,26 +587,6 @@ export default defineSchema({
     ),
     assignedTo: v.optional(v.string()),
     reply: v.optional(v.string()),
-    createdAt: v.string(),
-  }).index("by_created", ["createdAt"]),
-
-  tourBookings: defineTable({
-    reference: v.string(),
-    parentName: v.string(),
-    phone: v.string(),
-    email: v.string(),
-    preferredDate: v.string(),
-    preferredTime: v.string(),
-    visitors: v.number(),
-    intendedLevelId: v.string(),
-    mode: v.union(v.literal("physical"), v.literal("virtual"), v.literal("consultation")),
-    notes: v.optional(v.string()),
-    status: v.union(
-      v.literal("requested"),
-      v.literal("confirmed"),
-      v.literal("completed"),
-      v.literal("cancelled"),
-    ),
     createdAt: v.string(),
   }).index("by_created", ["createdAt"]),
 
@@ -738,131 +640,7 @@ export default defineSchema({
     .index("by_created", ["createdAt"])
     .index("by_status", ["status"]),
 
-  messageThreads: defineTable({
-    subject: v.string(),
-    participantIds: v.array(v.id("users")),
-    studentId: v.optional(v.id("students")),
-    createdAt: v.string(),
-    updatedAt: v.string(),
-  }),
-
-  /** Index of thread membership, so "my threads" is an indexed lookup. */
-  threadParticipants: defineTable({
-    threadId: v.id("messageThreads"),
-    userId: v.id("users"),
-  })
-    .index("by_user", ["userId"])
-    .index("by_thread", ["threadId"]),
-
-  threadMessages: defineTable({
-    threadId: v.id("messageThreads"),
-    senderId: v.id("users"),
-    body: v.string(),
-    sentAt: v.string(),
-    readBy: v.array(v.id("users")),
-  }).index("by_thread", ["threadId", "sentAt"]),
-
-  appointments: defineTable({
-    teacherId: v.id("teachers"),
-    parentId: v.id("parents"),
-    studentId: v.id("students"),
-    date: v.string(),
-    time: v.string(),
-    mode: v.union(v.literal("in_person"), v.literal("virtual")),
-    status: v.union(
-      v.literal("requested"),
-      v.literal("confirmed"),
-      v.literal("rescheduled"),
-      v.literal("cancelled"),
-      v.literal("completed"),
-    ),
-    note: v.optional(v.string()),
-  })
-    .index("by_teacher", ["teacherId"])
-    .index("by_parent", ["parentId"]),
-
-  availability: defineTable({
-    teacherId: v.id("teachers"),
-    date: v.string(),
-    time: v.string(),
-    taken: v.boolean(),
-  }).index("by_teacher", ["teacherId", "date"]),
-
   /* ------------------------------- teaching ------------------------------- */
-
-  materials: defineTable({
-    title: v.string(),
-    description: v.string(),
-    classId: v.id("classes"),
-    subjectId: v.id("subjects"),
-    teacherId: v.id("teachers"),
-    kind: v.union(
-      v.literal("note"),
-      v.literal("pdf"),
-      v.literal("worksheet"),
-      v.literal("video"),
-      v.literal("audio"),
-      v.literal("slides"),
-      v.literal("link"),
-      v.literal("image"),
-    ),
-    url: v.string(),
-    media: v.optional(cloudMedia),
-    sizeBytes: v.number(),
-    uploadedAt: v.string(),
-    downloads: v.number(),
-  })
-    .index("by_class", ["classId"])
-    .index("by_teacher", ["teacherId"]),
-
-  quizzes: defineTable({
-    title: v.string(),
-    classId: v.id("classes"),
-    subjectId: v.id("subjects"),
-    teacherId: v.id("teachers"),
-    description: v.string(),
-    durationMinutes: v.number(),
-    attemptsAllowed: v.number(),
-    randomize: v.boolean(),
-    showResultsImmediately: v.boolean(),
-    questions: v.array(quizQuestion),
-    opensAt: v.string(),
-    closesAt: v.string(),
-    status: v.union(v.literal("draft"), v.literal("published"), v.literal("closed")),
-    createdAt: v.optional(v.string()),
-  })
-    .index("by_class", ["classId"])
-    .index("by_teacher", ["teacherId"]),
-
-  /**
-   * One sitting of a quiz. Answers are keyed by question id; a matching
-   * question's answer is a JSON array of the right-hand item chosen for each
-   * left-hand item. Rows without `status` predate auto-save and are submitted.
-   */
-  quizAttempts: defineTable({
-    quizId: v.id("quizzes"),
-    studentId: v.id("students"),
-    answers: v.record(v.string(), v.string()),
-    score: v.number(),
-    maxScore: v.number(),
-    startedAt: v.string(),
-    submittedAt: v.optional(v.string()),
-    attemptNo: v.number(),
-    status: v.optional(v.union(v.literal("in_progress"), v.literal("submitted"))),
-    /** No answers are accepted after this: start + duration, capped at the closing time. */
-    deadline: v.optional(v.string()),
-    /** Question order shown to this pupil (shuffled when the quiz is randomised). */
-    order: v.optional(v.array(v.string())),
-    /** Marks per question id. A question missing here is waiting for the teacher. */
-    marks: v.optional(v.record(v.string(), v.number())),
-    needsMarking: v.optional(v.boolean()),
-    feedback: v.optional(v.string()),
-    markedAt: v.optional(v.string()),
-    markedBy: v.optional(v.id("users")),
-  })
-    .index("by_quiz_student", ["quizId", "studentId"])
-    .index("by_quiz", ["quizId"])
-    .index("by_student", ["studentId"]),
 
   /** House points totals, recomputed by a daily job (see convex/gamification.ts). */
   houseStandings: defineTable({
@@ -884,150 +662,6 @@ export default defineSchema({
   })
     .index("by_class", ["classId", "day", "period"])
     .index("by_teacher", ["teacherId", "day", "period"]),
-
-  /* ------------------------- premium: live bus tracking ------------------------- */
-
-  /** One run of a bus: the morning pickup or the afternoon drop-off. */
-  busTrips: defineTable({
-    routeId: v.id("transportRoutes"),
-    direction: v.union(v.literal("morning"), v.literal("afternoon")),
-    /** School day (YYYY-MM-DD). */
-    date: v.string(),
-    status: v.union(v.literal("active"), v.literal("completed")),
-    startedAt: v.string(),
-    endedAt: v.optional(v.string()),
-    startedBy: v.id("users"),
-    /** How many stops the bus has reached so far, in travel order. */
-    stopsReached: v.number(),
-    stopLog: v.array(v.object({ stop: v.string(), at: v.string() })),
-    lastPosition: v.optional(
-      v.object({
-        lat: v.number(),
-        lng: v.number(),
-        accuracy: v.optional(v.number()),
-        speedKmh: v.optional(v.number()),
-        heading: v.optional(v.number()),
-        at: v.string(),
-      }),
-    ),
-  })
-    .index("by_route_date", ["routeId", "date"])
-    .index("by_status", ["status"]),
-
-  /** Location trail of a trip. */
-  busPositions: defineTable({
-    tripId: v.id("busTrips"),
-    lat: v.number(),
-    lng: v.number(),
-    accuracy: v.optional(v.number()),
-    speedKmh: v.optional(v.number()),
-    at: v.string(),
-  }).index("by_trip", ["tripId", "at"]),
-
-  /** A rider checked on or off the bus by the attendant. */
-  riderEvents: defineTable({
-    tripId: v.id("busTrips"),
-    studentId: v.id("students"),
-    kind: v.union(v.literal("boarded"), v.literal("dropped_off"), v.literal("absent")),
-    stop: v.string(),
-    at: v.string(),
-    recordedBy: v.id("users"),
-  })
-    .index("by_trip", ["tripId"])
-    .index("by_student", ["studentId", "at"]),
-
-  /* --------------------------- premium: virtual tour --------------------------- */
-
-  tourScenes: defineTable({
-    slug: v.string(),
-    title: v.string(),
-    area: v.string(),
-    narration: v.string(),
-    highlights: v.array(v.string()),
-    /** Built-in photo seed (lib/school/photos.ts) used when nothing is uploaded. */
-    photoSeed: v.optional(v.string()),
-    media: v.optional(cloudMedia),
-    order: v.number(),
-    published: v.boolean(),
-    updatedAt: v.string(),
-  })
-    .index("by_slug", ["slug"])
-    .index("by_order", ["order"]),
-
-  /* ------------------------ premium: digital library ------------------------ */
-
-  digitalResources: defineTable({
-    title: v.string(),
-    author: v.string(),
-    kind: v.union(v.literal("ebook"), v.literal("audiobook"), v.literal("video"), v.literal("article")),
-    description: v.string(),
-    category: v.string(),
-    /** Class levels this suits ("lvl-p4"); empty means every level. */
-    levelIds: v.array(v.string()),
-    /** Where it opens: an open-licence reading site, or the uploaded media's URL. */
-    url: v.string(),
-    media: v.optional(cloudMedia),
-    minutes: v.optional(v.number()),
-    published: v.boolean(),
-    opens: v.number(),
-    addedAt: v.string(),
-  }).index("by_published", ["published"]),
-
-  /** Reading diary: one entry per reading session, logged by the pupil or a parent. */
-  readingLogs: defineTable({
-    studentId: v.id("students"),
-    title: v.string(),
-    resourceId: v.optional(v.id("digitalResources")),
-    bookId: v.optional(v.id("books")),
-    minutes: v.number(),
-    date: v.string(),
-    finished: v.boolean(),
-    note: v.optional(v.string()),
-    loggedBy: v.id("users"),
-    createdAt: v.string(),
-  }).index("by_student", ["studentId", "date"]),
-
-  /** A hold on a library book whose copies are all out. */
-  bookReservations: defineTable({
-    bookId: v.id("books"),
-    studentId: v.id("students"),
-    status: v.union(v.literal("waiting"), v.literal("ready"), v.literal("fulfilled"), v.literal("cancelled")),
-    createdAt: v.string(),
-    readyAt: v.optional(v.string()),
-    closedAt: v.optional(v.string()),
-  })
-    .index("by_book", ["bookId", "status"])
-    .index("by_student", ["studentId"])
-    .index("by_status", ["status"]),
-
-  /* ------------------------ premium: parent insights ------------------------ */
-
-  /** Weekly, rule-based summary of a pupil's week, written by a scheduled job. */
-  parentInsights: defineTable({
-    studentId: v.id("students"),
-    /** Monday of the week summarised (YYYY-MM-DD). */
-    weekOf: v.string(),
-    headline: v.string(),
-    points: v.array(
-      v.object({
-        tone: v.union(v.literal("success"), v.literal("info"), v.literal("warning"), v.literal("danger")),
-        area: v.string(),
-        text: v.string(),
-      }),
-    ),
-    metrics: v.object({
-      attendanceRate: v.optional(v.number()),
-      daysRecorded: v.number(),
-      homeworkDue: v.number(),
-      homeworkDone: v.number(),
-      averageScore: v.optional(v.number()),
-      quizzes: v.number(),
-      readingMinutes: v.number(),
-    }),
-    generatedAt: v.string(),
-  })
-    .index("by_student", ["studentId", "weekOf"])
-    .index("by_week", ["weekOf"]),
 
   /* ------------------------------ premium: alumni ----------------------------- */
 
@@ -1064,88 +698,6 @@ export default defineSchema({
   })
     .index("by_slug", ["slug"])
     .index("by_status", ["status"]),
-
-  givingCampaigns: defineTable({
-    slug: v.string(),
-    title: v.string(),
-    summary: v.string(),
-    description: v.string(),
-    goal: v.number(),
-    status: v.union(v.literal("open"), v.literal("closed")),
-    endsAt: v.optional(v.string()),
-    createdAt: v.string(),
-  }).index("by_slug", ["slug"]),
-
-  /** A gift promised online. It counts towards the goal only once the bursary confirms receipt. */
-  pledges: defineTable({
-    reference: v.string(),
-    campaignId: v.id("givingCampaigns"),
-    name: v.string(),
-    email: v.string(),
-    phone: v.optional(v.string()),
-    amount: v.number(),
-    anonymous: v.boolean(),
-    message: v.optional(v.string()),
-    status: v.union(v.literal("pledged"), v.literal("received"), v.literal("cancelled")),
-    createdAt: v.string(),
-    receivedAt: v.optional(v.string()),
-  })
-    .index("by_campaign", ["campaignId"])
-    .index("by_reference", ["reference"]),
-
-  /* ------------------------------ premium: shop ------------------------------ */
-
-  products: defineTable({
-    slug: v.string(),
-    name: v.string(),
-    category: v.union(
-      v.literal("uniform"),
-      v.literal("sportswear"),
-      v.literal("books"),
-      v.literal("stationery"),
-      v.literal("accessories"),
-    ),
-    description: v.string(),
-    price: v.number(),
-    /** Sizes (or a single "One size") with the stock held for each. */
-    variants: v.array(v.object({ size: v.string(), stock: v.number() })),
-    image: v.optional(cloudMedia),
-    photoSeed: v.optional(v.string()),
-    active: v.boolean(),
-    updatedAt: v.string(),
-  })
-    .index("by_slug", ["slug"])
-    .index("by_active", ["active"]),
-
-  /** Paid at the bursary or by transfer; the bursar confirms payment, as with fees. */
-  orders: defineTable({
-    orderNo: v.string(),
-    parentId: v.id("parents"),
-    studentId: v.id("students"),
-    items: v.array(
-      v.object({ productId: v.id("products"), name: v.string(), size: v.string(), qty: v.number(), unitPrice: v.number() }),
-    ),
-    total: v.number(),
-    status: v.union(
-      v.literal("placed"),
-      v.literal("paid"),
-      v.literal("ready"),
-      v.literal("collected"),
-      v.literal("cancelled"),
-    ),
-    note: v.optional(v.string()),
-    placedAt: v.string(),
-    paidAt: v.optional(v.string()),
-    paymentReference: v.optional(v.string()),
-    readyAt: v.optional(v.string()),
-    collectedAt: v.optional(v.string()),
-    cancelledAt: v.optional(v.string()),
-  })
-    .index("by_parent", ["parentId", "placedAt"])
-    .index("by_status", ["status"])
-    .index("by_order_no", ["orderNo"]),
-
-  /* --------------------------------- audit -------------------------------- */
 
   /* ------------------------------ website CMS ------------------------------ */
 

@@ -193,16 +193,6 @@ export const adminAchievements = query({
   },
 });
 
-export const achievementsForStudent = query({
-  args: { studentId: v.id("students") },
-  handler: async (ctx, { studentId }) => {
-    const viewer = await requireViewer(ctx);
-    await assertStudentAccess(ctx, viewer, studentId);
-    const rows = await ctx.db.query("achievements").withIndex("by_student", (q) => q.eq("studentId", studentId)).collect();
-    return rows.map(withId).sort((a, b) => b.date.localeCompare(a.date));
-  },
-});
-
 export const saveAchievement = mutation({
   args: {
     id: v.optional(v.id("achievements")),

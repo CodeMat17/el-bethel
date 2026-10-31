@@ -47,7 +47,7 @@ const PERMISSIONS: { role: Role; can: string[]; cannot: string[] }[] = [
   },
   {
     role: "parent",
-    can: ["View their own children's work, scores and results", "Message their children's teachers", "Book parent-teacher meetings"],
+    can: ["View their own children's work, scores and results", "See fees, payments and the timetable", "Download school documents"],
     cannot: ["View another family's records", "Modify academic results"],
   },
   {

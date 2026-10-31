@@ -54,13 +54,6 @@ export const questionAnswer = v.object({
 });
 export type QuestionAnswerValue = Infer<typeof questionAnswer>;
 
-export const attendanceStatus = v.union(
-  v.literal("present"),
-  v.literal("absent"),
-  v.literal("late"),
-  v.literal("excused"),
-);
-
 export const feeLine = v.object({
   category: v.union(
     v.literal("tuition"),
@@ -93,30 +86,3 @@ export const applicationStatus = v.union(
   v.literal("withdrawn"),
   v.literal("enrolled"),
 );
-
-/**
- * An online quiz question.
- * - "multiple_choice" / "picture": choose one of `options`; `answer` is the right option.
- *   Picture questions show `imageUrl` above the options.
- * - "true_false": `options` is ["True", "False"].
- * - "short_answer": a typed answer. `answer` lists accepted answers separated by "|";
- *   when it is empty the teacher marks the answer by hand.
- * - "matching": pupils pair each `pairs[i].left` with one of the right-hand items.
- */
-export const quizQuestion = v.object({
-  id: v.string(),
-  type: v.union(
-    v.literal("multiple_choice"),
-    v.literal("true_false"),
-    v.literal("short_answer"),
-    v.literal("picture"),
-    v.literal("matching"),
-  ),
-  prompt: v.string(),
-  options: v.array(v.string()),
-  answer: v.string(),
-  points: v.number(),
-  imageUrl: v.optional(v.string()),
-  pairs: v.optional(v.array(v.object({ left: v.string(), right: v.string() }))),
-});
-export type QuizQuestionValue = Infer<typeof quizQuestion>;

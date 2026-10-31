@@ -7,11 +7,14 @@ export interface StarsData {
   house: string;
   points: number;
   level: { name: string; number: number; nextName: string | null; nextAt: number | null; progress: number };
-  breakdown: { key: string; label: string; icon: string; points: number }[];
   badges: { key: string; label: string; description: string; icon: string; current: number; target: number; earned: boolean }[];
-  streak: number;
-  bestStreak: number;
-  houses: { house: string; points: number; pupils: number; computedAt: string | null }[];
+}
+
+export interface HouseStanding {
+  house: string;
+  points: number;
+  pupils: number;
+  computedAt: string | null;
 }
 
 const HOUSE_COLOUR: Record<string, string> = {
@@ -49,7 +52,7 @@ export function StarsSummary({ data, compact = false }: { data: StarsData; compa
   );
 }
 
-export function HouseTable({ houses, mine }: { houses: StarsData["houses"]; mine: string }) {
+export function HouseTable({ houses, mine }: { houses: HouseStanding[]; mine: string }) {
   const top = Math.max(1, ...houses.map((h) => h.points));
   return (
     <ol className="space-y-3">

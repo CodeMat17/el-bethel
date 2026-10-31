@@ -14,10 +14,6 @@ const ALLOWED: Record<MediaPurpose, ("super_admin" | "admin" | "site_admin" | "t
   events: ["super_admin", "site_admin", "admin"],
   // Teachers and parents add their own profile photo.
   people: ["super_admin", "admin", "teacher", "parent"],
-  materials: ["super_admin", "admin", "teacher"],
-  tour: ["super_admin", "admin"],
-  library: ["super_admin", "admin"],
-  shop: ["super_admin", "admin"],
   alumni: ["super_admin", "admin"],
   site: ["super_admin", "site_admin"],
 };

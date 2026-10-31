@@ -130,23 +130,6 @@ export const academics = query({
   },
 });
 
-export const enquiryStats = query({
-  args: {},
-  handler: async (ctx) => {
-    await requireAdmin(ctx);
-    const [rows, tours] = await Promise.all([ctx.db.query("enquiries").collect(), ctx.db.query("tourBookings").collect()]);
-    return {
-      byCategory: ["admissions", "fees", "academics", "transport", "general"].map((category) => ({
-        category,
-        count: rows.filter((e) => e.category === category).length,
-      })),
-      total: rows.length,
-      resolved: rows.filter((e) => e.status === "resolved").length,
-      tours: tours.length,
-    };
-  },
-});
-
 /** One summary line per child for the signed-in parent. */
 export const childSummaries = query({
   args: {},

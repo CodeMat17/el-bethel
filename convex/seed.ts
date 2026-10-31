@@ -19,15 +19,11 @@ import { internalAction, internalMutation, internalQuery } from "./_generated/se
 
 const TABLES: TableNames[] = [
   "users", "academicSessions", "terms", "classes", "subjects", "teachers", "teachingAssignments",
-  "students", "parents", "guardianships", "assignments", "submissions", "attendance", "results",
-  "reportCards", "midtermScores", "midtermPublications", "invoices", "payments", "applications", "news", "events", "gallery", "clubs",
-  "achievements", "testimonials", "faqs", "documents", "vacancies", "emergencyNotices", "books",
-  "borrowings", "transportRoutes", "enquiries", "tourBookings", "certificates", "notifications",
-  "messageThreads", "threadParticipants", "threadMessages", "appointments", "availability",
-  "materials", "quizzes", "quizAttempts", "timetable", "auditLogs", "deliveries", "houseStandings",
-  "busTrips", "busPositions", "riderEvents", "tourScenes", "digitalResources", "readingLogs", "bookReservations",
-  "parentInsights", "alumni", "alumniStories",
-  "givingCampaigns", "pledges", "products", "orders",
+  "students", "parents", "guardianships", "assignments", "submissions", "results",
+  "reportCards", "midtermScores", "midtermPublications", "invoices", "payments", "applications",
+  "news", "events", "gallery", "clubs", "achievements", "testimonials", "faqs", "documents", "emergencyNotices",
+  "enquiries", "certificates", "notifications", "deliveries", "timetable", "auditLogs", "houseStandings",
+  "alumni", "alumniStories",
 ];
 
 const LEGACY_TABLES = new Set<TableNames>([
@@ -130,7 +126,6 @@ export const demo = internalAction({
     await run("academicSessions", db.sessions, (r) => ({ ...r }));
     await run("terms", db.terms, (r) => ({ ...r, sessionId: ref("academicSessions", r.sessionId) }));
     await run("subjects", db.subjects, (r) => ({ ...r }));
-    await run("transportRoutes", db.transportRoutes, (r) => ({ ...r }));
 
     if (full) {
       await run("teachers", db.teachers, ({ subjectIds, classIds, isClassTeacher, ...r }) => {
@@ -161,11 +156,7 @@ export const demo = internalAction({
       });
       await run("students", db.students, ({ parentIds, ...r }) => {
         void parentIds;
-        return {
-          ...r,
-          classId: ref("classes", r.classId),
-          transportRouteId: ref("transportRoutes", r.transportRouteId),
-        };
+        return { ...r, classId: ref("classes", r.classId) };
       });
       const links = db.students.flatMap((s) => s.parentIds.map((parentId) => ({ studentId: s.id, parentId })));
       await run("guardianships", links, (r) => ({
@@ -191,10 +182,6 @@ export const demo = internalAction({
         void gradedBy;
         return { ...r, assignmentId: ref("assignments", r.assignmentId), studentId: ref("students", r.studentId) };
       });
-      await run("attendance", db.attendance, ({ recordedBy, ...r }) => {
-        void recordedBy;
-        return { ...r, studentId: ref("students", r.studentId), classId: ref("classes", r.classId) };
-      });
       await run("results", db.results, (r) => ({
         ...r,
         studentId: ref("students", r.studentId),
@@ -218,18 +205,6 @@ export const demo = internalAction({
         invoiceId: ref("invoices", r.invoiceId),
         studentId: ref("students", r.studentId),
       }));
-      await run("materials", db.materials, (r) => ({
-        ...r,
-        classId: ref("classes", r.classId),
-        subjectId: ref("subjects", r.subjectId),
-        teacherId: ref("teachers", r.teacherId),
-      }));
-      await run("quizzes", db.quizzes, (r) => ({
-        ...r,
-        classId: ref("classes", r.classId),
-        subjectId: ref("subjects", r.subjectId),
-        teacherId: ref("teachers", r.teacherId),
-      }));
       await run("timetable", db.timetable, (r) => ({
         ...r,
         classId: ref("classes", r.classId),
@@ -248,69 +223,17 @@ export const demo = internalAction({
     await run("testimonials", db.testimonials, (r) => ({ ...r }));
     await run("faqs", db.faqs.map((f, i) => ({ ...f, order: i })), (r) => ({ ...r }));
     await run("documents", db.documents, (r) => ({ ...r }));
-    await run("vacancies", db.vacancies, (r) => ({ ...r }));
     await run("emergencyNotices", db.emergencyNotices, (r) => ({ ...r }));
-    await run("books", db.books, (r) => ({ ...r }));
 
     if (full) {
-      // Borrowings reference books, which are inserted with the content above.
-      await run("borrowings", db.borrowings, (r) => ({
-        ...r,
-        bookId: ref("books", r.bookId),
-        studentId: ref("students", r.studentId),
-      }));
       await run("enquiries", db.enquiries, (r) => ({ ...r }));
-      await run("tourBookings", db.tourBookings, (r) => ({ ...r }));
       await run("certificates", db.certificates, (r) => ({ ...r, studentId: ref("students", r.studentId) }));
       await run(
         "notifications",
         db.notifications.filter((n) => ref("users", n.userId)),
         (r) => ({ ...r, userId: ref("users", r.userId) }),
       );
-
-      for (const thread of db.messageThreads) {
-        const participants = thread.participantIds.map((p) => ref("users", p)).filter(Boolean);
-        const [threadId] = await ctx.runMutation(internal.seed.importRows, {
-          table: "messageThreads",
-          rows: [
-            clean({
-              subject: thread.subject,
-              participantIds: participants,
-              studentId: ref("students", thread.studentId),
-              createdAt: thread.createdAt,
-              updatedAt: thread.updatedAt,
-            }),
-          ],
-        });
-        await ctx.runMutation(internal.seed.importRows, {
-          table: "threadParticipants",
-          rows: participants.map((userId) => ({ threadId, userId })),
-        });
-        await ctx.runMutation(internal.seed.importRows, {
-          table: "threadMessages",
-          rows: thread.messages.map((m) => ({
-            threadId,
-            senderId: ref("users", m.senderId),
-            body: m.body,
-            sentAt: m.sentAt,
-            readBy: m.readBy.map((u) => ref("users", u)).filter(Boolean),
-          })),
-        });
-      }
-      summary.messageThreads = db.messageThreads.length;
-
-      await run("availability", db.availability, (r) => ({ ...r, teacherId: ref("teachers", r.teacherId) }));
-      await run("appointments", db.appointments, (r) => ({
-        ...r,
-        teacherId: ref("teachers", r.teacherId),
-        parentId: ref("parents", r.parentId),
-        studentId: ref("students", r.studentId),
-      }));
-      await run("auditLogs", db.auditLogs, (r) => ({ ...r, actorId: ref("users", r.actorId) }));
     }
-
-    // Premium modules: virtual tour, shop, digital library, giving.
-    await ctx.runMutation(internal.premiumSeed.run, {});
 
     return summary;
   },

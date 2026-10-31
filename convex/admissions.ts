@@ -4,7 +4,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { fail, requireAdmin } from "./lib/access";
 import { publishedContent } from "./lib/cms";
-import { audit, getByLooseId, nowISO, withId } from "./lib/util";
+import { audit, nowISO, withId } from "./lib/util";
 import { nextStudentNo } from "./people";
 import { applicationStatus } from "./validators";
 
@@ -219,15 +219,6 @@ export const list = query({
         accepted: all.filter((a) => ["accepted", "conditionally_accepted", "enrolled"].includes(a.status)).length,
       },
     };
-  },
-});
-
-export const get = query({
-  args: { id: v.string() },
-  handler: async (ctx, { id }) => {
-    await requireAdmin(ctx);
-    const app = await getByLooseId(ctx, "applications", id);
-    return app ? publicShape(app) : null;
   },
 });
 

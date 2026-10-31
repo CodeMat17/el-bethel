@@ -32,7 +32,6 @@ import type * as newsRelease from "../newsRelease.js";
 import type * as notifications from "../notifications.js";
 import type * as office from "../office.js";
 import type * as people from "../people.js";
-import type * as premiumSeed from "../premiumSeed.js";
 import type * as results from "../results.js";
 import type * as seed from "../seed.js";
 import type * as seedMedia from "../seedMedia.js";
@@ -72,7 +71,6 @@ declare const fullApi: ApiFromModules<{
   notifications: typeof notifications;
   office: typeof office;
   people: typeof people;
-  premiumSeed: typeof premiumSeed;
   results: typeof results;
   seed: typeof seed;
   seedMedia: typeof seedMedia;

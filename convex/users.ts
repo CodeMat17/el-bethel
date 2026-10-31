@@ -442,18 +442,3 @@ export const bootstrapSuperAdmin = internalMutation({
     });
   },
 });
-
-/** Display names for a set of users (used by messaging and audit views). */
-export const names = query({
-  args: { ids: v.array(v.id("users")) },
-  handler: async (ctx, { ids }) => {
-    const viewer = await requireViewer(ctx);
-    void viewer;
-    const out: Record<string, string> = {};
-    for (const id of ids) {
-      const user = await ctx.db.get(id);
-      if (user) out[id] = user.name;
-    }
-    return out;
-  },
-});

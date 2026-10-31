@@ -4,7 +4,6 @@ import type { Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx } from "./_generated/server";
 import {
   assertStudentAccess,
-  assertTeachesClass,
   fail,
   isAdmin,
   parentStudentIds,
@@ -79,21 +78,6 @@ export const getStudent = query({
           )
         : [];
     return { student: shaped, parents: parents.filter((p) => p !== null) };
-  },
-});
-
-/** A class list, for teachers of that class and administrators. */
-export const classRoster = query({
-  args: { classId: v.id("classes"), includeInactive: v.optional(v.boolean()) },
-  handler: async (ctx, { classId, includeInactive }) => {
-    const viewer = await requireStaff(ctx);
-    await assertTeachesClass(ctx, viewer, classId);
-    const rows = await ctx.db
-      .query("students")
-      .withIndex("by_class", (q) => q.eq("classId", classId))
-      .collect();
-    const list = includeInactive ? rows : rows.filter((s) => s.status === "active");
-    return (await toStudents(ctx, list)).sort(byName);
   },
 });
 
@@ -450,20 +434,6 @@ export const updateTeacher = mutation({
   },
 });
 
-/** Update the signed-in teacher's own profile details. */
-export const updateMyTeacherProfile = mutation({
-  args: { phone: v.string(), bio: v.string(), qualifications: v.array(v.string()) },
-  handler: async (ctx, args) => {
-    const viewer = await requireStaff(ctx);
-    if (!viewer.teacherId) fail("FORBIDDEN", "This account is not linked to a teacher.");
-    await ctx.db.patch(viewer.teacherId, {
-      phone: args.phone.trim(),
-      bio: args.bio.trim(),
-      qualifications: args.qualifications.map((q) => q.trim()).filter(Boolean),
-    });
-  },
-});
-
 /**
  * The signed-in teacher's or parent's own profile photo (Cloudinary). Pupils'
  * photos are set by the school office, through the pupil record.
@@ -481,17 +451,6 @@ export const setMyPhoto = mutation({
     if (photo && photo.resourceType !== "image") fail("INVALID", "Choose a photo.");
     await ctx.db.patch(record._id, { photo });
     return { previousPhoto: replacedPhoto(record, photo) };
-  },
-});
-
-export const studentWithAccount = query({
-  args: { id: v.string() },
-  handler: async (ctx, { id }) => {
-    await requireAdmin(ctx);
-    const student = await getByLooseId(ctx, "students", id);
-    if (!student) return null;
-    const account = await ctx.db.query("users").withIndex("by_student", (q) => q.eq("studentId", student._id)).first();
-    return { student: await toStudent(ctx, student), account: account ? withId(account) : null };
   },
 });
 
