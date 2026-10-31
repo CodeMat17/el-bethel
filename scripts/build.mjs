@@ -16,6 +16,9 @@ env.TOKIO_WORKER_THREADS ??= "2";
 env.RAYON_NUM_THREADS ??= "2";
 env.UV_THREADPOOL_SIZE ??= "2";
 env.NEXT_TELEMETRY_DISABLED ??= "1";
+// A new id per build: a tab still running the previous build reloads the page
+// on its next navigation instead of failing with "Server Action was not found".
+env.NEXT_DEPLOYMENT_ID ??= `b${Date.now().toString(36)}`;
 
 // Webpack instead of Turbopack: Turbopack runs a much larger thread pool.
 const result = spawnSync(process.execPath, [require.resolve("next/dist/bin/next"), "build", "--webpack", ...process.argv.slice(2)], {

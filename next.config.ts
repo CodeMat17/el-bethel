@@ -33,6 +33,15 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // Pages and their RSC payloads. Next would mark static pages cacheable for a
+        // year, and Hostinger's CDN would then keep serving its copy after a dashboard
+        // edit (refreshSite clears this server's cache, not the CDN's). With this the
+        // CDN passes every page request through, so edits show on the next visit.
+        // Hashed /_next/static files and public images still cache normally.
+        source: "/((?!_next/static|_next/image|.*\\.(?:webp|png|jpe?g|gif|svg|ico|woff2?)$).*)",
+        headers: [{ key: "Cache-Control", value: "private, no-cache, no-store, max-age=0, must-revalidate" }],
+      },
+      {
         // Private portals must never be indexed.
         source: "/portal/:path*",
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
