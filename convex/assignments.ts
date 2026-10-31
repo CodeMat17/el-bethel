@@ -434,8 +434,8 @@ export const pendingForTeacher = query({
   },
 });
 
-const assignmentFields = {
-  classId: v.id("classes"),
+/** Everything but the class: a new assignment may be set for several classes at once. */
+const detailFields = {
   subjectId: v.id("subjects"),
   title: v.string(),
   topic: v.string(),
@@ -446,6 +446,7 @@ const assignmentFields = {
   dueDate: v.string(),
   publish: v.boolean(),
 };
+const assignmentFields = { classId: v.id("classes"), ...detailFields };
 
 function validateDetails(args: { title: string; topic: string; startDate: string; dueDate: string }) {
   if (args.title.trim().length < 3) fail("INVALID", "Give the assignment a title of at least 3 characters.");
@@ -466,56 +467,68 @@ function normaliseQuestions(questions: QuestionValue[]): QuestionValue[] {
   }));
 }
 
+/**
+ * Sets the same work for one or more classes. Each class gets its own copy so its
+ * roster, submissions and marking stay separate; the ids come back in class order.
+ */
 export const create = mutation({
-  args: assignmentFields,
-  handler: async (ctx, args) => {
+  args: { ...detailFields, classIds: v.array(v.id("classes")) },
+  handler: async (ctx, { classIds, ...args }) => {
     const viewer = await requireStaff(ctx);
-    await assertTeachesSubject(ctx, viewer, args.classId, args.subjectId);
+    const classes = [...new Set(classIds)];
+    if (classes.length === 0) fail("INVALID", "Choose at least one class.");
+    if (classes.length > 20) fail("INVALID", "Choose no more than 20 classes at once.");
+    for (const c of classes) await assertTeachesSubject(ctx, viewer, c, args.subjectId);
     validateDetails(args);
     const questions = normaliseQuestions(args.questions);
     validateQuestions(questions);
     if (args.publish && Date.parse(args.dueDate) < Date.now()) fail("INVALID", "The due date is already in the past.");
 
-    // The teacher who owns the work: the caller, or (for an admin) whoever teaches the subject.
-    let teacherId = viewer.teacherId;
-    if (isAdmin(viewer)) {
-      const row = await ctx.db
-        .query("teachingAssignments")
-        .withIndex("by_class_subject", (q) => q.eq("classId", args.classId).eq("subjectId", args.subjectId))
-        .first();
-      const cls = await ctx.db.get(args.classId);
-      teacherId = row?.teacherId ?? cls?.classTeacherId ?? viewer.teacherId;
-    }
-    if (!teacherId) fail("INVALID", "No teacher is assigned to this subject in this class yet.");
-
     const now = nowISO();
-    const id = await ctx.db.insert("assignments", {
-      title: args.title.trim(),
-      topic: args.topic.trim(),
-      description: args.description.trim(),
-      instructions: args.instructions.trim(),
-      classId: args.classId,
-      subjectId: args.subjectId,
-      teacherId,
-      termId: await activeTermId(ctx),
-      questions,
-      maxScore: questions.reduce((n, q) => n + q.points, 0),
-      publishedAt: args.publish ? now : "",
-      startDate: args.startDate,
-      dueDate: args.dueDate,
-      status: args.publish ? "published" : "draft",
-      createdAt: now,
-    });
-    await audit(ctx, viewer, { action: args.publish ? "Published assignment" : "Drafted assignment", entity: "Assignment", entityId: id, newValue: args.title });
-    if (args.publish) {
-      const subject = await ctx.db.get(args.subjectId);
-      await notifyClass(ctx, args.classId, {
-        type: "assignment_published",
-        title: `New ${subject?.name ?? ""} assignment: ${args.title.trim()}`,
-        body: `Due ${new Date(args.dueDate).toUTCString().slice(0, 16)}.`,
+    const termId = await activeTermId(ctx);
+    const subject = await ctx.db.get(args.subjectId);
+    const ids: Id<"assignments">[] = [];
+    for (const c of classes) {
+      // The teacher who owns the work: the caller, or (for an admin) whoever teaches the subject.
+      let teacherId = viewer.teacherId;
+      if (isAdmin(viewer)) {
+        const row = await ctx.db
+          .query("teachingAssignments")
+          .withIndex("by_class_subject", (q) => q.eq("classId", c).eq("subjectId", args.subjectId))
+          .first();
+        const cls = await ctx.db.get(c);
+        teacherId = row?.teacherId ?? cls?.classTeacherId ?? viewer.teacherId;
+      }
+      if (!teacherId) fail("INVALID", "No teacher is assigned to this subject in this class yet.");
+
+      const id = await ctx.db.insert("assignments", {
+        title: args.title.trim(),
+        topic: args.topic.trim(),
+        description: args.description.trim(),
+        instructions: args.instructions.trim(),
+        classId: c,
+        subjectId: args.subjectId,
+        teacherId,
+        termId,
+        questions,
+        maxScore: questions.reduce((n, q) => n + q.points, 0),
+        publishedAt: args.publish ? now : "",
+        startDate: args.startDate,
+        dueDate: args.dueDate,
+        status: args.publish ? "published" : "draft",
+        createdAt: now,
       });
+      ids.push(id);
+      await audit(ctx, viewer, { action: args.publish ? "Published assignment" : "Drafted assignment", entity: "Assignment", entityId: id, newValue: args.title });
+      if (args.publish) {
+        await notifyClass(ctx, c, {
+          type: "assignment_published",
+          title: `New ${subject?.name ?? ""} assignment: ${args.title.trim()}`,
+          body: `Due ${new Date(args.dueDate).toUTCString().slice(0, 16)}.`,
+        });
+      }
     }
-    return id;
+    return ids;
   },
 });
 

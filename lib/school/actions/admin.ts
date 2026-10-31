@@ -190,6 +190,32 @@ export async function resetPassword(formData: FormData): Promise<AdminResult> {
   return done(`Password changed for ${account.name}. Give them the new password in person.`, "/portal/admin/users");
 }
 
+/** Fix a mistyped sign-in email: in Convex first, then in Clerk (no verification email is sent). */
+export async function changeSignInEmail(formData: FormData): Promise<AdminResult> {
+  const userId = str(formData, "userId") as Id<"users">;
+  const email = str(formData, "email").toLowerCase();
+  const result = await tryMutation(api.users.changeEmail, { userId, email });
+  if (!result.ok) return { ok: false, message: result.message };
+  const { name, clerkUserId, previousEmail } = result.data;
+  try {
+    const client = await clerkClient();
+    const user = await client.users.getUser(clerkUserId!);
+    const existing = user.emailAddresses.find((e) => e.emailAddress.toLowerCase() === email);
+    const primary = existing
+      ? await client.emailAddresses.updateEmailAddress(existing.id, { verified: true, primary: true })
+      : await client.emailAddresses.createEmailAddress({ userId: user.id, emailAddress: email, verified: true, primary: true });
+    for (const old of user.emailAddresses) {
+      if (old.id !== primary.id) await client.emailAddresses.deleteEmailAddress(old.id);
+    }
+  } catch (error) {
+    if (previousEmail) await tryMutation(api.users.changeEmail, { userId, email: previousEmail, revert: true });
+    return { ok: false, message: clerkMessage(error) };
+  }
+  // Shown on the Users page and on each pupil, parent and teacher record.
+  revalidatePath("/portal/admin", "layout");
+  return { ok: true, message: `${name} now signs in with ${email}. Their password hasn't changed.` };
+}
+
 export async function setAccountActive(userId: string, active: boolean): Promise<AdminResult> {
   const result = await tryMutation(api.users.setActive, { userId: userId as Id<"users">, active });
   if (!result.ok) return { ok: false, message: result.message };

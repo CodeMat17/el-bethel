@@ -118,9 +118,17 @@ export function AssignmentForm({
   );
   const [pending, setPending] = React.useState<null | "publish" | "draft">(null);
   const [error, setError] = React.useState<string | null>(null);
+  /** Extra classes to set the same work for — only when creating. */
+  const [alsoFor, setAlsoFor] = React.useState<string[]>([]);
 
   const classOption = options.find((o) => o.classId === form.classId);
   const subjects = classOption?.subjects ?? [];
+  // Other classes this teacher takes the chosen subject in can receive the same assignment.
+  const sameSubjectClasses = initial?.id
+    ? []
+    : options.filter((o) => o.classId !== form.classId && o.subjects.some((s) => s.id === form.subjectId));
+  const extraClasses = alsoFor.filter((id) => sameSubjectClasses.some((o) => o.classId === id));
+  const classCount = 1 + extraClasses.length;
   const total = form.questions.reduce((n, q) => n + (Number.isFinite(q.points) ? q.points : 0), 0);
   const isPublished = initial?.status && initial.status !== "draft";
 
@@ -190,7 +198,7 @@ export function AssignmentForm({
       publish,
     };
     try {
-      const res = initial?.id ? await updateAssignment(initial.id, input) : await createAssignment(input);
+      const res = initial?.id ? await updateAssignment(initial.id, input) : await createAssignment(input, extraClasses);
       if (!res.ok) {
         setError(res.message ?? "The assignment could not be saved.");
         toast.error("Not saved", { description: res.message });
@@ -281,6 +289,29 @@ export function AssignmentForm({
             </Select>
           </Field>
         </div>
+
+        {sameSubjectClasses.length > 0 ? (
+          <Field>
+            <FieldLabel>Also set for (optional)</FieldLabel>
+            <div className="flex flex-wrap gap-2">
+              {sameSubjectClasses.map((o) => (
+                <label key={o.classId} className="flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold">
+                  <Checkbox
+                    checked={extraClasses.includes(o.classId)}
+                    disabled={busy}
+                    onCheckedChange={(checked) =>
+                      setAlsoFor((ids) => (checked ? [...ids, o.classId] : ids.filter((id) => id !== o.classId)))
+                    }
+                  />
+                  {o.className}
+                </label>
+              ))}
+            </div>
+            <FieldDescription>
+              Other classes you teach this subject in. Each class gets its own copy to mark separately.
+            </FieldDescription>
+          </Field>
+        ) : null}
 
         <div className="grid gap-5 sm:grid-cols-2">
           <Field>
@@ -501,7 +532,13 @@ export function AssignmentForm({
       <div className="flex flex-col gap-2 sm:flex-row">
         <Button type="submit" size="lg" className="h-11 flex-1 font-bold" disabled={busy}>
           {pending === "publish" ? <Spinner /> : <SendIcon />}
-          {pending === "publish" ? "Saving…" : isPublished ? "Save changes" : "Publish to the class"}
+          {pending === "publish"
+            ? "Saving…"
+            : isPublished
+              ? "Save changes"
+              : classCount > 1
+                ? `Publish to ${classCount} classes`
+                : "Publish to the class"}
         </Button>
         {!isPublished ? (
           <Button type="button" variant="outline" size="lg" className="h-11 font-bold" disabled={busy} onClick={() => void save(false)}>

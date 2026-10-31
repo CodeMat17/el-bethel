@@ -343,6 +343,36 @@ export const updateRoles = mutation({
   },
 });
 
+/**
+ * Change the email someone signs in with. Convex checks and records it first;
+ * the server then changes it in Clerk and calls this again with the previous
+ * email (`revert`) if Clerk refuses.
+ */
+export const changeEmail = mutation({
+  args: { userId: v.id("users"), email: v.string(), revert: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const viewer = await requireAdmin(ctx);
+    const user = await ctx.db.get(args.userId);
+    if (!user) fail("NOT_FOUND", "That account no longer exists.");
+    assertCanManage(viewer, user);
+    if (!user.clerkUserId) fail("INVALID", "This account has no sign-in yet.");
+    const email = args.email.trim().toLowerCase();
+    if (!EMAIL.test(email)) fail("INVALID", "Enter a valid email address to sign in with.");
+    await assertEmailFree(ctx, email, user._id);
+    await ctx.db.patch(user._id, { email });
+    if (!args.revert) {
+      await audit(ctx, viewer, {
+        action: "Changed sign-in email",
+        entity: "User",
+        entityId: user._id,
+        previousValue: user.email,
+        newValue: email,
+      });
+    }
+    return { name: user.name, clerkUserId: user.clerkUserId, previousEmail: user.email };
+  },
+});
+
 export const recordPasswordReset = mutation({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {

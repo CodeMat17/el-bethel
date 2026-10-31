@@ -9,14 +9,16 @@ import { Button } from "@/components/ui/button";
 import { saveAlumniStory } from "@/lib/school/actions/premium";
 import type { CloudMedia } from "@/lib/school/types";
 
-function Trigger({ editing, label }: { editing: boolean; label: string }) {
+// DialogTrigger's `render` clones this element with its click handler and ref,
+// so those props must reach the Button or the dialog never opens.
+function Trigger({ editing, label, ...props }: { editing: boolean; label: string } & React.ComponentProps<typeof Button>) {
   return editing ? (
-    <Button size="sm" variant="outline" className="font-bold">
+    <Button {...props} size="sm" variant="outline" className="font-bold">
       <PencilIcon />
       Edit
     </Button>
   ) : (
-    <Button size="lg" className="font-bold">
+    <Button {...props} size="lg" className="font-bold">
       <PlusIcon />
       {label}
     </Button>

@@ -74,14 +74,24 @@ function toArgs(input: AssignmentInput) {
   };
 }
 
-export async function createAssignment(input: AssignmentInput): Promise<ActionResult> {
-  const result = await tryMutation(api.assignments.create, toArgs(input));
+/** Sets the work for the main class plus any `alsoFor` classes; each gets its own copy. */
+export async function createAssignment(input: AssignmentInput, alsoFor: string[] = []): Promise<ActionResult> {
+  const { classId, ...args } = toArgs(input);
+  const result = await tryMutation(api.assignments.create, {
+    ...args,
+    classIds: [classId, ...alsoFor.map((id) => id as Id<"classes">)],
+  });
   if (!result.ok) return { ok: false, message: result.message };
   revalidatePath("/portal/teacher", "layout");
+  const count = result.data.length;
+  const target = count === 1 ? "the class" : `${count} classes`;
   return {
     ok: true,
-    id: result.data,
-    message: input.publish ? "Assignment published to the class." : "Draft saved. Publish it when you're ready.",
+    // With several classes there is no single assignment page to open.
+    id: count === 1 ? result.data[0] : undefined,
+    message: input.publish
+      ? `Assignment published to ${target}.`
+      : `${count === 1 ? "Draft" : `${count} drafts`} saved. Publish when you're ready.`,
   };
 }
 

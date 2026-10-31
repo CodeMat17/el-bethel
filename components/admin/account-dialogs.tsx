@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { KeyRoundIcon, MailIcon, RefreshCwIcon, ShieldIcon, UserPlusIcon } from "lucide-react";
+import { AtSignIcon, KeyRoundIcon, MailIcon, RefreshCwIcon, ShieldIcon, UserPlusIcon } from "lucide-react";
 
 import { CheckGroupField, Hidden, TextField } from "@/components/admin/fields";
 import { FormDialog } from "@/components/admin/form-dialog";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { ConfirmAction } from "@/components/portal/confirm-action";
-import { createLogin, resetPassword, sendSignInInvite, updateRoles } from "@/lib/school/actions/admin";
+import { changeSignInEmail, createLogin, resetPassword, sendSignInInvite, updateRoles } from "@/lib/school/actions/admin";
 import type { Role } from "@/lib/school/types";
 
 const WORDS = ["Sun", "Lake", "Star", "Moon", "Tree", "Bird", "Rock", "Leaf", "Wave", "Rain", "Gold", "Blue"];
@@ -182,6 +182,35 @@ export function ResetPasswordDialog({ userId, name }: { userId: string; name: st
     >
       <Hidden name="userId" value={userId} />
       <PasswordField label="New password" />
+    </FormDialog>
+  );
+}
+
+export function ChangeEmailDialog({ userId, name, email }: { userId: string; name: string; email?: string }) {
+  return (
+    <FormDialog
+      trigger={
+        <Button size="sm" variant="ghost" className="font-bold">
+          <AtSignIcon />
+          Change email
+        </Button>
+      }
+      title={`Change ${name}'s sign-in email`}
+      description="They will sign in with the new email from now on. Their password stays the same."
+      action={changeSignInEmail}
+      submitLabel="Save email"
+      pendingLabel="Saving…"
+    >
+      <Hidden name="userId" value={userId} />
+      <TextField
+        name="email"
+        type="email"
+        label="New email"
+        defaultValue={email}
+        autoCapitalize="none"
+        description="Must not belong to another account."
+        required
+      />
     </FormDialog>
   );
 }

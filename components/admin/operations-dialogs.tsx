@@ -13,14 +13,16 @@ import type { Achievement } from "@/lib/school/types";
 
 const CATEGORY_OPTIONS = AWARD_CATEGORIES.map((c) => ({ value: c, label: c }));
 
-function Trigger({ editing, label }: { editing: boolean; label: string }) {
+// DialogTrigger's `render` clones this element with its click handler and ref,
+// so those props must reach the Button or the dialog never opens.
+function Trigger({ editing, label, ...props }: { editing: boolean; label: string } & React.ComponentProps<typeof Button>) {
   return editing ? (
-    <Button size="sm" variant="outline" className="font-bold">
+    <Button {...props} size="sm" variant="outline" className="font-bold">
       <PencilIcon />
       Edit
     </Button>
   ) : (
-    <Button size="lg" className="font-bold">
+    <Button {...props} size="lg" className="font-bold">
       <PlusIcon />
       {label}
     </Button>

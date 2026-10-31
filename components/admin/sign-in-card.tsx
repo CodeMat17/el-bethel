@@ -1,6 +1,6 @@
 import { BanIcon, CircleCheckIcon } from "lucide-react";
 
-import { CreateLoginDialog, ResetPasswordDialog, SendInviteButton } from "@/components/admin/account-dialogs";
+import { ChangeEmailDialog, CreateLoginDialog, ResetPasswordDialog, SendInviteButton } from "@/components/admin/account-dialogs";
 import { ConfirmAction } from "@/components/portal/confirm-action";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -34,6 +34,10 @@ export function SignInCard({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="font-mono text-sm font-bold">@{account.username}</p>
+            {account.email ? <p className="text-sm">{account.email}</p> : null}
+            {email && account.email && email.trim().toLowerCase() !== account.email ? (
+              <p className="text-xs font-bold text-warning">Signs in with a different email from this record ({email}).</p>
+            ) : null}
             <p className="text-xs text-muted-foreground">
               {account.active ? "Can sign in" : "Disabled"} · last seen {account.lastLoginAt ? formatDate(account.lastLoginAt) : "never"}
             </p>
@@ -41,6 +45,7 @@ export function SignInCard({
           <div className="flex flex-wrap gap-1">
             {kind !== "pupil" && !account.lastLoginAt ? <SendInviteButton userId={account.id} name={name} /> : null}
             <ResetPasswordDialog userId={account.id} name={name} />
+            <ChangeEmailDialog userId={account.id} name={name} email={email || account.email} />
             {account.active ? (
               <ConfirmAction
                 action={setAccountActive.bind(null, account.id, false)}
