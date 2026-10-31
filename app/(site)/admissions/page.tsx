@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { Metadata } from "next";
 import { ArrowRightIcon, CheckCircle2Icon } from "lucide-react";
 
 import { CtaBand, PageHero, SectionHeading, StatusPill } from "@/components/common";
@@ -14,13 +13,15 @@ import { CLASS_LEVELS, STAGE_LABELS } from "@/lib/school/config";
 import { getContent } from "@/lib/school/site-content";
 import { getFaqs } from "@/lib/school/site-data";
 import { money } from "@/lib/school/format";
+import { jsonLd, pageMetadata } from "@/lib/school/seo";
 
-export const metadata: Metadata = {
-  title: "Admissions",
-  description:
-    "Admission to El-Bethel International Academy, Abuja is open for the 2026/2027 session — Creche, Pre-School, Nursery 1–3, Primary 1–6 and JSS 1–3. Process, requirements, fees and FAQs.",
-  alternates: { canonical: "/admissions" },
-};
+export const generateMetadata = () =>
+  pageMetadata({
+    title: "Admissions",
+    description:
+      "Admission to El-Bethel International Academy, Abuja is open for the 2026/2027 session — Creche, Pre-School, Nursery 1–3, Primary 1–6 and JSS 1–3. Process, requirements, fees and FAQs.",
+    path: "/admissions",
+  });
 
 const AGE_GUIDE = CLASS_LEVELS.map((level) => ({
   level: level.name,
@@ -46,7 +47,7 @@ export default async function AdmissionsPage() {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema).replace(/</g, "\\u003c") }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(faqSchema) }} />
       <PageHero
         eyebrow={hero.eyebrow}
         title={hero.title}

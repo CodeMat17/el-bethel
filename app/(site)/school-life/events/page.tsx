@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { Metadata } from "next";
 import { ArrowRightIcon, ClockIcon, MapPinIcon } from "lucide-react";
 
 import { CtaBand, EmptyState, PageHero, SectionHeading, StatusPill } from "@/components/common";
@@ -9,13 +8,15 @@ import { DatedCount, DatedGroup, DatedItem, WhenDated, WhenNotDated } from "@/co
 import { Card, CardContent } from "@/components/ui/card";
 import { getAllEvents } from "@/lib/school/site-data";
 import { eventEnd, formatDate, todayISO } from "@/lib/school/format";
+import { pageMetadata } from "@/lib/school/seo";
 
-export const metadata: Metadata = {
-  title: "Events",
-  description:
-    "Upcoming and past events at El-Bethel International Academy, Abuja — sports day, cultural day, open days, excursions and examinations.",
-  alternates: { canonical: "/school-life/events" },
-};
+export const generateMetadata = () =>
+  pageMetadata({
+    title: "Events",
+    description:
+      "Upcoming and past events at El-Bethel International Academy, Abuja — sports day, cultural day, open days, excursions and examinations.",
+    path: "/school-life/events",
+  });
 
 const CATEGORY_TONE = {
   academic: "info",

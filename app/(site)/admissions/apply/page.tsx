@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { Metadata } from "next";
 import { ArrowRightIcon, CheckCircle2Icon, PencilIcon } from "lucide-react";
 
 import {
@@ -21,13 +20,15 @@ import { CLASS_LEVELS } from "@/lib/school/config";
 import { publicQuery } from "@/lib/school/convex";
 import { formatDate } from "@/lib/school/format";
 import { getContent } from "@/lib/school/site-content";
+import { pageMetadata } from "@/lib/school/seo";
 
-export const metadata: Metadata = {
-  title: "Apply Online",
-  description:
-    "Start or resume an online admission application to El-Bethel International Academy, Abuja, for the 2026/2027 session.",
-  alternates: { canonical: "/admissions/apply" },
-};
+export const generateMetadata = () =>
+  pageMetadata({
+    title: "Apply Online",
+    description:
+      "Start or resume an online admission application to El-Bethel International Academy, Abuja, for the 2026/2027 session.",
+    path: "/admissions/apply",
+  });
 
 const STEP_COPY: Record<ApplyStepKey, { title: string; lede: string }> = {
   account: { title: "Start your application", lede: "Tell us who you are and which class you are applying for. Your progress is saved in this browser." },

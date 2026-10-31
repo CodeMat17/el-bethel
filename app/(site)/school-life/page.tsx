@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { Metadata } from "next";
 import { ArrowRightIcon, MapPinIcon } from "lucide-react";
 
 import { CtaBand, PageHero, SectionHeading } from "@/components/common";
@@ -13,13 +12,15 @@ import { getContent } from "@/lib/school/site-content";
 import { slugify } from "@/lib/utils";
 import { getClubs, getGallery, getUpcomingEvents } from "@/lib/school/site-data";
 import { eventEnd, formatDate, todayISO } from "@/lib/school/format";
+import { pageMetadata } from "@/lib/school/seo";
 
-export const metadata: Metadata = {
-  title: "School Life",
-  description:
-    "Clubs, sports, library, facilities, events and gallery — life beyond the classroom at El-Bethel International Academy, Abuja.",
-  alternates: { canonical: "/school-life" },
-};
+export const generateMetadata = () =>
+  pageMetadata({
+    title: "School Life",
+    description:
+      "Clubs, sports, library, facilities, events and gallery — life beyond the classroom at El-Bethel International Academy, Abuja.",
+    path: "/school-life",
+  });
 
 export default async function SchoolLifePage() {
   const [clubs, upcoming, allGallery, page] = await Promise.all([getClubs(), getUpcomingEvents(), getGallery(), getContent("schoolLife")]);

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { Metadata } from "next";
 import { ArrowRightIcon, MapPinIcon } from "lucide-react";
 
 import { CtaBand, PageHero, SectionHeading, StatusPill } from "@/components/common";
@@ -12,13 +11,15 @@ import { academicCalendar } from "@/lib/school/calendar";
 import { getPublicDirectory } from "@/lib/school/directory";
 import { getAllEvents } from "@/lib/school/site-data";
 import { formatDate, todayISO } from "@/lib/school/format";
+import { pageMetadata } from "@/lib/school/seo";
 
-export const metadata: Metadata = {
-  title: "School Calendar",
-  description:
-    "Term dates, breaks, examinations and key events for the current academic session at El-Bethel International Academy, Abuja.",
-  alternates: { canonical: "/calendar" },
-};
+export const generateMetadata = () =>
+  pageMetadata({
+    title: "School Calendar",
+    description:
+      "Term dates, breaks, examinations and key events for the current academic session at El-Bethel International Academy, Abuja.",
+    path: "/calendar",
+  });
 
 const CATEGORY_TONE = {
   academic: "info",

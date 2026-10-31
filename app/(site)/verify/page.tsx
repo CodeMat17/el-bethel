@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { BadgeCheckIcon, CircleAlertIcon, SearchIcon } from "lucide-react";
 
 import { PageHero } from "@/components/common";
@@ -9,13 +8,15 @@ import { Separator } from "@/components/ui/separator";
 import { getSchool } from "@/lib/school/site-content";
 import { formatDate } from "@/lib/school/format";
 import { verifyCertificate } from "@/lib/school/site-data";
+import { pageMetadata } from "@/lib/school/seo";
 
-export const metadata: Metadata = {
-  title: "Verify a Certificate",
-  description:
-    "Verify the authenticity of a certificate issued by El-Bethel International Academy using its certificate number.",
-  alternates: { canonical: "/verify" },
-};
+export const generateMetadata = () =>
+  pageMetadata({
+    title: "Verify a Certificate",
+    description:
+      "Verify the authenticity of a certificate issued by El-Bethel International Academy using its certificate number.",
+    path: "/verify",
+  });
 
 export default async function VerifyPage({ searchParams }: PageProps<"/verify">) {
   const SCHOOL = await getSchool();

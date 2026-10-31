@@ -1,20 +1,24 @@
-"use client";
-
 import * as React from "react";
 import Image from "next/image";
-import { motion, useInView, useMotionValue, useSpring } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 import { dimensionsFor, photoFor } from "@/lib/school/photos";
 import type { CloudMedia } from "@/lib/school/types";
 
-/** Fade-and-rise on first view. Honours prefers-reduced-motion via the CSS override. */
+export { Counter } from "@/components/counter";
+
+/**
+ * Fade-and-rise as it scrolls into view. Pure CSS (a scroll-driven animation, see
+ * `.eb-reveal` in globals.css), so the content is in the server HTML, painted at
+ * once above the fold, and needs no JavaScript. Browsers without scroll timelines
+ * simply show it. `delay` (seconds) staggers siblings slightly.
+ */
 export function Reveal({
   children,
   className,
   delay = 0,
   y = 18,
-  as = "div",
+  as: Component = "div",
 }: {
   children: React.ReactNode;
   className?: string;
@@ -22,47 +26,13 @@ export function Reveal({
   y?: number;
   as?: "div" | "li" | "section" | "article";
 }) {
-  const Component = { div: motion.div, li: motion.li, section: motion.section, article: motion.article }[as];
   return (
     <Component
-      className={className}
-      initial={{ opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={cn("eb-reveal", className)}
+      style={{ "--reveal-y": `${y}px`, "--reveal-delay": delay } as React.CSSProperties}
     >
       {children}
     </Component>
-  );
-}
-
-/** Counts up to `value` when scrolled into view. */
-export function Counter({
-  value,
-  suffix = "",
-  className,
-}: {
-  value: number;
-  suffix?: string;
-  className?: string;
-}) {
-  const ref = React.useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-40px" });
-  const motionValue = useMotionValue(0);
-  const spring = useSpring(motionValue, { duration: 1400, bounce: 0 });
-  const [display, setDisplay] = React.useState(0);
-
-  React.useEffect(() => {
-    if (inView) motionValue.set(value);
-  }, [inView, motionValue, value]);
-
-  React.useEffect(() => spring.on("change", (v) => setDisplay(Math.round(v))), [spring]);
-
-  return (
-    <span ref={ref} className={cn("tabular-nums", className)}>
-      {display}
-      {suffix}
-    </span>
   );
 }
 

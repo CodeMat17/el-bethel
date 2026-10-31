@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { Metadata } from "next";
 import { DownloadIcon, FileTextIcon, LockIcon } from "lucide-react";
 
 import { CtaBand, PageHero, SectionHeading } from "@/components/common";
@@ -10,13 +9,15 @@ import { Card } from "@/components/ui/card";
 import { getPublicDocuments } from "@/lib/school/site-data";
 import { fileSize, formatDate } from "@/lib/school/format";
 import { getPublicCatalogue, verifyCertificate } from "@/lib/school/site-data";
+import { pageMetadata } from "@/lib/school/seo";
 
-export const metadata: Metadata = {
-  title: "School Documents",
-  description:
-    "Download the El-Bethel International Academy handbook, prospectus, fee schedule, academic calendar, uniform guide and admission requirements.",
-  alternates: { canonical: "/documents" },
-};
+export const generateMetadata = () =>
+  pageMetadata({
+    title: "School Documents",
+    description:
+      "Download the El-Bethel International Academy handbook, prospectus, fee schedule, academic calendar, uniform guide and admission requirements.",
+    path: "/documents",
+  });
 
 export default async function DocumentsPage() {
   const publicDocs = await getPublicDocuments();

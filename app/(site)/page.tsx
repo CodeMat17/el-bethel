@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { Metadata } from "next";
 import {
   ArrowRightIcon,
   CalendarDaysIcon,
@@ -26,13 +25,15 @@ import { slugify } from "@/lib/utils";
 import { getContent, getSchool } from "@/lib/school/site-content";
 import { getAchievements, getClubs, getFeaturedTeachers, getGallery, getPublishedNews, getTestimonials, getUpcomingEvents } from "@/lib/school/site-data";
 import { eventEnd, formatDate, initials, todayISO } from "@/lib/school/format";
+import { pageMetadata } from "@/lib/school/seo";
 
-export const metadata: Metadata = {
-  title: "Creche, Primary & Junior Secondary School in Abuja",
-  description:
-    "El-Bethel International Academy is a private Primary School in Abuja providing quality, child-centred education in a safe, stimulating and technology-enabled environment.",
-  alternates: { canonical: "/" },
-};
+export const generateMetadata = () =>
+  pageMetadata({
+    title: "Creche, Primary & Junior Secondary School in Abuja",
+    description:
+      "El-Bethel International Academy is a private creche, nursery, primary and junior secondary school in Ushafa, Abuja, providing quality, child-centred education in a safe, stimulating and technology-enabled environment.",
+    path: "/",
+  });
 
 export default async function HomePage() {
   const news = (await getPublishedNews()).slice(0, 3);

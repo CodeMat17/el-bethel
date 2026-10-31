@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { Metadata } from "next";
 import { CalendarDaysIcon } from "lucide-react";
 
 import { CtaBand, PageHero, SectionHeading } from "@/components/common";
@@ -9,12 +8,15 @@ import { Card } from "@/components/ui/card";
 import { eventEnd, formatDate, todayISO } from "@/lib/school/format";
 import { getAlumniHub } from "@/lib/school/site-data";
 import { getContent } from "@/lib/school/site-content";
+import { pageMetadata } from "@/lib/school/seo";
 
-export const metadata: Metadata = {
-  title: "Alumni",
-  description: "Stories from former pupils of El-Bethel International Academy, and news of alumni reunions.",
-  alternates: { canonical: "/alumni" },
-};
+export const generateMetadata = () =>
+  pageMetadata({
+    title: "Alumni",
+    description:
+      "Stories from former pupils of El-Bethel International Academy, and news of alumni reunions.",
+    path: "/alumni",
+  });
 
 export default async function AlumniPage() {
   const [hub, page] = await Promise.all([getAlumniHub(), getContent("alumni")]);

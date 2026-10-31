@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { Metadata } from "next";
 import {
   CalendarClockIcon,
   CheckCircle2Icon,
@@ -20,14 +19,16 @@ import { getContent, getSchool } from "@/lib/school/site-content";
 import { publicQuery } from "@/lib/school/convex";
 import { APPLICATION_STATUS, formatDate, formatDateTime, money } from "@/lib/school/format";
 import type { Application } from "@/lib/school/types";
+import { pageMetadata } from "@/lib/school/seo";
 
-export const metadata: Metadata = {
-  title: "Check Application Status",
-  description:
-    "Track the status of your El-Bethel International Academy admission application using your application number.",
-  robots: { index: false, follow: true },
-  alternates: { canonical: "/admissions/status" },
-};
+export const generateMetadata = () =>
+  pageMetadata({
+    title: "Check Application Status",
+    description:
+      "Track the status of your El-Bethel International Academy admission application using your application number.",
+    path: "/admissions/status",
+    robots: { index: false, follow: true },
+  });
 
 const TRACKER = [
   { key: "account", label: "Account" },

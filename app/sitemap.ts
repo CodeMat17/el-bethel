@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { SITE_URL } from "@/lib/school/config";
-import { getAllEvents, getPublishedNews } from "@/lib/school/site-data";
+import { getAlumniHub, getAllEvents, getPublishedNews } from "@/lib/school/site-data";
 
 const STATIC_ROUTES: { path: string; priority: number; changeFrequency: "daily" | "weekly" | "monthly" | "yearly" }[] = [
   { path: "/", priority: 1, changeFrequency: "weekly" },
@@ -43,6 +43,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(event.date),
       changeFrequency: "monthly" as const,
       priority: 0.5,
+    })),
+    ...(await getAlumniHub()).stories.map((story) => ({
+      url: `${SITE_URL}/alumni/stories/${story.slug}`,
+      ...(story.publishedAt ? { lastModified: new Date(story.publishedAt) } : {}),
+      changeFrequency: "yearly" as const,
+      priority: 0.4,
     })),
   ];
 }

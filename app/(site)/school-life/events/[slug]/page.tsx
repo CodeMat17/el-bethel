@@ -10,6 +10,7 @@ import { DatedGroup, DatedItem, WhenDated } from "@/components/site/dated";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { SITE_URL } from "@/lib/school/config";
+import { jsonLd, pageMetadata, shareImage } from "@/lib/school/seo";
 import { getSchool } from "@/lib/school/site-content";
 import { getAllEvents, getEventBySlug, getUpcomingEvents } from "@/lib/school/site-data";
 import { eventEnd, formatLongDate, todayISO } from "@/lib/school/format";
@@ -32,17 +33,12 @@ export async function generateMetadata({ params }: PageProps<"/school-life/event
   const { slug } = await params;
   const event = await getEventBySlug(slug);
   if (!event) return { title: "Event not found" };
-  return {
-    title: event.title,
+  return pageMetadata({
+    title: event.status === "cancelled" ? `Cancelled: ${event.title}` : event.title,
     description: event.description,
-    alternates: { canonical: `/school-life/events/${event.slug}` },
-    openGraph: {
-      type: "article",
-      title: event.title,
-      description: event.description,
-      url: `${SITE_URL}/school-life/events/${event.slug}`,
-    },
-  };
+    path: `/school-life/events/${event.slug}`,
+    image: event.cover,
+  });
 }
 
 export default async function EventPage({ params }: PageProps<"/school-life/events/[slug]">) {
@@ -61,7 +57,8 @@ export default async function EventPage({ params }: PageProps<"/school-life/even
     description: event.description,
     startDate: `${event.date}T${event.startTime}:00+01:00`,
     endDate: `${event.endDate ?? event.date}T${event.endTime}:00+01:00`,
-    eventStatus: "https://schema.org/EventScheduled",
+    image: [shareImage(event.cover, event.title).url],
+    eventStatus: event.status === "cancelled" ? "https://schema.org/EventCancelled" : "https://schema.org/EventScheduled",
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     location: {
       "@type": "Place",
@@ -73,7 +70,7 @@ export default async function EventPage({ params }: PageProps<"/school-life/even
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(schema) }} />
 
       <article>
         <div className="relative">

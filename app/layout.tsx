@@ -3,6 +3,7 @@ import { Nunito } from "next/font/google";
 
 import { Providers } from "@/components/providers";
 import { SITE_URL } from "@/lib/school/config";
+import { shareImage } from "@/lib/school/seo";
 import { getSchool } from "@/lib/school/site-content";
 import "./globals.css";
 
@@ -10,19 +11,18 @@ const nunito = Nunito({
   variable: "--font-nunito",
   subsets: ["latin"],
   display: "swap",
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  // Variable font: one file covers every weight, instead of one download per weight.
 });
 
 export async function generateMetadata(): Promise<Metadata> {
   const SCHOOL = await getSchool();
+  const title = `${SCHOOL.name} | Creche, Primary & Junior Secondary School in Abuja`;
+  const description = `${SCHOOL.name} is a private creche, nursery, primary and junior secondary school in Ushafa, Abuja, providing quality, child-centred education in a safe, stimulating and technology-enabled environment.`;
+  const images = [shareImage(null, SCHOOL.name)];
   return {
     metadataBase: new URL(SITE_URL),
-    title: {
-      default: `${SCHOOL.name} | Creche, Primary & Junior Secondary School in Abuja`,
-      template: `%s | ${SCHOOL.name}`,
-    },
-    description:
-      "El-Bethel International Academy is a private Primary School in Abuja providing quality, child-centred education in a safe, stimulating and technology-enabled environment.",
+    title: { default: title, template: `%s | ${SCHOOL.name}` },
+    description,
     applicationName: SCHOOL.name,
     keywords: [
       "primary school Abuja",
@@ -36,24 +36,11 @@ export async function generateMetadata(): Promise<Metadata> {
     ],
     authors: [{ name: SCHOOL.name }],
     manifest: "/manifest.webmanifest",
-    alternates: { canonical: "/" },
-    openGraph: {
-      type: "website",
-      locale: "en_NG",
-      url: SITE_URL,
-      siteName: SCHOOL.name,
-      title: `${SCHOOL.name} | Premium Primary School in Abuja`,
-      description:
-        "Quality, child-centred education in a safe, stimulating and technology-enabled environment in Abuja.",
-    },
-    twitter: {
-      card: "summary_large_image",
-      site: "@ElBethelInternational",
-      title: `${SCHOOL.name} | Primary School in Abuja`,
-      description: `${SCHOOL.motto} — ${SCHOOL.name}, ${SCHOOL.city}.`,
-    },
+    // Fallbacks for pages that set none of their own; public pages build theirs with pageMetadata.
+    openGraph: { type: "website", locale: "en_NG", siteName: SCHOOL.name, title, description, images },
+    twitter: { card: "summary_large_image", title, description, images },
     robots: { index: true, follow: true },
-    icons: { icon: [{ url: "/favicon.ico" }, { url: "/icon.svg", type: "image/svg+xml" }], apple: "/icon.svg" },
+    icons: { icon: "/favicon.ico", apple: "/logo.webp" },
   };
 }
 

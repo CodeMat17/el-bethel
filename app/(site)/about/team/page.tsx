@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { QuoteIcon } from "lucide-react";
 
 import { CtaBand, PageHero, SectionHeading } from "@/components/common";
@@ -11,13 +10,15 @@ import { teacherName } from "@/lib/school/data";
 import { getPublicDirectory } from "@/lib/school/directory";
 import { getTeachers } from "@/lib/school/site-data";
 import { getContent, getSchool } from "@/lib/school/site-content";
+import { pageMetadata } from "@/lib/school/seo";
 
-export const metadata: Metadata = {
-  title: "Our Team",
-  description:
-    "Meet the Headteacher, leadership, operations staff and teachers of El-Bethel International Academy, Abuja.",
-  alternates: { canonical: "/about/team" },
-};
+export const generateMetadata = () =>
+  pageMetadata({
+    title: "Our Team",
+    description:
+      "Meet the Headteacher, leadership, operations staff and teachers of El-Bethel International Academy, Abuja.",
+    path: "/about/team",
+  });
 
 export default async function TeamPage() {
   const [dir, allTeachers, SCHOOL, page] = await Promise.all([getPublicDirectory(), getTeachers(), getSchool(), getContent("team")]);

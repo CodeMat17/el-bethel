@@ -116,7 +116,7 @@ export function PortalShell({
     <Image
       alt="School logo"
       priority
-      src="/logo.webp"
+      src="/logo-small.webp"
       width={36}
       height={36}
       className="size-9 shrink-0 rounded object-cover"

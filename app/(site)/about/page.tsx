@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { Metadata } from "next";
 import { ArrowRightIcon, CheckCircle2Icon } from "lucide-react";
 
 import { CtaBand, PageHero, SectionHeading } from "@/components/common";
@@ -8,13 +7,15 @@ import { Counter, Reveal, ToneImage } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getContent } from "@/lib/school/site-content";
+import { pageMetadata } from "@/lib/school/seo";
 
-export const metadata: Metadata = {
-  title: "Our Story",
-  description:
-    "El-Bethel International Academy is a private creche, nursery, primary and junior secondary school in Ushafa, Abuja, built around how children actually learn.",
-  alternates: { canonical: "/about" },
-};
+export const generateMetadata = () =>
+  pageMetadata({
+    title: "Our Story",
+    description:
+      "El-Bethel International Academy is a private creche, nursery, primary and junior secondary school in Ushafa, Abuja, built around how children actually learn.",
+    path: "/about",
+  });
 
 export default async function AboutPage() {
   const { hero, story, timeline, vision, stats, values, anthem, accreditations, cta } = await getContent("about");

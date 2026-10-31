@@ -18,8 +18,7 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     lang: "en-NG",
     categories: ["education"],
     icons: [
-      { src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
-      { src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "maskable" },
+      { src: "/logo.webp", sizes: "984x872", type: "image/webp", purpose: "any" },
     ],
     shortcuts: [
       { name: "Portal", url: "/portal" },

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { Metadata } from "next";
 import { ArrowRightIcon, ClockIcon, MailIcon, MapPinIcon, MessageCircleIcon, PhoneIcon } from "lucide-react";
 
 import { PageHero, SectionHeading } from "@/components/common";
@@ -9,13 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getContent, getSchool } from "@/lib/school/site-content";
+import { pageMetadata } from "@/lib/school/seo";
 
-export const metadata: Metadata = {
-  title: "Contact Us",
-  description:
-    "Contact El-Bethel International Academy, No.3 Engr. Demola Oduneye Avenue, Opposite Ushafa Mini Stadium, Ushafa, Abuja. Phone 0812 390 8499 or send an enquiry online.",
-  alternates: { canonical: "/contact" },
-};
+export const generateMetadata = () =>
+  pageMetadata({
+    title: "Contact Us",
+    description:
+      "Contact El-Bethel International Academy, No.3 Engr. Demola Oduneye Avenue, Opposite Ushafa Mini Stadium, Ushafa, Abuja. Phone 0812 390 8499 or send an enquiry online.",
+    path: "/contact",
+  });
 
 export default async function ContactPage() {
   const [SCHOOL, page] = await Promise.all([getSchool(), getContent("contact")]);

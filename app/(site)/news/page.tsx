@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { Metadata } from "next";
 import { ArrowRightIcon } from "lucide-react";
 
 import { CtaBand, PageHero, SectionHeading } from "@/components/common";
@@ -8,13 +7,15 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getPublishedNews } from "@/lib/school/site-data";
 import { formatDate } from "@/lib/school/format";
+import { pageMetadata } from "@/lib/school/seo";
 
-export const metadata: Metadata = {
-  title: "News & Updates",
-  description:
-    "School news, achievements, announcements and updates from El-Bethel International Academy, Abuja.",
-  alternates: { canonical: "/news" },
-};
+export const generateMetadata = () =>
+  pageMetadata({
+    title: "News & Updates",
+    description:
+      "School news, achievements, announcements and updates from El-Bethel International Academy, Abuja.",
+    path: "/news",
+  });
 
 export default async function NewsPage() {
   const news = await getPublishedNews();

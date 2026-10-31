@@ -239,3 +239,20 @@
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
+
+/* <Reveal>: fade-and-rise driven by scroll position, no JavaScript. Content that is
+   already on screen at load is at the end of its range, so it paints immediately. */
+@supports (animation-timeline: view()) {
+  .eb-reveal {
+    animation: eb-reveal linear both;
+    animation-timeline: view();
+    animation-range: entry calc(var(--reveal-delay, 0) * 60%) entry calc(65% + var(--reveal-delay, 0) * 60%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .eb-reveal { animation: none !important; }
+}
+@keyframes eb-reveal {
+  from { opacity: 0; transform: translateY(var(--reveal-y, 18px)); }
+  to { opacity: 1; transform: none; }
+}

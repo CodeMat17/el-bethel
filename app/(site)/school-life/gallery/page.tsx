@@ -1,15 +1,15 @@
-import type { Metadata } from "next";
-
 import { CtaBand, PageHero } from "@/components/common";
 import { GalleryGrid } from "@/components/site/gallery-grid";
 import { getGallery } from "@/lib/school/site-data";
+import { pageMetadata } from "@/lib/school/seo";
 
-export const metadata: Metadata = {
-  title: "Gallery",
-  description:
-    "Photographs from classrooms, sports, excursions, cultural events, science, arts and facilities at El-Bethel International Academy, Abuja.",
-  alternates: { canonical: "/school-life/gallery" },
-};
+export const generateMetadata = () =>
+  pageMetadata({
+    title: "Gallery",
+    description:
+      "Photographs from classrooms, sports, excursions, cultural events, science, arts and facilities at El-Bethel International Academy, Abuja.",
+    path: "/school-life/gallery",
+  });
 
 export default async function GalleryPage() {
   return (

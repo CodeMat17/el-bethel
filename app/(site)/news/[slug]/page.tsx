@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { SITE_URL } from "@/lib/school/config";
+import { jsonLd, shareImage } from "@/lib/school/seo";
 import { getSchool } from "@/lib/school/site-content";
 import { getNewsBySlug, getPublishedNews } from "@/lib/school/site-data";
 import { formatDate, initials } from "@/lib/school/format";
@@ -23,20 +24,24 @@ export async function generateMetadata({ params }: PageProps<"/news/[slug]">): P
   const { slug } = await params;
   const [post, SCHOOL] = await Promise.all([getNewsBySlug(slug), getSchool()]);
   if (!post) return { title: "Article not found" };
+  const images = [shareImage(post.cover, post.title)];
   return {
-    title: post.seoTitle.replace(` | ${SCHOOL.name}`, ""),
-    description: post.seoDescription,
+    title: (post.seoTitle || post.title).replace(` | ${SCHOOL.name}`, ""),
+    description: post.seoDescription || post.excerpt,
     alternates: { canonical: `/news/${post.slug}` },
     openGraph: {
       type: "article",
+      locale: "en_NG",
+      siteName: SCHOOL.name,
       title: post.title,
       description: post.excerpt,
       url: `${SITE_URL}/news/${post.slug}`,
       publishedTime: post.publishedAt,
       authors: [post.authorName],
       tags: post.tags,
+      images,
     },
-    twitter: { card: "summary_large_image", title: post.title, description: post.excerpt },
+    twitter: { card: "summary_large_image", title: post.title, description: post.excerpt, images },
   };
 }
 
@@ -56,16 +61,22 @@ export default async function NewsArticlePage({ params }: PageProps<"/news/[slug
     "@type": "NewsArticle",
     headline: post.title,
     description: post.excerpt,
+    image: [shareImage(post.cover, post.title).url],
     datePublished: post.publishedAt,
     author: { "@type": "Person", name: post.authorName },
-    publisher: { "@type": "Organization", name: SCHOOL.name, url: SITE_URL },
+    publisher: {
+      "@type": "Organization",
+      name: SCHOOL.name,
+      url: SITE_URL,
+      logo: { "@type": "ImageObject", url: SCHOOL.logo?.url ?? `${SITE_URL}/logo.webp` },
+    },
     mainEntityOfPage: `${SITE_URL}/news/${post.slug}`,
     keywords: post.tags.join(", "),
   };
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(schema) }} />
 
       <article>
         <div className="relative">

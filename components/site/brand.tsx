@@ -60,7 +60,7 @@ export function Brand({
       <Image
         alt='School logo'
         priority
-        src={logo?.url ?? '/logo.webp'}
+        src={logo?.url ?? '/logo-small.webp'}
         width={40}
         height={40}
         className='rounded object-cover'

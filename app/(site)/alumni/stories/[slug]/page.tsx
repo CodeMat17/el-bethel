@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { CtaBand, PageHero } from "@/components/common";
 import { ToneImage } from "@/components/motion";
 import { formatDate } from "@/lib/school/format";
+import { pageMetadata } from "@/lib/school/seo";
 import { getAlumniHub, getAlumniStory } from "@/lib/school/site-data";
 
 export async function generateStaticParams() {
@@ -14,7 +15,7 @@ export async function generateMetadata({ params }: PageProps<"/alumni/stories/[s
   const { slug } = await params;
   const story = await getAlumniStory(slug);
   if (!story) return { title: "Story not found" };
-  return { title: story.title, description: story.excerpt, alternates: { canonical: `/alumni/stories/${slug}` } };
+  return pageMetadata({ title: story.title, description: story.excerpt, path: `/alumni/stories/${slug}`, image: story.cover, type: "article" });
 }
 
 export default async function AlumniStoryPage({ params }: PageProps<"/alumni/stories/[slug]">) {

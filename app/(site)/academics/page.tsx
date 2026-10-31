@@ -1,5 +1,3 @@
-import type { Metadata } from "next";
-
 import { CtaBand, PageHero, SectionHeading } from "@/components/common";
 import { Reveal, ToneImage } from "@/components/motion";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,13 +9,15 @@ import {
 } from "@/lib/school/config";
 import { getContent } from "@/lib/school/site-content";
 import { getLevelSummary, getSubjects } from "@/lib/school/site-data";
+import { pageMetadata } from "@/lib/school/seo";
 
-export const metadata: Metadata = {
-  title: "Academics",
-  description:
-    "The El-Bethel International Academy curriculum: fourteen class levels from Creche to JSS 3, thirty subjects and continuous assessment.",
-  alternates: { canonical: "/academics" },
-};
+export const generateMetadata = () =>
+  pageMetadata({
+    title: "Academics",
+    description:
+      "The El-Bethel International Academy curriculum: fourteen class levels from Creche to JSS 3, thirty subjects and continuous assessment.",
+    path: "/academics",
+  });
 
 /** Colour and built-in photo for each stage; the photo can be replaced in the Site portal. */
 const STAGE_TONES = Object.fromEntries(STAGES.map((s) => [s.key, s.tone]));
