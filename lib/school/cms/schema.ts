@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LEVEL_ID_SET } from "../config";
 
 /**
  * Website content managed from the Site portal. Each document (the school's
@@ -135,7 +136,8 @@ const block = <T extends z.ZodRawShape>(extra: T) => section.extend(extra);
 const titled = z.object({ title: text(120), text: text(600) });
 const iconCard = z.object({ icon: text(40), title: text(80), text: text(400) });
 const amountLine = z.object({ label: text(80), amount: z.number().min(0).max(100_000_000) });
-const levelIds = z.array(z.string().regex(/^lvl-[a-z0-9]+$/)).max(20);
+/** Class levels; ids no longer on the school's list are dropped rather than failing the whole document. */
+const levelIds = z.array(z.string()).max(20).transform((ids) => ids.filter((id) => LEVEL_ID_SET.has(id)));
 
 /* ---------------------------------- about --------------------------------- */
 
@@ -171,7 +173,10 @@ export const academicsSchema = z.object({
   stages: z.object({
     ...visible,
     items: z.array(z.object({ key: z.enum(STAGE_KEYS), name: text(60), ages: text(40), text: text(500), image: cmsImage })).length(STAGE_KEYS.length),
-    levels: z.array(z.object({ id: z.string().regex(/^lvl-[a-z0-9]+$/), name: text(40), focus: text(400) })).max(20),
+    levels: z
+      .array(z.object({ id: z.string(), name: text(40), focus: text(400) }))
+      .max(20)
+      .transform((rows) => rows.filter((r) => LEVEL_ID_SET.has(r.id))),
   }),
   subjects: z.object({ ...visible, eyebrow: text(80), title: text(160) }),
   assessment: section,

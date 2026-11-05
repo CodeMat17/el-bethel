@@ -155,7 +155,7 @@ export function PublishMidterm({
             </AlertDialogContent>
           </AlertDialog>
         ) : (
-          <p className="text-sm text-muted-foreground">Only the class teacher or an administrator can publish these results.</p>
+          <p className="text-sm text-muted-foreground">Only the class teacher (the Handler, for Creche) can publish these results.</p>
         )}
         {published && canUnpublish ? (
           <Button variant="outline" size="lg" className="font-bold" disabled={pending !== null} onClick={unpublish}>

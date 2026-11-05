@@ -28,6 +28,7 @@ import type * as lib_delivery from "../lib/delivery.js";
 import type * as lib_mappers from "../lib/mappers.js";
 import type * as lib_util from "../lib/util.js";
 import type * as midterm from "../midterm.js";
+import type * as migrations from "../migrations.js";
 import type * as newsRelease from "../newsRelease.js";
 import type * as notifications from "../notifications.js";
 import type * as office from "../office.js";
@@ -67,6 +68,7 @@ declare const fullApi: ApiFromModules<{
   "lib/mappers": typeof lib_mappers;
   "lib/util": typeof lib_util;
   midterm: typeof midterm;
+  migrations: typeof migrations;
   newsRelease: typeof newsRelease;
   notifications: typeof notifications;
   office: typeof office;

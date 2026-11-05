@@ -39,7 +39,7 @@ export const PUBLIC_NAV: NavSection[] = [
     ],
     featured: {
       title: "2026/2027 admission is open",
-      text: "Creche, Pre-School, Nursery, Primary and JSS 1–3. Limited spaces are available in some classes.",
+      text: "Creche, Prep, Nursery, Primary and JSS 1–3. Limited spaces are available in some classes.",
       href: "/admissions/apply",
       cta: "Apply online",
     },

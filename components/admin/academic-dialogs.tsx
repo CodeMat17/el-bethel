@@ -40,22 +40,21 @@ export function ClassDialog({ cls, levels, teachers }: { cls?: SchoolClass; leve
       }}
     >
       <Hidden name="id" value={cls?.id} />
-      <div className="grid gap-4 sm:grid-cols-2">
-        <SelectField name="levelId" label="Level" options={levels} defaultValue={cls?.levelId ?? levels[0]?.value} />
-        <TextField name="section" label="Section" defaultValue={cls?.section ?? "A"} maxLength={4} />
-      </div>
-      <TextField name="name" label="Class name" defaultValue={cls?.name} placeholder="Primary 4A" required />
+      <SelectField
+        name="levelId"
+        label="Class"
+        options={levels}
+        defaultValue={cls?.levelId ?? levels[0]?.value}
+        description="Each level is one class, named after the level (for example Primary 4)."
+      />
       <SelectField
         name="classTeacherId"
-        label="Class teacher"
+        label="Class teacher / Handler"
         options={[{ value: NONE, label: "None yet" }, ...teachers]}
         defaultValue={cls?.classTeacherId ?? NONE}
-        description="The class teacher can publish this class's term results."
+        description="Creche is run by a Handler; every other class has a class teacher. Either one can publish this class's term results."
       />
-      <div className="grid gap-4 sm:grid-cols-2">
-        <TextField name="capacity" type="number" min={1} max={200} label="Capacity" defaultValue={cls?.capacity ?? 30} />
-        <TextField name="room" label="Room" defaultValue={cls?.room} placeholder="Block A · Room 4" />
-      </div>
+      <TextField name="capacity" type="number" min={1} max={200} label="Capacity" defaultValue={cls?.capacity ?? 30} />
     </FormDialog>
   );
 }

@@ -17,6 +17,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { linkGuardian, setStudentStatus } from "@/lib/school/actions/admin";
 import { isSuperAdmin, requireAdmin } from "@/lib/school/auth";
+import { classLeadTitle } from "@/lib/school/config";
 import { query } from "@/lib/school/convex";
 import { studentName } from "@/lib/school/data";
 import { getDirectory } from "@/lib/school/directory";
@@ -80,7 +81,7 @@ export default async function AdminStudentPage({ params }: PageProps<"/portal/ad
               ["Nationality", student.nationality],
               ["House", student.house],
               ["Blood group", student.bloodGroup || "—"],
-              ["Class teacher", dir.teacherName(dir.getClass(student.classId)?.classTeacherId)],
+              [classLeadTitle(dir.getClass(student.classId)?.levelId), dir.teacherName(dir.getClass(student.classId)?.classTeacherId)],
             ].map(([label, value]) => (
               <div key={label}>
                 <dt className="text-xs font-bold text-muted-foreground uppercase">{label}</dt>

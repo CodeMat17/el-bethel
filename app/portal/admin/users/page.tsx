@@ -42,7 +42,7 @@ const PERMISSIONS: { role: Role; can: string[]; cannot: string[] }[] = [
   },
   {
     role: "teacher",
-    can: ["Set assignments for classes they teach", "Mark submissions", "Enter scores for their subjects", "Publish results as class teacher"],
+    can: ["Set assignments for classes they teach", "Mark submissions", "Enter scores for their subjects", "Publish results as class teacher (or Handler, for Creche)"],
     cannot: ["See classes they don't teach", "Change published results", "Manage accounts"],
   },
   {

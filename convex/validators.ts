@@ -1,4 +1,9 @@
 import { v, type Infer } from "convex/values";
+import { LEVEL_IDS } from "../lib/school/config";
+
+/** A class level from the school's fixed list (Creche … JSS 3). Old levels are rejected. */
+const [firstLevel, secondLevel, ...otherLevels] = LEVEL_IDS.map((id) => v.literal(id));
+export const levelId = v.union(firstLevel, secondLevel, ...otherLevels);
 
 export const role = v.union(
   v.literal("super_admin"),

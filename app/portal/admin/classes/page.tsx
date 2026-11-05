@@ -11,7 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { api } from "@/convex/_generated/api";
 import { requireAdmin } from "@/lib/school/auth";
-import { CLASS_LEVELS } from "@/lib/school/config";
+import { CLASS_LEVELS, classLeadTitle } from "@/lib/school/config";
 import { query } from "@/lib/school/convex";
 import { teacherName } from "@/lib/school/data";
 import { getDirectory } from "@/lib/school/directory";
@@ -32,7 +32,7 @@ export default async function AdminClassesPage() {
     <>
       <PortalPageHeader
         title="Classes"
-        description="Every class, its class teacher and who teaches each subject. Open a class to assign subject teachers."
+        description="Every class, its class teacher (the Handler for Creche) and who teaches each subject. Open a class to assign subject teachers."
         action={<ClassDialog levels={levels} teachers={teachers} />}
       />
 
@@ -64,7 +64,7 @@ export default async function AdminClassesPage() {
               <div className="flex flex-wrap items-baseline justify-between gap-3">
                 <h2 className="font-heading text-lg font-extrabold">{level.name}</h2>
                 <p className="text-sm text-muted-foreground">
-                  {levelClasses.length} section{levelClasses.length === 1 ? "" : "s"} · {subjects.length} subjects
+                  {subjects.length} subjects
                 </p>
               </div>
               <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -75,10 +75,7 @@ export default async function AdminClassesPage() {
                   return (
                     <Card key={cls.id} className="gap-0 p-5">
                       <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <h3 className="font-heading text-base font-extrabold">{cls.name}</h3>
-                          <p className="mt-0.5 text-xs text-muted-foreground">{cls.room || "No room set"}</p>
-                        </div>
+                        <h3 className="font-heading text-base font-extrabold">{cls.name}</h3>
                         <Badge variant={roster > cls.capacity ? "destructive" : "secondary"} className="font-bold">
                           {roster}/{cls.capacity}
                         </Badge>
@@ -86,7 +83,7 @@ export default async function AdminClassesPage() {
                       <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-muted">
                         <div className={`h-full rounded-full ${roster > cls.capacity ? "bg-destructive" : "bg-viz-3"}`} style={{ width: `${Math.min(100, fill)}%` }} />
                       </div>
-                      <p className="mt-3 truncate text-xs text-muted-foreground">Class teacher: {dir.teacherName(cls.classTeacherId)}</p>
+                      <p className="mt-3 truncate text-xs text-muted-foreground">{classLeadTitle(cls.levelId)}: {dir.teacherName(cls.classTeacherId)}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
                         Subject teachers: {assigned} of {subjects.length} assigned
                       </p>

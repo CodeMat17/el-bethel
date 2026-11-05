@@ -22,7 +22,7 @@ import type { CmsData } from "./schema";
 const defaultCta = {
   visible: true,
   title: "Ready to join the El-Bethel family?",
-  text: "Admission for the {session} session is open for every class — Creche, Pre-School, Nursery 1–3, Primary 1–6 and JSS 1–3. Spaces in some classes are limited.",
+  text: "Admission for the {session} session is open for every class — Creche, Prep 1–2, Nursery 1–2, Primary 1–6 and JSS 1–3. Spaces in some classes are limited.",
   primary: { label: "Apply for admission", href: "/admissions/apply" },
   secondary: { label: "Contact the school", href: "/contact" },
 };
@@ -40,7 +40,7 @@ export const about: CmsData["about"] = {
     lede: "Why should a child have to choose between a school that is academically serious and one that is genuinely kind?",
     paragraphs: [
       "A small group of Abuja educators and parents opened El-Bethel International Academy with thirty-one pupils. The premise was simple: children learn best when they feel safe, valued and challenged — in that order.",
-      "That premise has not changed, but the school around it has. We now teach fourteen class levels across twenty-nine classes — creche, pre-school, nursery, primary and junior secondary — with a science laboratory, an ICT and innovation lab, a library, a creative arts studio and full sporting facilities.",
+      "That premise has not changed, but the school around it has. We now teach fourteen class levels across twenty-nine classes — creche, prep, nursery, primary and junior secondary — with a science laboratory, an ICT and innovation lab, a library, a creative arts studio and full sporting facilities.",
       "What has stayed constant is the relationship at the centre of it all: a class teacher who knows your child, and a school that keeps you genuinely informed about how they are doing.",
     ],
     image: null,
@@ -127,10 +127,10 @@ export const team: CmsData["team"] = {
 
 const YEAR_FOCUS: Record<string, string> = {
   "lvl-cre": "Settling, secure attachment, sensory play, first words and a predictable daily rhythm.",
-  "lvl-pre": "Talking in short sentences, colours and shapes, sharing and turn-taking, toilet independence.",
+  "lvl-pr1": "Talking in short sentences, colours and shapes, sharing and turn-taking, toilet independence.",
+  "lvl-pr2": "Songs and rhymes, first letter sounds, counting to 10, simple routines done on their own.",
   "lvl-n1": "Letter sounds, number recognition to 20, holding a pencil correctly, my body and my family.",
-  "lvl-n2": "Blending simple words, writing numerals to 50, plants and animals, first computer play.",
-  "lvl-n3": "Reading three-letter words and first sentences, numbers to 100, full Primary 1 readiness.",
+  "lvl-n2": "Reading three-letter words and first sentences, numbers to 100, full Primary 1 readiness.",
   "lvl-p1": "Reading fluency, number bonds to 20, structured routines and independence.",
   "lvl-p2": "Extended writing, times tables to 5, first science investigations.",
   "lvl-p3": "Comprehension strategies, multiplication and division, coding begins.",
@@ -175,7 +175,7 @@ export const admissions: CmsData["admissions"] = {
   hero: {
     eyebrow: "{session} admission",
     title: "Admission is open",
-    lede: "Admission is open for every class — Creche, Pre-School, Nursery 1–3, Primary 1–6 and JSS 1–3 — for the {session} session. Limited spaces are available in some classes.",
+    lede: "Admission is open for every class — Creche, Prep 1–2, Nursery 1–2, Primary 1–6 and JSS 1–3 — for the {session} session. Limited spaces are available in some classes.",
     primary: { label: "Apply online", href: "/admissions/apply" },
     secondary: { label: "View school fees", href: "/admissions#fees" },
   },

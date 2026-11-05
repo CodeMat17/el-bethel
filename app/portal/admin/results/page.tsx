@@ -35,7 +35,7 @@ export default async function AdminResultsPage({ searchParams }: PageProps<"/por
     <>
       <PortalPageHeader
         title="Exam results"
-        description="Every class's term results. Subject teachers enter scores; the class teacher or an administrator publishes them."
+        description="Every class's term results, view only. Subject teachers enter scores and the class teacher publishes them."
       />
 
       <Card className="mb-6 gap-0 p-4">
@@ -107,16 +107,16 @@ export default async function AdminResultsPage({ searchParams }: PageProps<"/por
                       size="sm"
                       variant="outline"
                       className="font-bold"
-                      render={<Link href={`/portal/teacher/results?class=${row.classId}&term=${term?.id}&view=scores`} />}
+                      render={<Link href={`/portal/admin/results/view?class=${row.classId}&term=${term?.id}&view=scores`} />}
                     >
                       Scores
                     </Button>
                     <Button
                       size="sm"
                       className="font-bold"
-                      render={<Link href={`/portal/teacher/results?class=${row.classId}&term=${term?.id}&view=publish`} />}
+                      render={<Link href={`/portal/admin/results/view?class=${row.classId}&term=${term?.id}&view=publish`} />}
                     >
-                      {row.published ? "Review" : "Publish"}
+                      Summary
                     </Button>
                   </div>
                 </TableCell>

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { requireTeacher } from "@/lib/school/auth";
-import { ROLE_LABELS } from "@/lib/school/config";
+import { ROLE_LABELS, leadTitleForClasses } from "@/lib/school/config";
 import { api } from "@/convex/_generated/api";
 import { query } from "@/lib/school/convex";
 import { teacherName } from "@/lib/school/data";
@@ -32,6 +32,7 @@ export default async function TeacherProfilePage() {
   ]);
   const classes = dir.classesForTeacher(teacher.id);
   const subjects = dir.subjectsForTeacher(teacher.id);
+  const leads = classes.filter((c) => c.classTeacherId === teacher.id);
   const pupils = classes.reduce((sum, c) => sum + (sizes[c.id] ?? 0), 0);
   const lessons = timetable.length;
 
@@ -76,7 +77,7 @@ export default async function TeacherProfilePage() {
               ["Phone", teacher.phone],
               ["Department", teacher.department],
               ["Experience", `${teacher.experienceYears} years`],
-              ["Class teacher", teacher.isClassTeacher ? "Yes" : "No"],
+              [leadTitleForClasses(leads), leads.length ? leads.map((c) => c.name).join(", ") : "No"],
               ["Status", teacher.active ? "Active" : "Inactive"],
             ].map(([label, value]) => (
               <div key={label}>

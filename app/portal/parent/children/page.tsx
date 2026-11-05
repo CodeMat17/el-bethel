@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { requireParent } from "@/lib/school/auth";
+import { classLeadTitle } from "@/lib/school/config";
 import { api } from "@/convex/_generated/api";
 import { studentName } from "@/lib/school/data";
 import { getMyChildren } from "@/lib/school/parent";
@@ -82,7 +83,7 @@ export default async function ParentChildrenPage() {
 
                 <dl className="space-y-2.5 text-sm">
                   <div className="flex items-center justify-between gap-3">
-                    <dt className="text-muted-foreground">Class teacher</dt>
+                    <dt className="text-muted-foreground">{classLeadTitle(dir.getClass(child.classId)?.levelId)}</dt>
                     <dd className="truncate font-bold">
                       {dir.teacherName(dir.getClass(child.classId)?.classTeacherId)}
                     </dd>

@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { api } from "@/convex/_generated/api";
 import { requirePupil } from "@/lib/school/auth";
+import { classLeadTitle } from "@/lib/school/config";
 import { query } from "@/lib/school/convex";
 import { studentName } from "@/lib/school/data";
 import { getDirectory } from "@/lib/school/directory";
@@ -48,7 +49,7 @@ export default async function PupilProfilePage() {
               {dir.className(student.classId)} · {student.house} House
             </p>
             <p className="mt-0.5 text-sm text-navy-foreground/70">
-              My class teacher is {dir.teacherName(cls?.classTeacherId)}
+              My {classLeadTitle(cls?.levelId).toLowerCase()} is {dir.teacherName(cls?.classTeacherId)}
             </p>
           </div>
         </div>
@@ -67,7 +68,6 @@ export default async function PupilProfilePage() {
             {[
               ["Student number", student.studentNo],
               ["Class", dir.className(student.classId)],
-              ["Classroom", cls?.room ?? "—"],
               ["House", student.house],
               ["Date of birth", formatDate(student.dateOfBirth)],
               ["Joined El-Bethel", formatDate(student.enrolledAt)],

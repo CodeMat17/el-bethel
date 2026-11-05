@@ -128,7 +128,7 @@ const home: CmsData["home"] = {
   cta: {
     visible: true,
     title: "Ready to join the El-Bethel family?",
-    text: "Admission for the {session} session is open for every class — Creche, Pre-School, Nursery 1–3, Primary 1–6 and JSS 1–3. Spaces in some classes are limited.",
+    text: "Admission for the {session} session is open for every class — Creche, Prep 1–2, Nursery 1–2, Primary 1–6 and JSS 1–3. Spaces in some classes are limited.",
     primary: { label: "Apply for admission", href: "/admissions/apply" },
     secondary: { label: "Contact the school", href: "/contact" },
   },

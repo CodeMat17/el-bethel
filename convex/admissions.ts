@@ -6,7 +6,7 @@ import { fail, requireAdmin } from "./lib/access";
 import { publishedContent } from "./lib/cms";
 import { audit, nowISO, withId } from "./lib/util";
 import { nextStudentNo } from "./people";
-import { applicationStatus } from "./validators";
+import { applicationStatus, levelId } from "./validators";
 
 /**
  * Online admissions. Public sign-up is off, so applicants don't get accounts:
@@ -65,7 +65,7 @@ export const start = mutation({
     fullName: v.string(),
     email: v.string(),
     phone: v.string(),
-    intendedLevelId: v.string(),
+    intendedLevelId: levelId,
   },
   handler: async (ctx, args) => {
     if (args.tokenHash.length < 32) fail("INVALID", "Invalid session.");
@@ -102,7 +102,7 @@ export const start = mutation({
 export const savePupil = mutation({
   args: {
     tokenHash: v.string(),
-    intendedLevelId: v.string(),
+    intendedLevelId: levelId,
     pupil: v.object({
       firstName: v.string(),
       middleName: v.string(),

@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { api } from "@/convex/_generated/api";
 import { requireTeacher } from "@/lib/school/auth";
+import { classLeadTitle } from "@/lib/school/config";
 import { query } from "@/lib/school/convex";
 import { getDirectory } from "@/lib/school/directory";
 
@@ -47,11 +48,8 @@ export default async function TeacherClassesPage() {
             return (
               <Card key={cls.id} className="flex h-full flex-col gap-0 p-5">
                 <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="font-heading text-lg font-extrabold">{cls.name}</h2>
-                    <p className="mt-0.5 text-sm text-muted-foreground">{cls.room}</p>
-                  </div>
-                  {isClassTeacher ? <StatusPill tone="gold">Class teacher</StatusPill> : null}
+                  <h2 className="font-heading text-lg font-extrabold">{cls.name}</h2>
+                  {isClassTeacher ? <StatusPill tone="gold">{classLeadTitle(cls.levelId)}</StatusPill> : null}
                 </div>
 
                 <Separator className="my-4" />
@@ -72,12 +70,11 @@ export default async function TeacherClassesPage() {
                 </dl>
 
                 <p className="mt-4 text-xs text-muted-foreground">
-                  Class teacher: {dir.teacherName(cls.classTeacherId)}
+                  {classLeadTitle(cls.levelId)}: {dir.teacherName(cls.classTeacherId)}
                 </p>
 
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   <Badge variant="secondary" className="font-bold">{dir.levelName(cls.levelId)}</Badge>
-                  <Badge variant="secondary" className="font-bold">Section {cls.section}</Badge>
                 </div>
 
                 <Button

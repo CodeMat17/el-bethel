@@ -150,7 +150,6 @@ export default async function AcademicsPage() {
                 <thead className="bg-muted/70 text-xs uppercase">
                   <tr>
                     <th scope="col" className="px-4 py-3 text-left font-extrabold">Level</th>
-                    <th scope="col" className="px-4 py-3 text-right font-extrabold">Sections</th>
                     <th scope="col" className="px-4 py-3 text-right font-extrabold">Pupils</th>
                   </tr>
                 </thead>
@@ -158,7 +157,6 @@ export default async function AcademicsPage() {
                   {CLASS_LEVELS.map((level) => (
                     <tr key={level.id} className="border-t">
                       <th scope="row" className="px-4 py-3 text-left font-bold">{level.name}</th>
-                      <td className="px-4 py-3 text-right tabular-nums">{levels[level.id]?.sections ?? 0}</td>
                       <td className="px-4 py-3 text-right tabular-nums">{levels[level.id]?.pupils ?? 0}</td>
                     </tr>
                   ))}

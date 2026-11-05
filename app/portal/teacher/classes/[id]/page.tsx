@@ -13,6 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/convex/_generated/api";
 import { requireTeacher } from "@/lib/school/auth";
+import { classLeadTitle } from "@/lib/school/config";
 import { query } from "@/lib/school/convex";
 import { studentName } from "@/lib/school/data";
 import { getDirectory } from "@/lib/school/directory";
@@ -39,9 +40,9 @@ export default async function TeacherClassPage({ params }: PageProps<"/portal/te
       </Button>
 
       <PortalPageHeader
-        eyebrow={`${levelName} · ${cls.room}`}
+        eyebrow={levelName}
         title={cls.name}
-        description={`Class teacher: ${dir.teacherName(cls.classTeacherId)}`}
+        description={`${classLeadTitle(cls.levelId)}: ${dir.teacherName(cls.classTeacherId)}`}
         action={
           <Button size="lg" className="font-bold" render={<Link href={`/portal/teacher/assignments/create?class=${cls.id}`} />}>
             New assignment

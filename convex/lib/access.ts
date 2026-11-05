@@ -186,11 +186,62 @@ export async function assertTeachesSubject(
   }
 }
 
-/** Class teachers (and admins) publish a class's term results. */
-export async function assertCanPublishClassResults(ctx: Ctx, viewer: Viewer, classId: Id<"classes">) {
-  if (isAdmin(viewer)) return;
+/* --------------------------------- results -------------------------------- */
+
+/**
+ * Results belong to the teachers: only the subject teacher (or the class
+ * teacher) enters scores, and only the class teacher publishes. Administrators,
+ * the super admin included, can read every class's results but change none of
+ * them; their one lever is withdrawing published results so a teacher can
+ * correct them.
+ */
+export async function entersSubjectScores(
+  ctx: Ctx,
+  viewer: Viewer,
+  classId: Id<"classes">,
+  subjectId: Id<"subjects">,
+): Promise<boolean> {
+  if (!viewer.teacherId) return false;
   const cls = await ctx.db.get(classId);
-  if (!viewer.teacherId || cls?.classTeacherId !== viewer.teacherId) {
-    fail("FORBIDDEN", "Only the class teacher or an administrator can publish this class's results.");
+  if (cls?.classTeacherId === viewer.teacherId) return true;
+  const row = await ctx.db
+    .query("teachingAssignments")
+    .withIndex("by_class_subject", (q) => q.eq("classId", classId).eq("subjectId", subjectId))
+    .first();
+  return row?.teacherId === viewer.teacherId;
+}
+
+export async function assertEntersSubjectScores(
+  ctx: Ctx,
+  viewer: Viewer,
+  classId: Id<"classes">,
+  subjectId: Id<"subjects">,
+) {
+  if (!(await entersSubjectScores(ctx, viewer, classId, subjectId))) {
+    fail("FORBIDDEN", "Only the teacher of this subject in this class can enter its scores.");
+  }
+}
+
+/** Admins may read any score sheet; teachers only the ones they enter. */
+export async function assertCanViewSubjectScores(
+  ctx: Ctx,
+  viewer: Viewer,
+  classId: Id<"classes">,
+  subjectId: Id<"subjects">,
+) {
+  if (isAdmin(viewer)) return;
+  await assertEntersSubjectScores(ctx, viewer, classId, subjectId);
+}
+
+export async function canPublishClassResults(ctx: Ctx, viewer: Viewer, classId: Id<"classes">): Promise<boolean> {
+  if (!viewer.teacherId) return false;
+  const cls = await ctx.db.get(classId);
+  return cls?.classTeacherId === viewer.teacherId;
+}
+
+/** Only the class teacher (the Handler, for Creche) publishes a class's results. */
+export async function assertCanPublishClassResults(ctx: Ctx, viewer: Viewer, classId: Id<"classes">) {
+  if (!(await canPublishClassResults(ctx, viewer, classId))) {
+    fail("FORBIDDEN", "Only the class teacher (the Handler, for Creche) can publish this class's results.");
   }
 }

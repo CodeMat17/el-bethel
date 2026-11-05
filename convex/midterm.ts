@@ -6,9 +6,12 @@ import { internal } from "./_generated/api";
 import { internalAction, internalMutation, internalQuery, mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import {
   assertCanPublishClassResults,
+  assertCanViewSubjectScores,
+  assertEntersSubjectScores,
   assertStudentAccess,
   assertTeachesClass,
-  assertTeachesSubject,
+  canPublishClassResults,
+  entersSubjectScores,
   fail,
   isAdmin,
   requireAdmin,
@@ -106,7 +109,7 @@ export const subjectSheet = query({
   args: { classId: v.id("classes"), subjectId: v.id("subjects"), termId: v.id("terms") },
   handler: async (ctx, { classId, subjectId, termId }) => {
     const viewer = await requireStaff(ctx);
-    await assertTeachesSubject(ctx, viewer, classId, subjectId);
+    await assertCanViewSubjectScores(ctx, viewer, classId, subjectId);
     const [students, scores, published] = await Promise.all([
       ctx.db
         .query("students")
@@ -121,7 +124,8 @@ export const subjectSheet = query({
     const byStudent = new Map(scores.map((s) => [s.studentId, s]));
     return {
       published: Boolean(published),
-      locked: Boolean(published) && !isAdmin(viewer),
+      // Read-only once published, and always for anyone who does not enter this subject (administrators).
+      locked: Boolean(published) || !(await entersSubjectScores(ctx, viewer, classId, subjectId)),
       maxScore: scores[0]?.maxScore ?? DEFAULT_MIDTERM_MAX,
       rows: students
         .filter((s) => s.status === "active" || byStudent.has(s._id))
@@ -163,9 +167,9 @@ export const saveSubjectScores = mutation({
   },
   handler: async (ctx, { classId, subjectId, termId, maxScore, rows }) => {
     const viewer = await requireStaff(ctx);
-    await assertTeachesSubject(ctx, viewer, classId, subjectId);
-    if ((await publication(ctx, classId, termId)) && !isAdmin(viewer)) {
-      fail("INVALID", "These mid-term results have been published. Ask an administrator to make changes.");
+    await assertEntersSubjectScores(ctx, viewer, classId, subjectId);
+    if (await publication(ctx, classId, termId)) {
+      fail("INVALID", "These mid-term results have been published. Ask an administrator to withdraw them if a score needs to change.");
     }
     if (!isValidMidtermMax(maxScore)) fail("INVALID", "The test must be marked out of a whole number between 1 and 100.");
     const existing = await ctx.db
@@ -223,7 +227,7 @@ export const classSummary = query({
     const { rows, positions } = rankPupils(scores);
     const byStudent = new Map(rows.map((r) => [r.studentId, r]));
     return {
-      canPublish: isAdmin(viewer) || cls.classTeacherId === viewer.teacherId,
+      canPublish: await canPublishClassResults(ctx, viewer, classId),
       published: Boolean(published),
       publishedAt: published?.publishedAt ?? null,
       subjectsEntered: new Set(scores.map((s) => s.subjectId)).size,

@@ -378,11 +378,8 @@ export async function saveClass(formData: FormData): Promise<AdminResult> {
   const result = await tryMutation(api.academics.saveClass, {
     id: opt(formData, "id") as Id<"classes"> | undefined,
     levelId: str(formData, "levelId"),
-    section: str(formData, "section"),
-    name: str(formData, "name"),
     classTeacherId: opt(formData, "classTeacherId") as Id<"teachers"> | undefined,
     capacity: num(formData, "capacity") || 30,
-    room: str(formData, "room"),
   });
   if (!result.ok) return { ok: false, message: result.message };
   refreshSite(SITE_TAGS.directory, SITE_TAGS.levels);
@@ -662,7 +659,7 @@ export async function recordPayment(formData: FormData): Promise<AdminResult> {
   const result = await tryMutation(api.fees.recordPayment, {
     invoiceId: str(formData, "invoiceId") as Id<"invoices">,
     amount: num(formData, "amount"),
-    provider: (provider === "cash" ? "cash" : "bank_transfer") as "bank_transfer" | "cash",
+    provider: (provider === "pos" ? "pos" : "bank_transfer") as "bank_transfer" | "pos",
     reference: opt(formData, "reference"),
   });
   if (!result.ok) return { ok: false, message: result.message };

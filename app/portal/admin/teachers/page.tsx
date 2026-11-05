@@ -43,7 +43,7 @@ export default async function AdminTeachersPage({ searchParams }: PageProps<"/po
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Active staff" value={result.counts.active} icon="GraduationCap" tone="info" />
         <StatCard label="On record" value={result.counts.all} icon="Users" tone="neutral" />
-        <StatCard label="Class teachers" value={dir.teachers.filter((t) => t.isClassTeacher).length} icon="School" tone="gold" />
+        <StatCard label="Class teachers & handlers" value={dir.teachers.filter((t) => t.isClassTeacher).length} icon="School" tone="gold" />
         <StatCard label="Departments" value={result.departments.length} icon="Layers" tone="neutral" />
       </div>
 

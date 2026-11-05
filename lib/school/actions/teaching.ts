@@ -35,6 +35,7 @@ export async function saveSubjectScores(input: {
   });
   if (!result.ok) return { ok: false, message: result.message };
   revalidatePath("/portal/teacher/results");
+  revalidatePath("/portal/admin/results", "layout");
   return { ok: true, message: `Scores saved for ${result.data.saved} pupils.` };
 }
 
@@ -83,6 +84,7 @@ export async function saveMidtermScores(input: {
   });
   if (!result.ok) return { ok: false, message: result.message };
   revalidatePath("/portal/teacher/results");
+  revalidatePath("/portal/admin/results", "layout");
   return { ok: true, message: `Mid-term scores saved for ${result.data.saved} pupils.` };
 }
 

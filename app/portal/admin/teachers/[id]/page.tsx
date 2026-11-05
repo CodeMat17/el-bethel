@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { api } from "@/convex/_generated/api";
 import { isSuperAdmin, requireAdmin } from "@/lib/school/auth";
+import { leadTitleForClasses } from "@/lib/school/config";
 import { query } from "@/lib/school/convex";
 import { teacherName } from "@/lib/school/data";
 import { getDirectory } from "@/lib/school/directory";
@@ -87,7 +88,7 @@ export default async function AdminTeacherPage({ params }: PageProps<"/portal/ad
           <Separator className="my-4" />
           {classTeacherOf.length > 0 ? (
             <p className="mb-4 text-sm">
-              Class teacher of{" "}
+              {leadTitleForClasses(classTeacherOf)} of{" "}
               {classTeacherOf.map((c) => (
                 <Badge key={c.id} className="mr-1 font-bold">
                   {c.name}

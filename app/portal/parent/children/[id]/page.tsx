@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { requireParent } from "@/lib/school/auth";
+import { classLeadTitle } from "@/lib/school/config";
 import { api } from "@/convex/_generated/api";
 import { studentName } from "@/lib/school/data";
 import { getDirectory } from "@/lib/school/directory";
@@ -151,11 +152,7 @@ export default async function ChildProfilePage({ params }: PageProps<"/portal/pa
                 <dd className="font-bold">{cls?.name}</dd>
               </div>
               <div className="flex items-center justify-between gap-3">
-                <dt className="text-muted-foreground">Room</dt>
-                <dd className="font-bold">{cls?.room}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <dt className="text-muted-foreground">Class teacher</dt>
+                <dt className="text-muted-foreground">{classLeadTitle(cls?.levelId)}</dt>
                 <dd className="truncate font-bold">{dir.teacherName(cls?.classTeacherId)}</dd>
               </div>
             </dl>

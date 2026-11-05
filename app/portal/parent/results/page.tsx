@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { requireParent } from "@/lib/school/auth";
+import { classLeadTitle } from "@/lib/school/config";
 import { api } from "@/convex/_generated/api";
 import { studentName } from "@/lib/school/data";
 import { getMyChildren, resolveActiveChild } from "@/lib/school/parent";
@@ -248,7 +249,7 @@ export default async function ParentResultsPage({ searchParams }: PageProps<"/po
                     ) : null}
                     <div className="space-y-4 text-sm">
                       <div>
-                        <p className="text-xs font-bold text-muted-foreground uppercase">Class teacher</p>
+                        <p className="text-xs font-bold text-muted-foreground uppercase">{classLeadTitle(dir.getClass(report.classId)?.levelId)}</p>
                         <p className="mt-1 leading-relaxed">{report.teacherComment}</p>
                       </div>
                       <div>

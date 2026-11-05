@@ -164,7 +164,7 @@ export default async function AdminSettingsPage() {
             <ul className="space-y-2.5">
               {[
                 { name: "Bank transfer", detail: "Paid into the school account, quoting the invoice or application number." },
-                { name: "Cash / POS at the bursary", detail: "Paid in person at the school bursary." },
+                { name: "POS at the bursary", detail: "Paid by card at the school bursary." },
               ].map((method) => (
                 <li key={method.name} className="flex items-center justify-between gap-3 rounded-xl border bg-card p-4">
                   <div>

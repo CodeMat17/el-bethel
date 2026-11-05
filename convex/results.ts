@@ -5,9 +5,12 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import {
   assertCanPublishClassResults,
+  assertCanViewSubjectScores,
+  assertEntersSubjectScores,
   assertStudentAccess,
   assertTeachesClass,
-  assertTeachesSubject,
+  canPublishClassResults,
+  entersSubjectScores,
   fail,
   isAdmin,
   requireAdmin,
@@ -122,7 +125,7 @@ export const subjectSheet = query({
   args: { classId: v.id("classes"), subjectId: v.id("subjects"), termId: v.id("terms") },
   handler: async (ctx, { classId, subjectId, termId }) => {
     const viewer = await requireStaff(ctx);
-    await assertTeachesSubject(ctx, viewer, classId, subjectId);
+    await assertCanViewSubjectScores(ctx, viewer, classId, subjectId);
     const [students, results, published] = await Promise.all([
       ctx.db
         .query("students")
@@ -137,7 +140,8 @@ export const subjectSheet = query({
     const byStudent = new Map(results.map((r) => [r.studentId, r]));
     return {
       published,
-      locked: published && !isAdmin(viewer),
+      // Read-only once published, and always for anyone who does not enter this subject (administrators).
+      locked: published || !(await entersSubjectScores(ctx, viewer, classId, subjectId)),
       caMax: results.find((r) => r.caMax !== undefined)?.caMax ?? DEFAULT_CA_MAX,
       rows: students
         .filter((s) => s.status === "active" || byStudent.has(s._id))
@@ -179,9 +183,9 @@ export const saveSubjectScores = mutation({
   },
   handler: async (ctx, { classId, subjectId, termId, caMax, rows }) => {
     const viewer = await requireStaff(ctx);
-    await assertTeachesSubject(ctx, viewer, classId, subjectId);
-    if ((await isPublished(ctx, classId, termId)) && !isAdmin(viewer)) {
-      fail("INVALID", "These results have been published. Ask an administrator to make changes.");
+    await assertEntersSubjectScores(ctx, viewer, classId, subjectId);
+    if (await isPublished(ctx, classId, termId)) {
+      fail("INVALID", "These results have been published. Ask an administrator to withdraw them if a score needs to change.");
     }
     if (!isValidCaMax(caMax)) fail("INVALID", "The CA weighting must be a whole number between 0 and 100.");
     const examMax = 100 - caMax;
@@ -267,7 +271,7 @@ export const classSummary = query({
     const { cls, subjects, subjectIdsWithScores, rows, positions, cards } = await computeSummary(ctx, classId, termId);
     const published = cards.some((c) => c.publishedAt);
     return {
-      canPublish: isAdmin(viewer) || cls.classTeacherId === viewer.teacherId,
+      canPublish: await canPublishClassResults(ctx, viewer, classId),
       published,
       publishedAt: cards.find((c) => c.publishedAt)?.publishedAt ?? null,
       subjects: subjects.map((s) => ({

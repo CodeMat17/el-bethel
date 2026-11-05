@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { api } from "@/convex/_generated/api";
 import { removeClass } from "@/lib/school/actions/admin";
 import { requireAdmin } from "@/lib/school/auth";
-import { CLASS_LEVELS } from "@/lib/school/config";
+import { CLASS_LEVELS, classLeadTitle } from "@/lib/school/config";
 import { query } from "@/lib/school/convex";
 import { teacherName } from "@/lib/school/data";
 import { getDirectory } from "@/lib/school/directory";
@@ -31,6 +31,7 @@ export default async function AdminClassPage({ params }: PageProps<"/portal/admi
   const teachers = dir.teachers.filter((t) => t.active).map((t) => ({ value: t.id, label: teacherName(t) }));
   const levels = CLASS_LEVELS.map((l) => ({ value: l.id, label: l.name }));
   const pupils = sizes[cls.id] ?? 0;
+  const lead = classLeadTitle(cls.levelId);
 
   return (
     <>
@@ -42,7 +43,7 @@ export default async function AdminClassPage({ params }: PageProps<"/portal/admi
       <PortalPageHeader
         eyebrow={`${dir.levelName(cls.levelId)} · ${pupils} pupils`}
         title={cls.name}
-        description={`Class teacher: ${dir.teacherName(cls.classTeacherId)}. Subject teachers can set assignments and enter scores for their subject in this class.`}
+        description={`${lead}: ${dir.teacherName(cls.classTeacherId)}. Subject teachers can set assignments and enter scores for their subject in this class.`}
         action={
           <div className="flex flex-wrap gap-2">
             <ClassDialog cls={cls} levels={levels} teachers={teachers} />
@@ -102,7 +103,7 @@ export default async function AdminClassPage({ params }: PageProps<"/portal/admi
         </div>
       )}
       <p className="mt-4 text-xs text-muted-foreground">
-        The class teacher can always set work in any subject for their own class and publishes the term&apos;s results.
+        The {lead.toLowerCase()} can always set work in any subject for their own class and publishes the term&apos;s results.
       </p>
     </>
   );

@@ -128,12 +128,12 @@ export const STAGES: {
 }[] = [
   {
     key: "early_years",
-    name: "Creche & Pre-School",
+    name: "Creche & Prep",
     shortName: "Early Years",
     href: "/academics#early_years",
     tone: "success",
-    ages: "6 months – 3 years",
-    text: "A warm, safe first step away from home — care, play, language and the routines that make a confident learner.",
+    ages: "6 months – 4 years",
+    text: "Creche, Prep 1 and Prep 2. A warm, safe first step away from home — care, play, language and the routines that make a confident learner.",
   },
   {
     key: "nursery",
@@ -141,8 +141,8 @@ export const STAGES: {
     shortName: "Nursery",
     href: "/academics#nursery",
     tone: "gold",
-    ages: "3 – 6 years",
-    text: "Nursery 1 to Nursery 3. Phonics, number work, rhymes and discovery play — the years reading is born in.",
+    ages: "4 – 6 years",
+    text: "Nursery 1 and Nursery 2. Phonics, number work, rhymes and discovery play — the years reading is born in.",
   },
   {
     key: "lower_primary",
@@ -174,7 +174,7 @@ export const STAGES: {
 ];
 
 export const STAGE_LABELS: Record<StageKey, string> = {
-  early_years: "Creche & Pre-School",
+  early_years: "Creche & Prep",
   nursery: "Nursery",
   lower_primary: "Lower Primary",
   upper_primary: "Upper Primary",
@@ -183,10 +183,10 @@ export const STAGE_LABELS: Record<StageKey, string> = {
 
 export const CLASS_LEVELS: ClassLevel[] = [
   { id: "lvl-cre", name: "Creche", stage: "early_years", order: 1, entryAge: 1 },
-  { id: "lvl-pre", name: "Pre-School", stage: "early_years", order: 2, entryAge: 2 },
-  { id: "lvl-n1", name: "Nursery 1", stage: "nursery", order: 3, entryAge: 3 },
-  { id: "lvl-n2", name: "Nursery 2", stage: "nursery", order: 4, entryAge: 4 },
-  { id: "lvl-n3", name: "Nursery 3", stage: "nursery", order: 5, entryAge: 5 },
+  { id: "lvl-pr1", name: "Prep 1", stage: "early_years", order: 2, entryAge: 2 },
+  { id: "lvl-pr2", name: "Prep 2", stage: "early_years", order: 3, entryAge: 3 },
+  { id: "lvl-n1", name: "Nursery 1", stage: "nursery", order: 4, entryAge: 4 },
+  { id: "lvl-n2", name: "Nursery 2", stage: "nursery", order: 5, entryAge: 5 },
   { id: "lvl-p1", name: "Primary 1", stage: "lower_primary", order: 6, entryAge: 6 },
   { id: "lvl-p2", name: "Primary 2", stage: "lower_primary", order: 7, entryAge: 7 },
   { id: "lvl-p3", name: "Primary 3", stage: "lower_primary", order: 8, entryAge: 8 },
@@ -197,6 +197,26 @@ export const CLASS_LEVELS: ClassLevel[] = [
   { id: "lvl-j2", name: "JSS 2", stage: "junior_secondary", order: 13, entryAge: 13 },
   { id: "lvl-j3", name: "JSS 3", stage: "junior_secondary", order: 14, entryAge: 14 },
 ];
+
+/**
+ * Creche is run by a Handler rather than a teacher; every other class has a
+ * class teacher. Same account and permissions, different title.
+ */
+export const HANDLER_LEVEL_IDS: ReadonlySet<string> = new Set(["lvl-cre"]);
+
+/** "Handler" for a Creche class, "Class teacher" for every other class. */
+export function classLeadTitle(levelId: string | undefined): "Handler" | "Class teacher" {
+  return levelId && HANDLER_LEVEL_IDS.has(levelId) ? "Handler" : "Class teacher";
+}
+
+/** Title for someone who leads these classes: "Handler" only if every one is a Creche class. */
+export function leadTitleForClasses(classes: { levelId: string }[]): "Handler" | "Class teacher" {
+  return classes.length > 0 && classes.every((c) => HANDLER_LEVEL_IDS.has(c.levelId)) ? "Handler" : "Class teacher";
+}
+
+/** Every valid class level id. Convex and the website reject anything else. */
+export const LEVEL_IDS: readonly string[] = CLASS_LEVELS.map((l) => l.id);
+export const LEVEL_ID_SET: ReadonlySet<string> = new Set(LEVEL_IDS);
 
 export function levelsForStage(stage: StageKey): ClassLevel[] {
   return CLASS_LEVELS.filter((l) => l.stage === stage);
@@ -396,8 +416,8 @@ export const FEE_STRUCTURE: {
   lines: { category: FeeCategory; label: string; amount: number }[];
 }[] = [
   {
-    band: "Creche & Pre-School",
-    levelIds: ["lvl-cre", "lvl-pre"],
+    band: "Creche & Prep",
+    levelIds: ["lvl-cre", "lvl-pr1", "lvl-pr2"],
     lines: [
       { category: "tuition", label: "Tuition", amount: 200000 },
       { category: "learning_resources", label: "Learning Resources", amount: 25000 },
@@ -406,8 +426,8 @@ export const FEE_STRUCTURE: {
     ],
   },
   {
-    band: "Nursery 1 – Nursery 3",
-    levelIds: ["lvl-n1", "lvl-n2", "lvl-n3"],
+    band: "Nursery 1 – Nursery 2",
+    levelIds: ["lvl-n1", "lvl-n2"],
     lines: [
       { category: "tuition", label: "Tuition", amount: 240000 },
       { category: "learning_resources", label: "Learning Resources", amount: 30000 },

@@ -12,7 +12,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { requireParent } from "@/lib/school/auth";
-import { DAY_NAMES } from "@/lib/school/config";
+import { DAY_NAMES, classLeadTitle } from "@/lib/school/config";
 import { api } from "@/convex/_generated/api";
 import { schoolDay, slotsForDay, studentName } from "@/lib/school/data";
 import { getMyChildren, resolveActiveChild } from "@/lib/school/parent";
@@ -108,7 +108,7 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/port
               {dir.className(child.classId)} · {child.studentNo} · {child.house} House
             </p>
             <p className="mt-1 text-sm text-navy-foreground/70">
-              Class teacher: {dir.teacherName(dir.getClass(child.classId)?.classTeacherId)}
+              {classLeadTitle(dir.getClass(child.classId)?.levelId)}: {dir.teacherName(dir.getClass(child.classId)?.classTeacherId)}
             </p>
           </div>
           <div className="flex gap-2">

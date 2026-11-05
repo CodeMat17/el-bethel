@@ -117,7 +117,7 @@ export function PublishResults({
               <th className="px-3 py-3 text-left text-xs font-extrabold uppercase">Pupil</th>
               <th className="px-3 py-3 text-center text-xs font-extrabold uppercase">Subjects</th>
               <th className="px-3 py-3 text-center text-xs font-extrabold uppercase">Average</th>
-              <th className="px-3 py-3 text-left text-xs font-extrabold uppercase">Class teacher&apos;s comment</th>
+              <th className="px-3 py-3 text-left text-xs font-extrabold uppercase">Comment</th>
             </tr>
           </thead>
           <tbody>
@@ -175,7 +175,7 @@ export function PublishResults({
             </AlertDialogContent>
           </AlertDialog>
         ) : (
-          <p className="text-sm text-muted-foreground">Only the class teacher or an administrator can publish these results.</p>
+          <p className="text-sm text-muted-foreground">Only the class teacher (the Handler, for Creche) can publish these results.</p>
         )}
         {published && canUnpublish ? (
           <Button variant="outline" size="lg" className="font-bold" disabled={pending !== null} onClick={unpublish}>

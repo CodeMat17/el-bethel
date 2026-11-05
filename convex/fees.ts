@@ -7,7 +7,7 @@ import { accountsForStudent, audit, notify, nowISO, withId } from "./lib/util";
 
 /**
  * Fees are recorded by the school office. Payments are entered once the bursar
- * has confirmed them (bank transfer, POS or cash); nothing is marked as paid from
+ * has confirmed them (bank transfer or POS); nothing is marked as paid from
  * the browser.
  */
 
@@ -138,7 +138,7 @@ export const listPayments = query({
         count: payments.length,
         verified: payments.filter((p) => p.verifiedAt).length,
         amount: ok.reduce((n, p) => n + p.amount, 0),
-        byProvider: ["paystack", "flutterwave", "bank_transfer", "cash"].map((provider) => ({
+        byProvider: ["bank_transfer", "pos"].map((provider) => ({
           provider,
           amount: ok.filter((p) => p.provider === provider).reduce((n, p) => n + p.amount, 0),
         })),
@@ -152,7 +152,7 @@ export const recordPayment = mutation({
   args: {
     invoiceId: v.id("invoices"),
     amount: v.number(),
-    provider: v.union(v.literal("paystack"), v.literal("flutterwave"), v.literal("bank_transfer"), v.literal("cash")),
+    provider: v.union(v.literal("bank_transfer"), v.literal("pos")),
     reference: v.optional(v.string()),
   },
   handler: async (ctx, args) => {

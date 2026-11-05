@@ -19,7 +19,7 @@ export const generateMetadata = () =>
   pageMetadata({
     title: "Admissions",
     description:
-      "Admission to El-Bethel International Academy, Abuja is open for the 2026/2027 session — Creche, Pre-School, Nursery 1–3, Primary 1–6 and JSS 1–3. Process, requirements, fees and FAQs.",
+      "Admission to El-Bethel International Academy, Abuja is open for the 2026/2027 session — Creche, Prep 1–2, Nursery 1–2, Primary 1–6 and JSS 1–3. Process, requirements, fees and FAQs.",
     path: "/admissions",
   });
 

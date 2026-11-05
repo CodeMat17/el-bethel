@@ -76,30 +76,13 @@ const dayKey = (d: Date) => d.toISOString().slice(0, 10);
  * and terms from Convex; these only decide what the seed creates.
  */
 
-/** Sections per level. */
-const LEVEL_SECTIONS: Record<string, string[]> = {
-  "lvl-cre": ["A"],
-  "lvl-pre": ["A"],
-  "lvl-n1": ["A", "B"],
-  "lvl-n2": ["A", "B"],
-  "lvl-n3": ["A", "B"],
-  "lvl-p1": ["A", "B", "C"],
-  "lvl-p2": ["A", "B", "C"],
-  "lvl-p3": ["A", "B", "C"],
-  "lvl-p4": ["A", "B"],
-  "lvl-p5": ["A", "B"],
-  "lvl-p6": ["A", "B"],
-  "lvl-j1": ["A", "B"],
-  "lvl-j2": ["A", "B"],
-  "lvl-j3": ["A", "B"],
-};
-
+/** Pupils per level. Each level is a single class (no A/B/C arms). */
 const LEVEL_POPULATION: Record<string, number> = {
   "lvl-cre": 18,
-  "lvl-pre": 22,
-  "lvl-n1": 40,
-  "lvl-n2": 42,
-  "lvl-n3": 44,
+  "lvl-pr1": 22,
+  "lvl-pr2": 40,
+  "lvl-n1": 42,
+  "lvl-n2": 44,
   "lvl-p1": 72,
   "lvl-p2": 75,
   "lvl-p3": 78,
@@ -197,8 +180,8 @@ const ACTIVE_TERM_ID = "term-2026-1";
 /* Subjects                                                                    */
 /* -------------------------------------------------------------------------- */
 
-const EARLY_YEARS = ["lvl-cre", "lvl-pre"];
-const NURSERY_LEVELS = ["lvl-n1", "lvl-n2", "lvl-n3"];
+const EARLY_YEARS = ["lvl-cre", "lvl-pr1", "lvl-pr2"];
+const NURSERY_LEVELS = ["lvl-n1", "lvl-n2"];
 const PRIMARY_LEVELS = ["lvl-p1", "lvl-p2", "lvl-p3", "lvl-p4", "lvl-p5", "lvl-p6"];
 const UPPER_PRIMARY = ["lvl-p4", "lvl-p5", "lvl-p6"];
 const JSS_LEVELS = ["lvl-j1", "lvl-j2", "lvl-j3"];
@@ -206,7 +189,7 @@ const PRIMARY_AND_JSS = [...PRIMARY_LEVELS, ...JSS_LEVELS];
 const NURSERY_AND_UP = [...NURSERY_LEVELS, ...PRIMARY_LEVELS, ...JSS_LEVELS];
 
 const subjects: Subject[] = [
-  // Creche and Pre-School
+  // Creche and Prep
   { id: "sub-play", name: "Play & Discovery", code: "PLY", group: "core", levelIds: EARLY_YEARS },
   { id: "sub-lang", name: "Language & Communication", code: "LNG", group: "core", levelIds: EARLY_YEARS },
   { id: "sub-motor", name: "Motor Skills & Movement", code: "MOT", group: "core", levelIds: EARLY_YEARS },
@@ -262,20 +245,20 @@ const NAMED_STAFF: {
   { title: "Mr.", firstName: "Ifeanyi", lastName: "Adeyemi", position: "Deputy Headteacher (Academics)", department: "Leadership", subjectIds: ["sub-mth"], featured: true },
   { title: "Mrs.", firstName: "Zainab", lastName: "Lawal", position: "Head of Early Years", department: "Leadership", subjectIds: ["sub-lit"], featured: true },
   { title: "Mr.", firstName: "Emeka", lastName: "Nnamdi", position: "Head of Junior Secondary", department: "Leadership", subjectIds: ["sub-bsc"], featured: true },
-  { title: "Miss", firstName: "Blessing", lastName: "Ogun", position: "Creche Care Lead", department: "Early Years", className: "Creche", subjectIds: ["sub-play", "sub-motor"], featured: true },
-  { title: "Mrs.", firstName: "Ngozi", lastName: "Uche", position: "Pre-School Teacher", department: "Early Years", className: "Pre-School", subjectIds: ["sub-play", "sub-lang"], featured: true },
-  { title: "Miss", firstName: "Rukayat", lastName: "Salami", position: "Class Teacher", department: "Nursery", className: "Nursery 1A", subjectIds: ["sub-lit", "sub-num"], featured: true },
-  { title: "Mrs.", firstName: "Joy", lastName: "Aliyu", position: "Class Teacher", department: "Nursery", className: "Nursery 2A", subjectIds: ["sub-pho", "sub-num"], featured: true },
-  { title: "Mrs.", firstName: "Patience", lastName: "Etim", position: "Class Teacher", department: "Nursery", className: "Nursery 3A", subjectIds: ["sub-lit", "sub-env"], featured: true },
-  { title: "Mrs.", firstName: "Grace", lastName: "Eze", position: "Class Teacher", department: "Lower Primary", className: "Primary 1A", subjectIds: ["sub-eng", "sub-mth"], featured: true },
-  { title: "Mr.", firstName: "Daniel", lastName: "Ibrahim", position: "Class Teacher", department: "Lower Primary", className: "Primary 2A", subjectIds: ["sub-eng", "sub-mth"], featured: true },
-  { title: "Mrs.", firstName: "Sarah", lastName: "Adeyemi", position: "Class Teacher", department: "Lower Primary", className: "Primary 3A", subjectIds: ["sub-eng", "sub-bsc"], featured: true },
-  { title: "Miss", firstName: "Chiamaka", lastName: "Obi", position: "Class Teacher", department: "Upper Primary", className: "Primary 4A", subjectIds: ["sub-eng", "sub-sst"], featured: true },
-  { title: "Mr.", firstName: "David", lastName: "Musa", position: "Class Teacher", department: "Upper Primary", className: "Primary 5A", subjectIds: ["sub-bsc", "sub-agr"], featured: true },
-  { title: "Mrs.", firstName: "Helen", lastName: "Okoro", position: "Class Teacher", department: "Upper Primary", className: "Primary 6A", subjectIds: ["sub-mth", "sub-qr"], featured: true },
-  { title: "Mr.", firstName: "Kelechi", lastName: "Anyanwu", position: "Form Teacher", department: "Junior Secondary", className: "JSS 1A", subjectIds: ["sub-mth", "sub-bte"], featured: true },
-  { title: "Mrs.", firstName: "Fatima", lastName: "Sani", position: "Form Teacher", department: "Junior Secondary", className: "JSS 2A", subjectIds: ["sub-eng", "sub-lir"], featured: true },
-  { title: "Mr.", firstName: "Peter", lastName: "Danjuma", position: "Form Teacher", department: "Junior Secondary", className: "JSS 3A", subjectIds: ["sub-bsc", "sub-bus"], featured: true },
+  { title: "Miss", firstName: "Blessing", lastName: "Ogun", position: "Creche Handler", department: "Early Years", className: "Creche", subjectIds: ["sub-play", "sub-motor"], featured: true },
+  { title: "Mrs.", firstName: "Ngozi", lastName: "Uche", position: "Class Teacher", department: "Early Years", className: "Prep 1", subjectIds: ["sub-play", "sub-lang"], featured: true },
+  { title: "Miss", firstName: "Rukayat", lastName: "Salami", position: "Class Teacher", department: "Nursery", className: "Nursery 1", subjectIds: ["sub-lit", "sub-num"], featured: true },
+  { title: "Mrs.", firstName: "Joy", lastName: "Aliyu", position: "Class Teacher", department: "Nursery", className: "Nursery 2", subjectIds: ["sub-pho", "sub-num"], featured: true },
+  { title: "Mrs.", firstName: "Patience", lastName: "Etim", position: "Class Teacher", department: "Early Years", className: "Prep 2", subjectIds: ["sub-lit", "sub-env"], featured: true },
+  { title: "Mrs.", firstName: "Grace", lastName: "Eze", position: "Class Teacher", department: "Lower Primary", className: "Primary 1", subjectIds: ["sub-eng", "sub-mth"], featured: true },
+  { title: "Mr.", firstName: "Daniel", lastName: "Ibrahim", position: "Class Teacher", department: "Lower Primary", className: "Primary 2", subjectIds: ["sub-eng", "sub-mth"], featured: true },
+  { title: "Mrs.", firstName: "Sarah", lastName: "Adeyemi", position: "Class Teacher", department: "Lower Primary", className: "Primary 3", subjectIds: ["sub-eng", "sub-bsc"], featured: true },
+  { title: "Miss", firstName: "Chiamaka", lastName: "Obi", position: "Class Teacher", department: "Upper Primary", className: "Primary 4", subjectIds: ["sub-eng", "sub-sst"], featured: true },
+  { title: "Mr.", firstName: "David", lastName: "Musa", position: "Class Teacher", department: "Upper Primary", className: "Primary 5", subjectIds: ["sub-bsc", "sub-agr"], featured: true },
+  { title: "Mrs.", firstName: "Helen", lastName: "Okoro", position: "Class Teacher", department: "Upper Primary", className: "Primary 6", subjectIds: ["sub-mth", "sub-qr"], featured: true },
+  { title: "Mr.", firstName: "Kelechi", lastName: "Anyanwu", position: "Form Teacher", department: "Junior Secondary", className: "JSS 1", subjectIds: ["sub-mth", "sub-bte"], featured: true },
+  { title: "Mrs.", firstName: "Fatima", lastName: "Sani", position: "Form Teacher", department: "Junior Secondary", className: "JSS 2", subjectIds: ["sub-eng", "sub-lir"], featured: true },
+  { title: "Mr.", firstName: "Peter", lastName: "Danjuma", position: "Form Teacher", department: "Junior Secondary", className: "JSS 3", subjectIds: ["sub-bsc", "sub-bus"], featured: true },
   { title: "Mr.", firstName: "Samuel", lastName: "Yusuf", position: "Mathematics Teacher", department: "Mathematics", subjectIds: ["sub-mth", "sub-qr"], featured: true },
   { title: "Mrs.", firstName: "Esther", lastName: "Bello", position: "English Teacher", department: "Languages", subjectIds: ["sub-eng", "sub-vr"], featured: true },
   { title: "Mr.", firstName: "Michael", lastName: "Nwosu", position: "ICT Teacher", department: "Technology", subjectIds: ["sub-cmp"], featured: true },
@@ -293,14 +276,12 @@ const QUALIFICATIONS = [
 const teachers: Teacher[] = [];
 const classes: (SchoolClass & { classTeacherId: string })[] = [];
 
-// Build class shells first so class teachers can be attached.
-const classShells: { id: string; levelId: string; name: string; section: string }[] = [];
-for (const level of CLASS_LEVELS) {
-  for (const section of LEVEL_SECTIONS[level.id]) {
-    const name = LEVEL_SECTIONS[level.id].length > 1 ? `${level.name}${section}` : level.name;
-    classShells.push({ id: `cls-${level.id.replace("lvl-", "")}${section.toLowerCase()}`, levelId: level.id, name, section });
-  }
-}
+// Build class shells first so class teachers can be attached. One class per level.
+const classShells: { id: string; levelId: string; name: string }[] = CLASS_LEVELS.map((level) => ({
+  id: `cls-${level.id.replace("lvl-", "")}`,
+  levelId: level.id,
+  name: level.name,
+}));
 
 for (let i = 0; i < 58; i++) {
   const named = NAMED_STAFF[i];
@@ -322,7 +303,7 @@ for (let i = 0; i < 58; i++) {
     phone: phone(),
     qualifications: [pick(QUALIFICATIONS), ...(chance(0.4) ? [pick(QUALIFICATIONS)] : [])],
     experienceYears: int(2, 21),
-    bio: `${title} ${firstName} ${lastName} has spent ${int(2, 21)} years teaching young learners and believes every child deserves a classroom where their questions are taken seriously.`,
+    bio: `${title} ${firstName} ${lastName} has spent ${int(2, 21)} years ${named?.position.includes("Handler") ? "caring for babies and toddlers" : "teaching young learners"} and believes every child deserves a classroom where their questions are taken seriously.`,
     subjectIds: Array.from(new Set(subjectIds)),
     classIds: [],
     isClassTeacher: false,
@@ -352,10 +333,8 @@ for (const shell of classShells) {
     id: shell.id,
     levelId: shell.levelId,
     name: shell.name,
-    section: shell.section,
     classTeacherId: teacherId,
-    capacity: 30,
-    room: `Block ${pick(["A", "B", "C"])} · Room ${int(1, 18)}`,
+    capacity: Math.max(30, Math.ceil(LEVEL_POPULATION[shell.levelId] / 30) * 30),
   });
 }
 
@@ -380,8 +359,8 @@ for (const cls of classes) {
   }
 }
 // The demo maths and English teachers own those subjects in the demo pupil's class.
-teachingAssignments.set("cls-p4a:sub-mth", "tch-019");
-teachingAssignments.set("cls-p4a:sub-eng", "tch-013");
+teachingAssignments.set("cls-p4:sub-mth", "tch-019");
+teachingAssignments.set("cls-p4:sub-eng", "tch-013");
 
 /* -------------------------------------------------------------------------- */
 /* Students and parents                                                        */
@@ -458,29 +437,21 @@ function makeStudent(classId: string, lastName: string, parentIds: string[], for
   return student;
 }
 
-const demoDavid = makeStudent("cls-p4a", "Chukwu", [DEMO_PARENT_ID], {
+const demoDavid = makeStudent("cls-p4", "Chukwu", [DEMO_PARENT_ID], {
   id: DEMO_STUDENT_ID,
   firstName: "David",
   gender: "Male",
   studentNo: "EIA-2026-00482",
   admissionNo: "EIA/2022/0184",
 });
-const demoMary = makeStudent("cls-p2a", "Chukwu", [DEMO_PARENT_ID], { firstName: "Mary", gender: "Female" });
-const demoSarah = makeStudent("cls-n3a", "Chukwu", [DEMO_PARENT_ID], { firstName: "Sarah", gender: "Female" });
+const demoMary = makeStudent("cls-p2", "Chukwu", [DEMO_PARENT_ID], { firstName: "Mary", gender: "Female" });
+const demoSarah = makeStudent("cls-n2", "Chukwu", [DEMO_PARENT_ID], { firstName: "Sarah", gender: "Female" });
 students.push(demoDavid, demoMary, demoSarah);
 demoParent.studentIds = [demoDavid.id, demoMary.id, demoSarah.id];
 
 // Remaining pupils, distributed across classes according to level population targets.
 const classTargets = new Map<string, number>();
-for (const level of CLASS_LEVELS) {
-  const sections = LEVEL_SECTIONS[level.id];
-  const total = LEVEL_POPULATION[level.id];
-  const per = Math.floor(total / sections.length);
-  sections.forEach((section, idx) => {
-    const id = `cls-${level.id.replace("lvl-", "")}${section.toLowerCase()}`;
-    classTargets.set(id, idx === sections.length - 1 ? total - per * (sections.length - 1) : per);
-  });
-}
+for (const level of CLASS_LEVELS) classTargets.set(`cls-${level.id.replace("lvl-", "")}`, LEVEL_POPULATION[level.id]);
 for (const s of students) {
   classTargets.set(s.classId, (classTargets.get(s.classId) ?? 1) - 1);
 }
@@ -613,7 +584,7 @@ let assignmentCounter = 0;
 
 for (const cls of TEACHING_CLASSES) {
   const levelSubjects = subjectsForLevel(cls.levelId);
-  const count = cls.id === "cls-p4a" ? 6 : int(2, 4);
+  const count = cls.id === "cls-p4" ? 6 : int(2, 4);
   for (let i = 0; i < count; i++) {
     const template = ASSIGNMENT_TEMPLATES.filter((t) => levelSubjects.some((s) => s.id === t.subjectId))[
       (assignmentCounter + i) % Math.max(1, ASSIGNMENT_TEMPLATES.filter((t) => levelSubjects.some((s) => s.id === t.subjectId)).length)
@@ -652,7 +623,7 @@ const flagship: Assignment = {
   topic: "Fractions",
   description: "Pupils identify and work with fractions using everyday objects at home.",
   instructions: "Answer every question. Show your thinking in the written answer.",
-  classId: "cls-p4a",
+  classId: "cls-p4",
   subjectId: "sub-mth",
   teacherId: "tch-019",
   termId: ACTIVE_TERM_ID,
@@ -859,7 +830,7 @@ for (const student of students) {
       invoiceId: invoice.id,
       studentId: student.id,
       amount: amountPaid,
-      provider: pick(["bank_transfer", "cash"] as const),
+      provider: pick(["bank_transfer", "pos"] as const),
       status: "successful",
       paidAt: iso(addDays(DEMO_TODAY, -int(3, 40))),
       verifiedAt: iso(addDays(DEMO_TODAY, -int(3, 40))),
@@ -1131,7 +1102,7 @@ const events: SchoolEvent[] = [
 
 const GALLERY_CATEGORIES = ["Classrooms", "Sports", "Excursions", "Cultural Events", "Graduation", "Science", "Arts", "School Facilities"];
 const GALLERY_TITLES = [
-  "Morning assembly on the front lawn", "Reading corner in Primary 2B", "Sack race at the sports festival",
+  "Morning assembly on the front lawn", "Reading corner in Primary 2", "Sack race at the sports festival",
   "Building bridges in the innovation lab", "Cultural day drumming circle", "Primary 6 graduation caps",
   "Growing beans in the gardening club", "Painting the school mural", "Field trip to the science centre",
   "Relay handover at inter-house sports", "Library story session", "Robotics team at work",
@@ -1141,7 +1112,7 @@ const GALLERY_TITLES = [
   "Learning to code with block editors", "Chess ladder in the library", "French club market role-play",
   "Planting day in the school garden", "Interactive whiteboard lesson", "Playground fun at break time",
   "Prize-giving day", "Parents' race", "Science fair volcano project",
-  "Musical instruments workshop", "Class photo — Primary 4A",
+  "Musical instruments workshop", "Class photo — Primary 4",
 ];
 const gallery: GalleryItem[] = GALLERY_TITLES.map((title, i) => ({
   id: `gal-${i + 1}`,
@@ -1214,15 +1185,14 @@ const testimonials: Testimonial[] = [
 ];
 
 const FAQ_DEFS: { category: string; question: string; answer: string }[] = [
-  { category: "Admissions", question: "When does admission open for the 2026/2027 session?", answer: "Admission for the 2026/2027 session is currently OPEN for every class — Creche, Pre-School, Nursery 1 to Nursery 3, Primary 1 to Primary 6 and JSS 1 to JSS 3. Limited spaces are available in some classes, so early application is encouraged." },
+  { category: "Admissions", question: "When does admission open for the 2026/2027 session?", answer: "Admission for the 2026/2027 session is currently OPEN for every class — Creche, Prep 1, Prep 2, Nursery 1, Nursery 2, Primary 1 to Primary 6 and JSS 1 to JSS 3. Limited spaces are available in some classes, so early application is encouraged." },
   { category: "Admissions", question: "How do I apply?", answer: "Create a parent account, complete the online application form, pay the application fee and submit. You will receive an application number to track your progress. Bring the required documents with you to the screening — nothing is uploaded online." },
-  { category: "Admissions", question: "Is there an entrance assessment?", answer: "Yes, from Nursery 1 upwards. All applicants take a short, age-appropriate assessment: a gentle readiness activity in the nursery and early primary years, and written English and mathematics papers for Primary 4 and above. Creche and Pre-School places need only a settling visit." },
+  { category: "Admissions", question: "Is there an entrance assessment?", answer: "Yes, from Nursery 1 upwards. All applicants take a short, age-appropriate assessment: a gentle readiness activity in the nursery and early primary years, and written English and mathematics papers for Primary 4 and above. Creche and Prep places need only a settling visit." },
   { category: "Admissions", question: "What documents are required?", answer: "A birth certificate or declaration of age, a passport photograph, medical information and parent identification are required. A previous school report and transfer document are needed where applicable." },
-  { category: "Fees", question: "What are the school fees?", answer: "Fees range from ₦248,000 per term in Creche and Pre-School to ₦460,000 per term in JSS 1 to 3, covering tuition, learning resources, activities and technology. Meals are an optional extra." },
+  { category: "Fees", question: "What are the school fees?", answer: "Fees range from ₦248,000 per term in Creche and Prep to ₦460,000 per term in JSS 1 to 3, covering tuition, learning resources, activities and technology. Meals are an optional extra." },
   { category: "Fees", question: "Can fees be paid in instalments?", answer: "Yes. Please contact the school accountant before the start of term to agree a payment plan. Payment records and receipts are always available in the Parent Portal." },
   { category: "Fees", question: "How do I get a receipt?", answer: "Receipts are issued by the school bursary once a payment is confirmed, and every payment recorded appears in the Parent Portal." },
   { category: "Classes", question: "How large are your classes?", answer: "Our average class size is 24 pupils, with a pupil-to-teacher ratio of 12:1. Every class also has a class teacher who knows each child personally." },
-  { category: "Classes", question: "How are pupils placed in sections?", answer: "Pupils are placed to create balanced sections. Siblings and friendship groups are considered where it supports a child's settling in." },
   { category: "Uniform", question: "What is the school uniform?", answer: "Pupils wear the El-Bethel day uniform Monday to Thursday and the house sports kit on Fridays. Full details and suppliers are in the Uniform Guide document." },
   { category: "Academics", question: "What curriculum do you follow?", answer: "We follow the Nigerian national curriculum, enriched with a child-centred, activity-based approach and a strong emphasis on reading, reasoning and digital literacy." },
   { category: "Academics", question: "How is my child assessed?", answer: "Assessment is continuous. Classwork, assignments and tests make up the continuous assessment, and the end-of-term examination makes up the rest of the 100-mark subject score. The usual split is 40 percent CA and 60 percent exam, but each subject teacher sets the exact weighting for the term, and the report card shows what each score was marked out of." },
@@ -1331,7 +1301,7 @@ notify("usr-pupil", "assignment_graded", "Your Mathematics assignment was graded
 notify("usr-pupil", "announcement", "School resumes Monday", "Please arrive by 7:30 AM in full uniform.", "/portal/pupil/dashboard", 8, true);
 notify("usr-pupil", "event_reminder", "Cultural Day registration is open", "Sign up with your class teacher before Friday.", "/portal/pupil/dashboard", 3, true);
 
-notify("usr-teacher", "assignment_published", "7 submissions await grading", "Primary 4A — Fractions Around Us.", "/portal/teacher/grading", 1);
+notify("usr-teacher", "assignment_published", "7 submissions await grading", "Primary 4 — Fractions Around Us.", "/portal/teacher/grading", 1);
 notify("usr-teacher", "announcement", "Staff briefing moved to 7:15 AM", "Tomorrow's briefing starts fifteen minutes earlier.", "/portal/teacher/dashboard", 2, true);
 
 notify("usr-admin", "admission_update", "27 new applications this month", "Nine applications are awaiting review.", "/portal/admin/admissions", 1);

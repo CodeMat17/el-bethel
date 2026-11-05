@@ -37,6 +37,7 @@ export function MidtermEntry({
   rows,
   maxScore: initialMax,
   locked,
+  lockedNote,
 }: {
   classId: string;
   subjectId: string;
@@ -47,6 +48,8 @@ export function MidtermEntry({
   rows: MidtermRow[];
   maxScore: number;
   locked: boolean;
+  /** Shown instead of the "published" note when the sheet is read-only for another reason. */
+  lockedNote?: string;
 }) {
   const router = useRouter();
   // Seeded from props; the page remounts this component (via key) when the selection changes.
@@ -108,7 +111,7 @@ export function MidtermEntry({
       {locked ? (
         <div className="flex items-start gap-2.5 rounded-xl border border-info/40 bg-info/10 px-4 py-3 text-sm font-semibold">
           <LockIcon className="mt-0.5 size-4 shrink-0" />
-          These mid-term results have been published, so they are read-only. Ask an administrator if a score needs to change.
+          {lockedNote ?? "These mid-term results have been published, so they are read-only. Ask an administrator to withdraw them if a score needs to change."}
         </div>
       ) : null}
 

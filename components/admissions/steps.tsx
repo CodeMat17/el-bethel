@@ -398,7 +398,7 @@ export function PaymentStep({
             At the school bursary
           </p>
           <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-            Pay in person by cash or POS at the school bursary during office hours, quoting your application number.
+            Pay by POS at the school bursary during office hours, quoting your application number.
           </p>
         </Card>
       </div>

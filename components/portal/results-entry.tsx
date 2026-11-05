@@ -40,6 +40,7 @@ export function ResultsEntry({
   rows,
   caMax: initialCaMax,
   locked,
+  lockedNote,
 }: {
   classId: string;
   subjectId: string;
@@ -51,6 +52,8 @@ export function ResultsEntry({
   /** Marks the CA is out of; the exam takes the rest of 100. */
   caMax: number;
   locked: boolean;
+  /** Shown instead of the "published" note when the sheet is read-only for another reason. */
+  lockedNote?: string;
 }) {
   const router = useRouter();
   // Seeded from props; the page remounts this component (via key) when the selection changes.
@@ -117,7 +120,7 @@ export function ResultsEntry({
       {locked ? (
         <div className="flex items-start gap-2.5 rounded-xl border border-info/40 bg-info/10 px-4 py-3 text-sm font-semibold">
           <LockIcon className="mt-0.5 size-4 shrink-0" />
-          These results have been published, so they are read-only. Ask an administrator if a score needs to change.
+          {lockedNote ?? "These results have been published, so they are read-only. Ask an administrator to withdraw them if a score needs to change."}
         </div>
       ) : null}
 

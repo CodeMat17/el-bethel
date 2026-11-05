@@ -4,6 +4,7 @@ import { CLASS_LEVELS } from "../lib/school/config";
 import { mutation, query } from "./_generated/server";
 import { fail, requireAdmin } from "./lib/access";
 import { audit } from "./lib/util";
+import { levelId } from "./validators";
 
 /**
  * School structure, managed by administrators: classes (with class teachers),
@@ -25,7 +26,7 @@ export const classStats = query({
   },
 });
 
-/** Sections and active pupils per class level, for the public Academics page. Totals only. */
+/** Active pupils per class level, for the public Academics page. Totals only. */
 export const levelSummary = query({
   args: {},
   handler: async (ctx) => {
@@ -34,11 +35,10 @@ export const levelSummary = query({
       ctx.db.query("students").withIndex("by_status", (q) => q.eq("status", "active")).collect(),
     ]);
     const levelOf = new Map(classes.map((c) => [c._id as string, c.levelId]));
-    const summary: Record<string, { sections: number; pupils: number }> = {};
-    for (const c of classes) (summary[c.levelId] ??= { sections: 0, pupils: 0 }).sections++;
+    const summary: Record<string, { pupils: number }> = {};
     for (const s of students) {
       const levelId = levelOf.get(s.classId);
-      if (levelId) summary[levelId].pupils++;
+      if (levelId) (summary[levelId] ??= { pupils: 0 }).pupils++;
     }
     return summary;
   },
@@ -47,21 +47,19 @@ export const levelSummary = query({
 export const saveClass = mutation({
   args: {
     id: v.optional(v.id("classes")),
-    levelId: v.string(),
-    section: v.string(),
-    name: v.string(),
+    levelId,
     classTeacherId: v.optional(v.id("teachers")),
     capacity: v.number(),
-    room: v.string(),
   },
   handler: async (ctx, { id, ...a }) => {
     const viewer = await requireAdmin(ctx);
     if (!LEVEL_IDS.has(a.levelId)) fail("INVALID", "Choose a level.");
-    if (!a.name.trim()) fail("INVALID", "Enter the class name.");
     if (!Number.isInteger(a.capacity) || a.capacity < 1 || a.capacity > 200) fail("INVALID", "Capacity must be between 1 and 200.");
-    const clash = (await ctx.db.query("classes").collect()).find((c) => c.name.toLowerCase() === a.name.trim().toLowerCase() && c._id !== id);
-    if (clash) fail("CONFLICT", `A class called ${clash.name} already exists.`);
-    const doc = { ...a, name: a.name.trim(), section: a.section.trim(), room: a.room.trim() };
+    // One class per level, named after the level (Primary 4, JSS 1 ...). No A/B/C arms.
+    const clash = (await ctx.db.query("classes").withIndex("by_level", (q) => q.eq("levelId", a.levelId)).collect()).find((c) => c._id !== id);
+    if (clash) fail("CONFLICT", `${clash.name} already exists. Each level has one class.`);
+    const name = CLASS_LEVELS.find((l) => l.id === a.levelId)!.name;
+    const doc = { ...a, name, section: undefined, room: undefined };
     if (id) {
       await ctx.db.patch(id, doc);
       await audit(ctx, viewer, { action: "Edited class", entity: "Class", entityId: id, newValue: doc.name });
@@ -102,7 +100,7 @@ export const saveSubject = mutation({
     name: v.string(),
     code: v.string(),
     group: v.union(v.literal("core"), v.literal("additional")),
-    levelIds: v.array(v.string()),
+    levelIds: v.array(levelId),
   },
   handler: async (ctx, { id, ...a }) => {
     const viewer = await requireAdmin(ctx);

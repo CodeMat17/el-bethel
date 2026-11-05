@@ -62,12 +62,10 @@ export interface ClassLevel {
 export interface SchoolClass {
   id: ID;
   levelId: ID;
-  /** e.g. "Primary 4A" */
+  /** Same as the level name, e.g. "Primary 4". One class per level. */
   name: string;
-  section: string;
   classTeacherId?: ID;
   capacity: number;
-  room: string;
 }
 
 export type SubjectGroup = "core" | "additional";
@@ -328,7 +326,7 @@ export interface Invoice {
   dueDate: string;
 }
 
-export type PaymentProvider = "paystack" | "flutterwave" | "bank_transfer" | "cash";
+export type PaymentProvider = "paystack" | "flutterwave" | "bank_transfer" | "pos";
 
 export interface Payment {
   id: ID;

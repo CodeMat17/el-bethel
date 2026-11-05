@@ -25,7 +25,7 @@ export const metadata: Metadata = { title: "Payments" };
 
 const PROVIDER_LABEL: Record<string, string> = {
   bank_transfer: "Bank transfer",
-  cash: "Cash / POS",
+  pos: "POS",
 };
 
 export default async function AdminPaymentsPage({ searchParams }: PageProps<"/portal/admin/payments">) {

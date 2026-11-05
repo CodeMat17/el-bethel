@@ -1,6 +1,9 @@
 import "server-only";
 
-import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
+import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFImage, type PDFPage } from "pdf-lib";
 import QRCode from "qrcode";
 
 import { SCHOOL as DEFAULT_SCHOOL, SITE_URL } from "./config";
@@ -80,7 +83,34 @@ function drawQr(page: PDFPage, text: string, x: number, y: number, size: number)
 }
 
 /** The parts of the school's identity a certificate prints. */
-export type CertificateSchool = { name: string; motto: string; city: string; headteacher: string };
+export type CertificateSchool = { name: string; motto: string; city: string; headteacher: string; logo?: { url: string } | null };
+
+/** pdf-lib embeds PNG/JPEG only; Cloudinary converts the uploaded logo to PNG on its CDN. */
+function cloudinaryPng(url: string) {
+  const marker = "/image/upload/";
+  const at = url.indexOf(marker);
+  if (!url.startsWith("https://res.cloudinary.com/") || at < 0) return null;
+  const rest = url.slice(at + marker.length).replace(/^f_auto,q_auto\//, "");
+  return `${url.slice(0, at + marker.length)}f_png,c_limit,w_360/${rest}`;
+}
+
+/** The logo uploaded in the Site portal, else the bundled one. Never fails the certificate. */
+async function loadLogo(doc: PDFDocument, school: CertificateSchool): Promise<PDFImage | null> {
+  const remote = school.logo?.url ? cloudinaryPng(school.logo.url) : null;
+  if (remote) {
+    try {
+      const res = await fetch(remote, { signal: AbortSignal.timeout(5000) });
+      if (res.ok) return await doc.embedPng(new Uint8Array(await res.arrayBuffer()));
+    } catch {
+      // fall back to the bundled logo
+    }
+  }
+  try {
+    return await doc.embedPng(await readFile(path.join(process.cwd(), "lib/school/assets/certificate-logo.png")));
+  } catch {
+    return null;
+  }
+}
 
 export async function renderCertificatePdf(c: CertificateContent, school: CertificateSchool = DEFAULT_SCHOOL): Promise<Uint8Array> {
   const SCHOOL = { ...school, country: DEFAULT_SCHOOL.country };
@@ -97,11 +127,20 @@ export async function renderCertificatePdf(c: CertificateContent, school: Certif
     doc.embedFont(StandardFonts.Helvetica),
     doc.embedFont(StandardFonts.HelveticaBold),
   ]);
+  const logo = await loadLogo(doc, school);
 
   // Frame
   page.drawRectangle({ x: 0, y: 0, width, height, color: rgb(1, 0.992, 0.965) });
   page.drawRectangle({ x: 18, y: 18, width: width - 36, height: height - 36, borderColor: NAVY, borderWidth: 6 });
   page.drawRectangle({ x: 32, y: 32, width: width - 64, height: height - 64, borderColor: GOLD, borderWidth: 1.5 });
+
+  // Logo: a faint watermark behind the text, and a crest in the top-left corner.
+  if (logo) {
+    const mark = logo.scaleToFit(300, 300);
+    page.drawImage(logo, { x: (width - mark.width) / 2, y: (height - mark.height) / 2 - 10, ...mark, opacity: 0.06 });
+    const crest = logo.scaleToFit(100, 92);
+    page.drawImage(logo, { x: 56, y: height - 52 - crest.height, ...crest });
+  }
 
   // Heading
   centered(page, safe(SCHOOL.name).toUpperCase(), height - 88, sansBold, 20, NAVY);

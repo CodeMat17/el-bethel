@@ -5,6 +5,7 @@ import {
   applicationStatus,
   cloudMedia,
   feeLine,
+  levelId,
   question,
   questionAnswer,
   role,
@@ -74,12 +75,14 @@ export default defineSchema({
     .index("by_legacy", ["legacyId"]),
 
   classes: defineTable({
-    levelId: v.string(),
+    levelId,
     name: v.string(),
-    section: v.string(),
+    /** Legacy A/B/C arm. Classes are one per level now; kept optional so old rows still validate. */
+    section: v.optional(v.string()),
     classTeacherId: v.optional(v.id("teachers")),
     capacity: v.number(),
-    room: v.string(),
+    /** Legacy block/room label. No longer used; optional so old rows still validate. */
+    room: v.optional(v.string()),
     legacyId: v.optional(v.string()),
   })
     .index("by_level", ["levelId"])
@@ -90,7 +93,7 @@ export default defineSchema({
     name: v.string(),
     code: v.string(),
     group: v.union(v.literal("core"), v.literal("additional")),
-    levelIds: v.array(v.string()),
+    levelIds: v.array(levelId),
     legacyId: v.optional(v.string()),
   })
     .index("by_code", ["code"])
@@ -346,6 +349,8 @@ export default defineSchema({
       v.literal("paystack"),
       v.literal("flutterwave"),
       v.literal("bank_transfer"),
+      v.literal("pos"),
+      // Legacy: cash is no longer accepted. Kept only until migrations:cashToPos has run.
       v.literal("cash"),
     ),
     status: v.union(
@@ -376,7 +381,7 @@ export default defineSchema({
   applications: defineTable({
     applicationNo: v.string(),
     sessionId: v.id("academicSessions"),
-    intendedLevelId: v.string(),
+    intendedLevelId: levelId,
     status: applicationStatus,
     createdAt: v.string(),
     submittedAt: v.optional(v.string()),

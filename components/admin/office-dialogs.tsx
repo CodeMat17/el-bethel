@@ -85,7 +85,7 @@ export function RecordPaymentDialog({ invoiceId, invoiceNo, balance, studentName
         label="Method"
         options={[
           { value: "bank_transfer", label: "Bank transfer" },
-          { value: "cash", label: "Cash / POS at the bursary" },
+          { value: "pos", label: "POS at the bursary" },
         ]}
         defaultValue="bank_transfer"
       />
